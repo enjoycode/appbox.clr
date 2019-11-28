@@ -1,0 +1,92 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace sys.ServiceLogic
+{
+    public class HelloService
+    {
+		//public async Task<EntityList<Entities.Emploee>> SayHello(string name, int[] age, Guid id, DateTime birthday)
+		//{
+		//    //var vs = new Entities.Order();
+		//    //vs.CreateById = Guid.Empty;
+		//    //await EntityStore.SaveAsync(vs);
+		//    return null;
+		//}
+
+		//[InvokePermission(Permissions.Admin || Permissions.Developer)]
+		//public async Task SayHello(Entities.Emploee emp)
+		//{
+		//    await EntityStore.SaveAsync(emp);
+		//}
+
+		//public async Task<EntityBase> LoadEmploee(Guid id)
+		//{
+		//    return await EntityStore.LoadAsync<Entities.Emploee>(id);
+		//}
+
+		//public Task<bool> TypeIdTest()
+		//{
+		//    ulong baseType = 0;
+		//    var res = baseType == Entities.Emploee.TypeId;
+		//    return Task.FromResult(res);
+		//}
+
+		//public async Task DeleteTest()
+		//{
+		//    await EntityStore.DeleteAsync<Entities.Emploee>(Guid.Empty);
+		//}
+
+		//public async Task<object> Test()
+		//{
+		//    var q = new TableScan<Entities.OrgUnit>();
+		//    q.Include(o => o.Parent.Name);
+		//    return await q.ToListAsync();
+		//}
+
+		//public async Task<object> Test()
+		//{
+		//    var id = Guid.Empty;
+		//    var childs = await EntityStore.LoadEntitySetAsync<Entities.OrgUnit, Entities.OrgUnit>(id, t => t.Childs);
+		//    return childs;
+		//}
+
+		//public async Task<object> Test()
+		//{
+		//    var q = new TableScan<Entities.VehicleState>();
+		//    q.Partitions.Equal(t => t.VehicleId, 1);
+		//    //q.Partitions.Equal(t => t.CreateTime, new DateTime(2019, 1, 1));
+		//    return await q.ToListAsync();
+		//}
+
+		//public async Task<object> Test()
+		//{
+		//	var q = new TableScan<Entities.VehicleState>();
+		//	q.Filter(t => t.Lng > 12f && t.Lat > 20f);
+		//	return await q.ToListAsync();
+		//}
+
+		//public async Task<object> Test(DateTime date)
+		//{
+		//    var q = new IndexScan<Entities.Emploee, Entities.Emploee.UI_Account_Password>();
+		//    q.Keys.Equal(t => t.Account, "Admin");
+		//    return await q.ToListAsync();
+		//}
+
+  //      public async Task Test()
+		//{
+		//	var obj = new Entities.City();
+		//	obj.Code = 214000;
+		//	obj.Name = "Wuxi";
+		//	await DataStore.DemoDB.SaveAsync(obj);
+		//}
+
+        public async Task<object> Test()
+		{
+			var q = new SqlQuery<Entities.City>();
+			q.Where(t => t.Code > 1 && t.Code < 10);
+			return await q.ToListAsync();
+		}
+
+	}
+}

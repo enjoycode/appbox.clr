@@ -1,0 +1,26 @@
+﻿<el-container style="height:100%">
+    <!-- Header -->
+    <el-header class="ops-header">
+        <div style="padding-top:10px;font-size:28px">
+            AppBox运维管理系统
+        </div>
+    </el-header>
+    <el-container>
+        <!-- Menu -->
+        <el-aside width="150px">
+            <el-menu router :default-active="$route.path" style="height:100%" background-color="#464b5b"
+                     text-color="#fff" active-text-color="#fff">
+                <el-menu-item v-for="sub in menus" :index="sub.index" :key="sub.index">
+                    <template slot="title">
+                        <i v-if="sub.icon" :class="sub.icon"></i>
+                        {{sub.title}}
+                    </template>
+                </el-menu-item>
+            </el-menu>
+        </el-aside>
+        <!-- Main -->
+        <el-main>
+            <router-view></router-view>
+        </el-main>
+    </el-container>
+</el-container>

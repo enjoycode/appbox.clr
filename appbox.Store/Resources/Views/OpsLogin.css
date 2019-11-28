@@ -1,0 +1,7 @@
+﻿.align-center {
+    position: fixed;
+    left: 40%;
+    top: 20%;
+    margin-left: width/2;
+    margin-top: height/2;
+}

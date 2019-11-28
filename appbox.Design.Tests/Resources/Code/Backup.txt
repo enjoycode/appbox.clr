@@ -1,0 +1,54 @@
+﻿using System;
+using System.Threading.Tasks;
+
+namespace sys.ServiceLogic
+{
+    public class HelloService
+    {
+        public async Task<string> SayHello()
+        {
+            var emp = new sys.Entities.Emploee();
+            emp.Name = "Rick";
+            await EntityStore.SaveAsync(emp);
+            Log.Debug("3");
+            return $"Hello {emp.Name}";
+        }
+    }
+}
+
+
+using System;
+using System.Threading.Tasks;
+
+namespace sys.ServiceLogic
+{
+    public class HelloService
+    {
+        public async Task<Entities.Emploee[]> SayHello()
+        {
+            var q = new TableScan<Entities.Emploee>();
+            q.Filter(t => t.Name == "Admin");
+            return await q.ToListAsync();
+        }
+    }
+}
+
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace sys.ServiceLogic
+{
+    public class HelloService
+    {
+        public async Task<List<string>> SayHello(string name, int[] age, Guid id, DateTime birthday)
+        {
+            var vs = new Entities.VehicleState(1);
+            vs.Lng = 120.123F;
+            vs.Lat = 32.112F;
+            await sys.EntityStore.SaveAsync(vs);
+            return new List<string> { "Hello Future!" };
+        }
+    }
+}
+

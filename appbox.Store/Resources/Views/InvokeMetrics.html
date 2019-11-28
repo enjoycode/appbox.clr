@@ -1,0 +1,38 @@
+﻿<div>
+	<div>
+		Times:
+		<el-date-picker size="small" v-model="times" @change="onTimesChange" type="datetimerange"
+			:picker-options="timesOptions" :clearable="false">
+		</el-date-picker>
+	</div>
+	<br />
+
+	<el-row :gutter="10">
+		<el-col :span="12">
+			<el-card>
+				<div slot="header" class="clearfix">
+					<span>调用次数排名</span>
+				</div>
+				<v-chart autoresize :options="chartOpt1" style="height:280px">
+				</v-chart>
+				<el-table :data="topcount" border>
+					<el-table-column prop="metric.method" label="Method"></el-table-column>
+					<el-table-column prop="value[1]" label="Count" width="80" align="right"></el-table-column>
+				</el-table>
+			</el-card>
+		</el-col>
+
+		<el-col :span="12">
+			<el-card>
+                <div slot="header" class="clearfix">
+					<span>调用耗时排名</span>
+				</div>
+				<v-chart autoresize :options="chartOpt2" style="height:280px"></v-chart>
+				<el-table :data="toptimes" border>
+					<el-table-column prop="metric.method" label="Method"></el-table-column>
+					<el-table-column prop="value[1]" label="Times" width="80" align="right"></el-table-column>
+				</el-table>
+			</el-card>
+		</el-col>
+	</el-row>
+</div>

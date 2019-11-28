@@ -1,0 +1,180 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>8.0</LangVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>8.0</LangVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <Folder Include="Properties\" />
+    <Folder Include="Query\" />
+    <Folder Include="Serialization\" />
+    <Folder Include="Caching\" />
+    <Folder Include="Utils\" />
+    <Folder Include="Runtime\" />
+    <Folder Include="Resources\" />
+    <Folder Include="Resources\Views\" />
+    <Folder Include="Resources\Services\" />
+    <Folder Include="Protobuf\" />
+    <Folder Include="Query\SysQuery\" />
+    <Folder Include="Query\SqlQuery\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\appbox.Core\appbox.Core.csproj" />
+    <ProjectReference Include="..\appbox.Server\appbox.Server.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="FastExpressionCompiler" Version="1.10.1" />
+    <PackageReference Include="Google.Protobuf" Version="3.9.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="Native\EntityStoreApi.cs" />
+    <Compile Remove="Resources\Services\OrgUnitService.cs" />
+    <Compile Remove="Resources\Services\MetricService.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System.Runtime">
+      <HintPath>..\..\..\..\..\..\usr\local\share\dotnet\sdk\NuGetFallbackFolder\microsoft.netcore.app\2.2.0\ref\netcoreapp2.2\System.Runtime.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="Resources\Views\PermissionTree.html" />
+    <None Remove="Resources\Views\PermissionTree.js" />
+    <None Remove="Resources\Views\PermissionTree.css" />
+    <None Remove="Resources\Views\Home.html" />
+    <None Remove="Resources\Views\Home.js" />
+    <None Remove="Resources\Views\Home.json" />
+    <None Remove="Resources\Views\PermissionTree.json" />
+    <None Remove="Resources\Views\EnterpriseView.html" />
+    <None Remove="Resources\Views\EnterpriseView.js" />
+    <None Remove="Resources\Views\EnterpriseView.css" />
+    <None Remove="Resources\Views\EnterpriseView.json" />
+    <None Remove="Resources\Views\OrgUnits.html" />
+    <None Remove="Resources\Views\OrgUnits.js" />
+    <None Remove="Resources\Views\OrgUnits.css" />
+    <None Remove="Resources\Views\OrgUnits.json" />
+    <None Remove="Resources\Views\WorkgroupView.html" />
+    <None Remove="Resources\Views\WorkgroupView.js" />
+    <None Remove="Resources\Views\WorkgroupView.css" />
+    <None Remove="Resources\Views\WorkgroupView.json" />
+    <None Remove="Resources\Views\EmploeeView.html" />
+    <None Remove="Resources\Views\EmploeeView.js" />
+    <None Remove="Resources\Views\EmploeeView.css" />
+    <None Remove="Resources\Views\EmploeeView.json" />
+    <None Remove="Resources\Services\OrgUnitService.dll" />
+    <None Remove="Resources\Views\CpuUsages.html" />
+    <None Remove="Resources\Views\CpuUsages.js" />
+    <None Remove="Resources\Views\CpuUsages.json" />
+    <None Remove="Resources\Views\DiskIO.html" />
+    <None Remove="Resources\Views\DiskIO.js" />
+    <None Remove="Resources\Views\DiskIO.json" />
+    <None Remove="Resources\Views\MemUsages.html" />
+    <None Remove="Resources\Views\MemUsages.js" />
+    <None Remove="Resources\Views\MemUsages.json" />
+    <None Remove="Resources\Views\NetTraffic.html" />
+    <None Remove="Resources\Views\NetTraffic.js" />
+    <None Remove="Resources\Views\NetTraffic.json" />
+    <None Remove="Resources\Services\MetricService.dll" />
+    <None Remove="Resources\Views\RaftGroupsView.html" />
+    <None Remove="Resources\Views\RaftGroupsView.js" />
+    <None Remove="Resources\Views\RaftGroupsView.json" />
+    <None Remove="Resources\Views\NodeMetrics.html" />
+    <None Remove="Resources\Views\NodeMetrics.js" />
+    <None Remove="Resources\Views\NodeMetrics.json" />
+    <None Remove="Resources\Views\GaugeCard.html" />
+    <None Remove="Resources\Views\GaugeCard.js" />
+    <None Remove="Resources\Views\GaugeCard.json" />
+    <None Remove="Resources\Views\ClusterHome.html" />
+    <None Remove="Resources\Views\ClusterHome.js" />
+    <None Remove="Resources\Views\ClusterHome.json" />
+    <None Remove="Resources\Views\NodesListView.html" />
+    <None Remove="Resources\Views\NodesListView.js" />
+    <None Remove="Resources\Views\NodesListView.json" />
+    <None Remove="Resources\Views\PartsListView.js" />
+    <None Remove="Resources\Views\PartsListView.html" />
+    <None Remove="Resources\Views\PartsListView.json" />
+    <None Remove="Resources\Views\OpsLogin.html" />
+    <None Remove="Resources\Views\OpsLogin.js" />
+    <None Remove="Resources\Views\OpsLogin.json" />
+    <None Remove="Resources\Views\OpsHome.html" />
+    <None Remove="Resources\Views\OpsHome.js" />
+    <None Remove="Resources\Views\OpsHome.json" />
+    <None Remove="Resources\Views\OpsHome.css" />
+    <None Remove="Resources\Views\OpsLogin.css" />
+    <None Remove="Resources\Views\InvokeMetrics.html" />
+    <None Remove="Resources\Views\InvokeMetrics.js" />
+    <None Remove="Resources\Views\InvokeMetrics.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\Views\PermissionTree.html" />
+    <EmbeddedResource Include="Resources\Views\PermissionTree.js" />
+    <EmbeddedResource Include="Resources\Views\PermissionTree.css" />
+    <EmbeddedResource Include="Resources\Views\Home.html" />
+    <EmbeddedResource Include="Resources\Views\Home.js" />
+    <EmbeddedResource Include="Resources\Views\Home.json" />
+    <EmbeddedResource Include="Resources\Views\PermissionTree.json" />
+    <EmbeddedResource Include="Resources\Services\OrgUnitService.cs" />
+    <EmbeddedResource Include="Resources\Views\EnterpriseView.html" />
+    <EmbeddedResource Include="Resources\Views\EnterpriseView.js" />
+    <EmbeddedResource Include="Resources\Views\EnterpriseView.json" />
+    <EmbeddedResource Include="Resources\Views\OrgUnits.html" />
+    <EmbeddedResource Include="Resources\Views\OrgUnits.js" />
+    <EmbeddedResource Include="Resources\Views\OrgUnits.css" />
+    <EmbeddedResource Include="Resources\Views\OrgUnits.json" />
+    <EmbeddedResource Include="Resources\Views\WorkgroupView.html" />
+    <EmbeddedResource Include="Resources\Views\WorkgroupView.js" />
+    <EmbeddedResource Include="Resources\Views\WorkgroupView.json" />
+    <EmbeddedResource Include="Resources\Views\EmploeeView.html" />
+    <EmbeddedResource Include="Resources\Views\EmploeeView.js" />
+    <EmbeddedResource Include="Resources\Views\EmploeeView.css" />
+    <EmbeddedResource Include="Resources\Views\EmploeeView.json" />
+    <EmbeddedResource Include="Resources\Services\OrgUnitService.dll" />
+    <EmbeddedResource Include="Resources\Services\MetricService.cs" />
+    <EmbeddedResource Include="Resources\Views\CpuUsages.html" />
+    <EmbeddedResource Include="Resources\Views\CpuUsages.js" />
+    <EmbeddedResource Include="Resources\Views\CpuUsages.json" />
+    <EmbeddedResource Include="Resources\Views\DiskIO.html" />
+    <EmbeddedResource Include="Resources\Views\DiskIO.js" />
+    <EmbeddedResource Include="Resources\Views\DiskIO.json" />
+    <EmbeddedResource Include="Resources\Views\MemUsages.html" />
+    <EmbeddedResource Include="Resources\Views\MemUsages.js" />
+    <EmbeddedResource Include="Resources\Views\MemUsages.json" />
+    <EmbeddedResource Include="Resources\Views\NetTraffic.html" />
+    <EmbeddedResource Include="Resources\Views\NetTraffic.js" />
+    <EmbeddedResource Include="Resources\Views\NetTraffic.json" />
+    <EmbeddedResource Include="Resources\Services\MetricService.dll" />
+    <EmbeddedResource Include="Resources\Views\PartsListView.html" />
+    <EmbeddedResource Include="Resources\Views\PartsListView.js" />
+    <EmbeddedResource Include="Resources\Views\PartsListView.json" />
+    <EmbeddedResource Include="Resources\Views\NodeMetrics.html" />
+    <EmbeddedResource Include="Resources\Views\NodeMetrics.js" />
+    <EmbeddedResource Include="Resources\Views\NodeMetrics.json" />
+    <EmbeddedResource Include="Resources\Views\GaugeCard.html" />
+    <EmbeddedResource Include="Resources\Views\GaugeCard.js" />
+    <EmbeddedResource Include="Resources\Views\GaugeCard.json" />
+    <EmbeddedResource Include="Resources\Views\ClusterHome.html" />
+    <EmbeddedResource Include="Resources\Views\ClusterHome.js" />
+    <EmbeddedResource Include="Resources\Views\ClusterHome.json" />
+    <EmbeddedResource Include="Resources\Views\NodesListView.html" />
+    <EmbeddedResource Include="Resources\Views\NodesListView.js" />
+    <EmbeddedResource Include="Resources\Views\NodesListView.json" />
+    <EmbeddedResource Include="Resources\Views\OpsLogin.html" />
+    <EmbeddedResource Include="Resources\Views\OpsLogin.js" />
+    <EmbeddedResource Include="Resources\Views\OpsLogin.json" />
+    <EmbeddedResource Include="Resources\Views\OpsHome.html" />
+    <EmbeddedResource Include="Resources\Views\OpsHome.js" />
+    <EmbeddedResource Include="Resources\Views\OpsHome.json" />
+    <EmbeddedResource Include="Resources\Views\OpsHome.css" />
+    <EmbeddedResource Include="Resources\Views\OpsLogin.css" />
+    <EmbeddedResource Include="Resources\Views\InvokeMetrics.html" />
+    <EmbeddedResource Include="Resources\Views\InvokeMetrics.js" />
+    <EmbeddedResource Include="Resources\Views\InvokeMetrics.json" />
+  </ItemGroup>
+</Project>

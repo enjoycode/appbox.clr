@@ -1,0 +1,22 @@
+﻿<div>
+    <div style="background:#F5F7FA">
+        <el-button @click="promoteRF" type="text" icon="el-icon-upload2">提升副本因子</el-button>
+        <el-button @click="loadNodes" type="text" icon="el-icon-refresh">刷新</el-button>
+    </div>
+    <el-table :data="nodes" border highlight-current-row readonly>
+        <el-table-column prop="PeerId" label="PeerId"></el-table-column>
+        <el-table-column prop="IPAddress" label="IPAddress"></el-table-column>
+        <el-table-column prop="RaftNodes" label="RaftNodes"></el-table-column>
+        <el-table-column label="IsMeta" width="100">
+            <template slot-scope="scope">
+                <el-tag v-if="scope.row.IsMeta">MetaNode</el-tag>
+            </template>
+        </el-table-column>
+        <el-table-column fixed="right" label="Actions" width="180">
+            <template slot-scope="scope">
+                <el-button @click="gotoNode(scope.row.IPAddress)" type="text" size="small">Metrics</el-button>
+                <el-button v-if="!scope.row.IsMeta" @click="setAsMeta(scope.row)" type="text" size="small">SetAsMeta</el-button>
+            </template>
+        </el-table-column>
+    </el-table>
+</div>

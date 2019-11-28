@@ -1,0 +1,48 @@
+﻿<div>
+    <table cellspacing="15px" style="font-size:14px;">
+        <tr>
+            <td>姓名:</td>
+            <td>
+                <el-input v-model="entity.Name" size="small" class="form-item"></el-input>
+            </td>
+        </tr>
+        <tr>
+            <td>性别:</td>
+            <td>
+                <el-switch v-model="entity.Male" active-text="男" inactive-text="女"></el-switch>
+            </td>
+        </tr>
+        <tr>
+            <td>生日:</td>
+            <td>
+                <el-date-picker v-model="entity.Birthday" size="small" class="form-item"></el-date-picker>
+            </td>
+        </tr>
+        <tr>
+            <td>用户:</td>
+            <td>
+                <el-input style="width:200px;" v-model="entity.Account" readonly size="small" class="form-item">
+                    <el-button slot="append" @click="onAccountClick" :icon="btAccountIcon"></el-button>
+                </el-input>
+                <el-button type="text" @click="onResetPassClick">重置密码</el-button>
+            </td>
+        </tr>
+    </table>
+
+    <!--创建用户对话框-->
+    <el-dialog :title="dlgTitle" :visible.sync="dlgVisible" width="350px">
+        <span v-show="dlgTitle===newUserTitle">
+            <label>账号:</label>
+            <el-input v-model="dlgAccount" size="small"></el-input>
+        </span>
+        <span>
+            <label>密码:</label>
+            <el-input v-model="dlgPassword" size="small" type="password">
+            </el-input>
+        </span>
+        <span slot="footer" class="dialog-footer">
+            <el-button type="text" size="small" @click="dlgVisible = false">取消</el-button>
+            <el-button type="primary" size="small" @click="onDlgOkClick">确定</el-button>
+        </span>
+    </el-dialog>
+</div>

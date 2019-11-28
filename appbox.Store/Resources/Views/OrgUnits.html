@@ -1,0 +1,28 @@
+﻿<div class="view">
+    <el-button-group>
+        <el-button @click="onCreateWorkgroup" type="primary" icon="fas fa-folder"> 新建组</el-button>
+        <el-button @click="onCreateEmploee" type="primary" icon="fas fa-user"> 新建员工</el-button>
+        <el-button @click="onSave" type="primary" icon="fas fa-save"> 保存</el-button>
+        <el-button @click="onDelete" type="primary" icon="fas fa-trash"> 删除</el-button>
+    </el-button-group>
+    <ex-splitter class="body" :pin-second="false" :size="280" handler-color="">
+        <div class="tree" slot="panel1">
+            <el-tree ref="outree" :data="orgUnitNodes" node-key="Id" :props="orgUnitTreeProps"
+                     @current-change="onCurrentChanged" highlight-current
+                     default-expand-all :expand-on-click-node="false">
+                <span class="el-tree-node__label" slot-scope="{node, data}">
+                    <i :class="getIcon(data, node)"></i> {{node.label}}
+                </span>
+            </el-tree>
+        </div>
+
+        <el-tabs slot="panel2" value="tbProperty" type="border-card">
+            <el-tab-pane label="组织单元属性" name="tbProperty">
+                <component ref="ouview" :is="orgUnitView" :orgUnit="currentOrgUnit"></component>
+            </el-tab-pane>
+            <el-tab-pane label="权限设置" name="tbPermission">
+                <permission-tree :orgunit="currentOrgUnit"></permission-tree>
+            </el-tab-pane>
+        </el-tabs>
+    </ex-splitter>
+</div>

@@ -1,0 +1,15 @@
+﻿<div style="padding:10px;height:100%">
+    <el-row :gutter="8">
+        <el-col :span="8">
+            <gauge-card :title="gagues.Nodes"></gauge-card>
+        </el-col>
+        <el-col :span="8">
+            <gauge-card :title="gagues.Parts" icon="fas fa-table" units="tablets" background="#5DB85B"></gauge-card>
+        </el-col>
+        <el-col :span="8">
+            <gauge-card :title="gagues.Sessions" icon="fas fa-user-friends" units="sessions" background="#EFAD4D"></gauge-card>
+        </el-col>
+    </el-row>
+    <br />
+    <component ref="view" :is="curView"></component>
+</div>

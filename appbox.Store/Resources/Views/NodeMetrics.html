@@ -1,0 +1,16 @@
+﻿<div>
+    <div>
+        <el-button icon="fas fa-arrow-left" type="text" @click="goback"> BackToList</el-button>
+        Node:
+        <el-input v-model="node" size="small" style="width:100px"></el-input>
+        Times:
+        <el-date-picker size="small" v-model="times" @change="onTimesChange" type="datetimerange"
+                        :picker-options="timesOptions" :clearable="false">
+        </el-date-picker>
+    </div>
+    <br />
+    <cpu-usages ref="cpu" :node="node" :start="times[0]" :end="times[1]"></cpu-usages>
+    <mem-usages ref="mem" :node="node" :start="times[0]" :end="times[1]"></mem-usages>
+    <net-traffic ref="net" :node="node" :start="times[0]" :end="times[1]"></net-traffic>
+    <disk-io ref="disk" :node="node" :start="times[0]" :end="times[1]"></disk-io>
+</div>
