@@ -29,16 +29,17 @@ namespace appbox.Design
             if (model.SysStoreOptions != null)
             {
                 var q = new TableScan(model.Id);
-                q.Take(20);
-                var res = await q.ToListAsync();
+                var res = await q.Take(20).ToListAsync();
                 if (res == null || res.Count == 0)
                     throw new Exception("no record"); //TODO: 同上
                 return res;
             }
-            else
+            if (model.SqlStoreOptions != null)
             {
-                throw new Exception("Load sql data is not implemented.");
+                var q = new SqlQuery(model.Id);
+                return await q.Top(20).ToListAsync();
             }
+            throw new NotSupportedException();
         }
     }
 }
