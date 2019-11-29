@@ -81,11 +81,20 @@ namespace sys.ServiceLogic
 		//	await DataStore.DemoDB.SaveAsync(obj);
 		//}
 
-        public async Task<object> Test()
+  //      public async Task<object> Test()
+		//{
+		//	var q = new SqlQuery<Entities.City>();
+		//	q.Where(t => t.Code > 1 && t.Code < 10);
+		//	return await q.ToListAsync();
+		//}
+
+        public async Task Test()
 		{
-			var q = new SqlQuery<Entities.City>();
-			q.Where(t => t.Code > 1 && t.Code < 10);
-			return await q.ToListAsync();
+			var cmd = new SqlUpdateCommand<Entities.City>();
+			cmd.Update(t => t.Code = t.Code + 1);
+			cmd.Output(t => t.Code);
+			cmd.Where(t => t.Code == 1);
+			await DataStore.DemoDB.ExecCommandAsync(cmd);
 		}
 
 	}

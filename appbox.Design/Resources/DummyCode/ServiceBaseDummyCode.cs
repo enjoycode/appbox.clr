@@ -103,7 +103,9 @@ public sealed class SqlStore
 {
 	private SqlStore() { }
 
-	public Task SaveAsync(sys.SqlEntityBase entity) { return null; }
+	public Task SaveAsync(SqlEntityBase entity) { return null; }
+
+	public Task ExecCommandAsync<TSource>(SqlUpdateCommand<TSource> cmd) where TSource : SqlEntityBase { return null; }
 }
 #endregion
 
@@ -336,40 +338,37 @@ public class SqlSubQuery<TSource> : ISqlQueryJoin<TSource>
 	private SqlSubQuery() { }
 }
 
-//[RealType("appbox.Store.SqlUpdateCommand")]
-//[GenericCreate()]
-//[QueriableClass(false)]
-//public sealed class SqlUpdateCommand<TSource> where TSource : SqlEntityBase
-//{
+[RealType("appbox.Store.SqlUpdateCommand")]
+[GenericCreate()]
+[QueriableClass(false)]
+public sealed class SqlUpdateCommand<TSource> where TSource : SqlEntityBase
+{
+	/// <summary>
+	/// 输出的值集合
+	/// </summary>
+	public object[] OutputValues { get { return null; } } //TODO:同步改为支持多条记录返回字段
 
-//    /// <summary>
-//    /// 输出的值集合
-//    /// </summary>
-//    public object[] OutputValues { get { return null; } }
+	[QueryMethod()]
+	public SqlUpdateCommand<TSource> Where(Func<TSource, bool> condition) { return this; }
 
-//    [QueryMethod()]
-//    public UpdateCommand<TSource> Where(Func<TSource, bool> condition) { return this; }
+	[QueryMethod()]
+	public SqlUpdateCommand<TSource> Where<TJoin>(ISqlQueryJoin<TJoin> j, Func<TSource, TJoin, bool> condition) where TJoin : class
+	{ return this; }
 
-//    [QueryMethod()]
-//    public UpdateCommand<TSource> Where<TJoin>(ISqlQueryJoin<TJoin> j, Func<TSource, TJoin, bool> condition) where TJoin : class
-//    { return this; }
+	[QueryMethod()]
+	public SqlUpdateCommand<TSource> Where<TJoin1, TJoin2>(ISqlQueryJoin<TJoin1> j1, ISqlQueryJoin<TJoin2> j2,
+		Func<TSource, TJoin1, TJoin2, bool> condition)
+		where TJoin1 : class
+		where TJoin2 : class
+	{ return this; }
 
-//    [QueryMethod()]
-//    public UpdateCommand<TSource> Where<TJoin1, TJoin2>(ISqlQueryJoin<TJoin1> j1, ISqlQueryJoin<TJoin2> j2,
-//        Func<TSource, TJoin1, TJoin2, bool> condition)
-//        where TJoin1 : class
-//        where TJoin2 : class
-//    { return this; }
+	[QueryMethod()]
+	public SqlUpdateCommand<TSource> Update(Action<TSource> setter) { return this; }
 
-//    [QueryMethod()]
-//    public UpdateCommand<TSource> Update(Action<TSource> setter) { return this; }
-
-//    /// <summary>
-//    /// 输出
-//    /// </summary>
-//    [QueryMethod()]
-//    public UpdateCommand<TSource> Output<TResult>(Func<TSource, TResult> selector)
-//    { return this; }
-
-//}
+	/// <summary>
+	/// 输出
+	/// </summary>
+	[QueryMethod()]
+	public SqlUpdateCommand<TSource> Output<TResult>(Func<TSource, TResult> selector) { return this; }
+}
 #endregion

@@ -367,9 +367,15 @@ namespace appbox.Design
             //先处理查询类方法内的LambdaExpression，目前主要是UpdateCommand.Update
             if (queryMethodCtx != null && queryMethodCtx.InLambdaExpression)
             {
+                //cmd.Update(t => t.Value = t.Value + 1) 转换为 cmd.Update(cmd.T["Value"].Assign(cmd.T["Value"] + 1))
                 var left = (ExpressionSyntax)node.Left.Accept(this);
                 var right = (ExpressionSyntax)node.Right.Accept(this);
-                return SyntaxFactory.BinaryExpression(SyntaxKind.EqualsExpression, left, right);
+
+                var methodName = (SimpleNameSyntax)SyntaxFactory.ParseName("Assign");
+                var assignMethod = SyntaxFactory.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, left, methodName);
+                var arg1 = SyntaxFactory.Argument(right);
+                var argList = SyntaxFactory.ArgumentList().AddArguments(arg1);
+                return SyntaxFactory.InvocationExpression(assignMethod, argList);
             }
 
             //判断左侧是否是EntityMember

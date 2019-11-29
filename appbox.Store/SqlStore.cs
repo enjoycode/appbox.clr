@@ -140,7 +140,7 @@ namespace appbox.Store
             }
         }
 
-        public async Task ExecCommandAsync(SqlUpdateCommand updateCommand, DbTransaction txn)
+        public async Task ExecCommandAsync(SqlUpdateCommand updateCommand, DbTransaction txn = null)
         {
             //暂不支持无条件更新，以防止误操作
             if (Expressions.Expression.IsNull(updateCommand.Filter))
