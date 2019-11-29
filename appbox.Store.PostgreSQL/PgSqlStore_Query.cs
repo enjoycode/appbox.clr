@@ -114,16 +114,16 @@ namespace appbox.Store
             {
                 BuildJoins(q1.Joins, ctx);
             }
-            var autoJoins = ctx.GetQueryAutoJoins(q1); //再处理自动联接
-            for (int i = 0; i < autoJoins.Length; i++)
-            {
-                throw new NotImplementedException();
-                //var rq = autoJoins[i];
-                //var rqModel = Runtime.RuntimeContext.Current.GetModelAsync<EntityModel>(rq.ModelID).Result;
-                //var rqOwnerModel = Runtime.RuntimeContext.Current.GetModelAsync<EntityModel>(rq.Owner.ModelID).Result;
-                //ctx.AppendFormat(" Left Join \"{0}\" {1} On {1}.\"ID\"={2}.\"{3}\"",
-                //    rqModel.Name, rq.AliasName, rq.Owner.AliasName, ((EntityRefModel)rqOwnerModel[rq.Name]).IDMemberName);
-            }
+            //TODO:*****
+            //var autoJoins = ctx.GetQueryAutoJoins(q1); //再处理自动联接
+            //for (int i = 0; i < autoJoins.Length; i++)
+            //{
+            //    var rq = autoJoins[i];
+            //    var rqModel = Runtime.RuntimeContext.Current.GetModelAsync<EntityModel>(rq.ModelID).Result;
+            //    var rqOwnerModel = Runtime.RuntimeContext.Current.GetModelAsync<EntityModel>(rq.Owner.ModelID).Result;
+            //    ctx.AppendFormat(" Left Join \"{0}\" {1} On {1}.\"ID\"={2}.\"{3}\"",
+            //        rqModel.Name, rq.AliasName, rq.Owner.AliasName, ((EntityRefModel)rqOwnerModel[rq.Name]).IDMemberName);
+            //}
 
             //处理分页或Top
             ctx.CurrentQueryInfo.BuildStep = BuildQueryStep.BuildPageTail;

@@ -15,7 +15,7 @@ namespace appbox.Store
 
         public override bool IsAtomicUpsertSupported => true;
 
-        public override bool UseReaderForOutput => false;
+        public override bool UseReaderForOutput => true;
 
         public PgSqlStore(string settings)
         {

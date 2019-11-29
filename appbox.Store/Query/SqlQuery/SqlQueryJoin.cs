@@ -3,7 +3,7 @@ using appbox.Expressions;
 
 namespace appbox.Store
 {
-    public sealed class SqlQueryJoin : SqlQueryBase, ISqlQueryJoin
+    public sealed class SqlQueryJoin : SqlQueryBase, ISqlQueryJoin //rename to SqlTable?
     {
 
         /// <summary>

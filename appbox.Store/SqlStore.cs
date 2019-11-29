@@ -9,6 +9,7 @@ using System.Data;
 using appbox.Data;
 using System.Threading.Tasks;
 using appbox.Caching;
+using System.Diagnostics;
 
 namespace appbox.Store
 {
@@ -92,6 +93,7 @@ namespace appbox.Store
         #region ====DDL Methods====
         public async Task CreateTableAsync(EntityModel model, DbTransaction txn)
         {
+            Debug.Assert(txn != null);
             var cmds = MakeCreateTable(model);
             foreach (var cmd in cmds)
             {
@@ -118,11 +120,89 @@ namespace appbox.Store
             if (model.SqlStoreOptions == null)
                 throw new InvalidOperationException("Can't insert entity to sqlstore");
 
-            var cmd = MakeCommand();
+            var cmd = BuildInsertCommand(entity, model);
             cmd.Connection = txn != null ? txn.Connection : MakeConnection();
             if (txn == null)
                 await cmd.Connection.OpenAsync();
+            //执行命令
+            try
+            {
+                return await cmd.ExecuteNonQueryAsync();
+            }
+            catch (Exception ex)
+            {
+                Log.Warn($"Exec sql error: {ex.Message}\n{cmd.CommandText}");
+                throw;
+            }
+            finally
+            {
+                if (txn == null) cmd.Connection.Dispose();
+            }
+        }
 
+        public async Task ExecCommandAsync(SqlUpdateCommand updateCommand, DbTransaction txn)
+        {
+            //暂不支持无条件更新，以防止误操作
+            if (Expressions.Expression.IsNull(updateCommand.Filter))
+                throw new NotSupportedException("Update must assign Where condition");
+
+            var cmd = BuidUpdateCommand(updateCommand);
+            cmd.Connection = txn != null ? txn.Connection : MakeConnection();
+            if (txn == null)
+                await cmd.Connection.OpenAsync();
+            //执行命令
+            if (updateCommand.HasOutputItems && UseReaderForOutput) //返回字段通过DbReader读取
+            {
+                try
+                {
+                    var reader = await cmd.ExecuteReaderAsync();
+                    if (await reader.ReadAsync())
+                    {
+                        for (int i = 0; i < updateCommand.OutputItems.Count; i++)
+                        {
+                            updateCommand.OutputValues[i] = reader.GetValue(i);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Warn($"Exec sql error: {ex.Message}\n{cmd.CommandText}");
+                    throw;
+                }
+                finally
+                {
+                    if (txn == null) cmd.Connection.Dispose();
+                }
+            }
+            else
+            {
+                try
+                {
+                    await cmd.ExecuteNonQueryAsync();
+                }
+                catch (Exception ex)
+                {
+                    Log.Warn($"Exec sql error: {ex.Message}\n{cmd.CommandText}");
+                    throw;
+                }
+                finally
+                {
+                    if (txn == null) cmd.Connection.Dispose();
+                }
+
+                if (updateCommand.HasOutputItems)
+                {
+                    throw new NotImplementedException(); //TODO:读取输出参数值
+                }
+            }
+        }
+
+        /// <summary>
+        /// 根据Entity及其模型生成相应的Insert命令
+        /// </summary>
+        protected internal virtual DbCommand BuildInsertCommand(Entity entity, EntityModel model)
+        {
+            var cmd = MakeCommand();
             var sb = StringBuilderCache.Acquire();
             var psb = StringBuilderCache.Acquire(); //用于构建参数列表
             int pindex = 0;
@@ -151,25 +231,15 @@ namespace appbox.Store
             sb.Append(") Values (");
             sb.Append(StringBuilderCache.GetStringAndRelease(psb));
             sb.Append(")");
-            //执行命令
+
             cmd.CommandText = StringBuilderCache.GetStringAndRelease(sb);
-            try
-            {
-                return await cmd.ExecuteNonQueryAsync();
-            }
-            catch (Exception ex)
-            {
-                Log.Warn($"Exec sql error: {ex.Message}\n{cmd.CommandText}");
-                throw;
-            }
-            finally
-            {
-                if (txn == null)
-                {
-                    cmd.Connection.Dispose();
-                }
-            }
+            return cmd;
         }
+
+        /// <summary>
+        /// 将SqlUpdateCommand转换为sql
+        /// </summary>
+        protected internal abstract DbCommand BuidUpdateCommand(SqlUpdateCommand updateCommand);
 
         protected internal abstract DbCommand BuildQuery(ISqlSelectQuery query);
         #endregion
