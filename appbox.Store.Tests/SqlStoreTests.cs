@@ -74,5 +74,25 @@ namespace appbox.Store.Tests
             Assert.True(cmd != null);
             output.WriteLine(cmd.CommandText);
         }
+
+        [Fact]
+        public void BuildUpdateTest()
+        {
+            var model = MakeTestSqlModel();
+            var mockRunntimeContext = new MockRuntimContext();
+            Runtime.RuntimeContext.Init(mockRunntimeContext, 10410);
+            mockRunntimeContext.AddModel(model);
+
+            var q = new SqlUpdateCommand(model.Id);
+            q.Update(q.T["Code"].Assign(q.T["Code"] + 1));
+            q.Output(q.T["Code"]);
+            q.Where(q.T["Code"] == 2);
+
+            var store = new PgSqlStore(StoreSettings);
+            var cmd = store.BuidUpdateCommand(q);
+            Assert.True(cmd != null);
+            output.WriteLine(cmd.CommandText);
+            //Update "Emploee" t Set "Code" = "Code" + @p1 Where t."Code" = @p2 RETURNING "Code"
+        }
     }
 }

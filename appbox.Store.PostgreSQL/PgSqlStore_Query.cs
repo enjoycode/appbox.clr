@@ -230,18 +230,6 @@ namespace appbox.Store
             //}
         }
 
-        private string GetJoinString(JoinType joinType)
-        {
-            return joinType switch
-            {
-                JoinType.InnerJoin => " Join ",
-                JoinType.LeftJoin => " Left Join ",
-                JoinType.RightJoin => " Right Join ",
-                JoinType.FullJoin => " Full Join ",
-                _ => throw new NotSupportedException(),
-            };
-        }
-
         #region ====Build Expression Methods====
         private void BuildExpression(Expression exp, BuildQueryContext ctx)
         {
@@ -364,6 +352,20 @@ namespace appbox.Store
                 BuildExpression(exp.RightOperand, ctx);
             }
         }
+        #endregion
+
+        #region ====private static help methods====
+        private static string GetJoinString(JoinType joinType)
+        {
+            return joinType switch
+            {
+                JoinType.InnerJoin => " Join ",
+                JoinType.LeftJoin => " Left Join ",
+                JoinType.RightJoin => " Right Join ",
+                JoinType.FullJoin => " Full Join ",
+                _ => throw new NotSupportedException(),
+            };
+        }
 
         private static void BuildBinaryOperatorType(BinaryExpression exp, StringBuilder sb)
         {
@@ -387,6 +389,7 @@ namespace appbox.Store
                 case BinaryOperatorType.Divide:
                     sb.Append(" / ");
                     break;
+                case BinaryOperatorType.Assign:
                 case BinaryOperatorType.Equal:
                     sb.Append(" = ");
                     break;
@@ -425,14 +428,45 @@ namespace appbox.Store
                 case BinaryOperatorType.NotEqual:
                     sb.Append(" <> ");
                     break;
-                //case BinaryOperatorType.Plus:
-                //    if (CheckNeedConvertStringAddOperator(exp))
-                //        sb.Append(" || ");
-                //    else
-                //        sb.Append(" + ");
-                //    break;
+                case BinaryOperatorType.Plus:
+                    if (CheckNeedConvertStringAddOperator(exp))
+                        sb.Append(" || ");
+                    else
+                        sb.Append(" + ");
+                    break;
                 default:
                     throw new NotSupportedException();
+            }
+        }
+
+        /// <summary>
+        /// 用于字符串+连接时转换为||操作符
+        /// </summary>
+        /// <returns>true需要转换</returns>
+        private static bool CheckNeedConvertStringAddOperator(Expression exp)
+        {
+            switch (exp.Type)
+            {
+                case ExpressionType.BinaryExpression:
+                    {
+                        var e = (BinaryExpression)exp;
+                        return CheckNeedConvertStringAddOperator(e.LeftOperand)
+                            || CheckNeedConvertStringAddOperator(e.RightOperand);
+                    }
+                case ExpressionType.FieldExpression:
+                    {
+                        var e = (FieldExpression)exp;
+                        var model = Runtime.RuntimeContext.Current.GetModelAsync<EntityModel>(e.Owner.ModelID).Result;
+                        var fieldModel = (DataFieldModel)model.GetMember(e.Name, true);
+                        return fieldModel.DataType == EntityFieldType.String;
+                    }
+                case ExpressionType.PrimitiveExpression:
+                    return ((PrimitiveExpression)exp).Value is string;
+                //case ExpressionType.InvocationExpression:
+                //    throw new NotImplementedException(); //TODO:根据系统函数判断
+                default:
+                    throw new NotSupportedException("Not Supported Expression Type ["
+                        + exp.Type.ToString() + "] for CheckNeedConvertStringAddOperator.");
             }
         }
         #endregion
