@@ -130,7 +130,6 @@ namespace appbox.Serialization
             RegisterKnownType(new UserSerializer(PayloadType.KVFieldExpression, typeof(KVFieldExpression), () => new KVFieldExpression()));
             RegisterKnownType(new UserSerializer(PayloadType.PrimitiveExpression, typeof(PrimitiveExpression), () => new PrimitiveExpression()));
             RegisterKnownType(new UserSerializer(PayloadType.BinaryExpression, typeof(BinaryExpression), () => new BinaryExpression()));
-            RegisterKnownType(new UserSerializer(PayloadType.GroupExpression, typeof(GroupExpression), () => new GroupExpression()));
             //RegisterKnownType(new UserSerializer(PayloadType.IdentifierExpression, typeof(IdentifierExpression), () => new IdentifierExpression()));
             //RegisterKnownType(new UserSerializer(PayloadType.MemberAccessExpression, typeof(MemberAccessExpression), () => new MemberAccessExpression()));
             //RegisterKnownType(new UserSerializer(PayloadType.EventAction, typeof(EventAction), () => new EventAction()));

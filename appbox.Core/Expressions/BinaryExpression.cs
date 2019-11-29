@@ -216,5 +216,6 @@ namespace appbox.Expressions
         As = 18,
         AndAlso = 19,
         OrElse = 20,
+        Assign = 21,
     }
 }

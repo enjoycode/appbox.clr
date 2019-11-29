@@ -43,33 +43,38 @@ namespace appbox.Expressions
         {
             return new BinaryExpression(this, value, BinaryOperatorType.Like);
         }
+
+        public Expression Assign(Expression value)
+        {
+            return new BinaryExpression(this, value, BinaryOperatorType.Assign);
+        }
         #endregion
 
         #region ====操作符重载====
 
         public static Expression operator +(Expression left, Expression right)
         {
-            return GroupExpression.Combine(GroupOperatorType.Add, left, right);
+            return new BinaryExpression(left, right, BinaryOperatorType.Plus);
         }
 
         public static Expression operator -(Expression left, Expression right)
         {
-            return GroupExpression.Combine(GroupOperatorType.Subtract, left, right);
+            return new BinaryExpression(left, right, BinaryOperatorType.Minus);
         }
 
         public static Expression operator *(Expression left, Expression right)
         {
-            return GroupExpression.Combine(GroupOperatorType.Multiply, left, right);
+            return new BinaryExpression(left, right, BinaryOperatorType.Multiply);
         }
 
         public static Expression operator /(Expression left, Expression right)
         {
-            return GroupExpression.Combine(GroupOperatorType.Divide, left, right);
+            return new BinaryExpression(left, right, BinaryOperatorType.Divide);
         }
 
         public static Expression operator %(Expression left, Expression right)
         {
-            return GroupExpression.Combine(GroupOperatorType.Mod, left, right);
+            return new BinaryExpression(left, right, BinaryOperatorType.Modulo);
         }
 
         public static Expression operator &(Expression left, Expression right)

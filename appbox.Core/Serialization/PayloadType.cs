@@ -97,7 +97,7 @@ namespace appbox.Serialization
         EntitySetExpression = 66,
         EnumItemExpression = 67,
         FieldExpression = 68,
-        GroupExpression = 69,
+        //GroupExpression = 69,
         TypeReference = 70,
         IdentifierExpression = 71,
         InvokeServiceExpression = 72,
