@@ -156,7 +156,7 @@ namespace appbox.Store
                 try
                 {
                     var reader = await cmd.ExecuteReaderAsync();
-                    if (await reader.ReadAsync())
+                    if (await reader.ReadAsync()) //TODO:*****循环Read多条记录的返回值
                     {
                         for (int i = 0; i < updateCommand.OutputItems.Count; i++)
                         {

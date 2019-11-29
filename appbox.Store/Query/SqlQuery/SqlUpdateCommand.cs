@@ -39,7 +39,7 @@ namespace appbox.Store
         }
 
         private object[] _outputValues;
-        public object[] OutputValues
+        public object[] OutputValues //TODO: 改为2维数组支持多条记录
         {
             get
             {
