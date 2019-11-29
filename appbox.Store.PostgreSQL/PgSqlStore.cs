@@ -11,7 +11,7 @@ namespace appbox.Store
     {
         private readonly string _connectionString;
 
-        public override string FieldEscaper => "\"";
+        public override string NameEscaper => "\"";
 
         public override bool IsAtomicUpsertSupported => true;
 

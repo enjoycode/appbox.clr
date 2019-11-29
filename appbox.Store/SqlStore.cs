@@ -5,7 +5,6 @@ using System.Reflection;
 using appbox.Models;
 using appbox.Runtime;
 using System.Data.Common;
-using System.Data;
 using appbox.Data;
 using System.Threading.Tasks;
 using appbox.Caching;
@@ -67,9 +66,9 @@ namespace appbox.Store
 
         #region ====Properties====
         /// <summary>
-        /// 字段转义符，如PG用引号包括字段名称"xxx"
+        /// 名称转义符，如PG用引号包括字段名称\"xxx\"
         /// </summary>
-        public abstract string FieldEscaper { get; }
+        public abstract string NameEscaper { get; }
 
         /// <summary>
         /// 是否支持原子Upsert
@@ -110,17 +109,54 @@ namespace appbox.Store
         #endregion
 
         #region ====DML Methods====
-        public virtual async Task<int> InsertAsync(Entity entity, DbTransaction txn)
+        public async Task<int> InsertAsync(Entity entity, DbTransaction txn)
         {
             if (entity == null) throw new ArgumentNullException(nameof(entity));
             if (entity.PersistentState != PersistentState.Detached)
-                throw new InvalidOperationException("Can't insert none new entity.");
+                throw new InvalidOperationException("Can't insert none new entity");
 
             var model = await RuntimeContext.Current.GetModelAsync<EntityModel>(entity.ModelId);
             if (model.SqlStoreOptions == null)
                 throw new InvalidOperationException("Can't insert entity to sqlstore");
 
             var cmd = BuildInsertCommand(entity, model);
+            cmd.Connection = txn != null ? txn.Connection : MakeConnection();
+            if (txn == null)
+                await cmd.Connection.OpenAsync();
+            //执行命令
+            try
+            {
+                return await cmd.ExecuteNonQueryAsync();
+            }
+            catch (Exception ex)
+            {
+                Log.Warn($"Exec sql error: {ex.Message}\n{cmd.CommandText}");
+                throw;
+            }
+            finally
+            {
+                if (txn == null) cmd.Connection.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// 仅适用于删除具备主键的实体，否则使用SqlDeleteCommand明确指定条件删除
+        /// </summary>
+        public async Task<int> DeleteAsync(Entity entity, DbTransaction txn)
+        {
+            if (entity == null) throw new ArgumentNullException(nameof(entity));
+            if (entity.PersistentState == PersistentState.Detached)
+                throw new InvalidOperationException("Can't delete new entity");
+            if (entity.PersistentState == PersistentState.Deleted)
+                throw new InvalidOperationException("Entity already deleted");
+
+            var model = await RuntimeContext.Current.GetModelAsync<EntityModel>(entity.ModelId);
+            if (model.SqlStoreOptions == null)
+                throw new InvalidOperationException("Can't delete entity from sqlstore");
+            if (!model.SqlStoreOptions.HasPrimaryKeys)
+                throw new InvalidOperationException("Can't delete entity without primary key");
+
+            var cmd = BuildDeleteCommand(entity, model);
             cmd.Connection = txn != null ? txn.Connection : MakeConnection();
             if (txn == null)
                 await cmd.Connection.OpenAsync();
@@ -209,7 +245,7 @@ namespace appbox.Store
             string sep = "";
             EntityMemberModel mm;
             //开始构建Sql
-            sb.Append($"Insert Into {FieldEscaper}{model.Name}{FieldEscaper} (");
+            sb.Append($"Insert Into {NameEscaper}{model.Name}{NameEscaper} (");
             for (int i = 0; i < entity.Members.Length; i++)
             {
                 mm = model.GetMember(entity.Members[i].Id, true);
@@ -221,7 +257,7 @@ namespace appbox.Store
                     para.Value = entity.Members[i].BoxedValue;
                     cmd.Parameters.Add(para);
 
-                    sb.Append($"{sep}{FieldEscaper}{mm.Name}{FieldEscaper}");
+                    sb.Append($"{sep}{NameEscaper}{mm.Name}{NameEscaper}");
                     psb.Append($"{sep}@{para.ParameterName}");
 
                     if (pindex == 1) sep = ",";
@@ -231,6 +267,34 @@ namespace appbox.Store
             sb.Append(") Values (");
             sb.Append(StringBuilderCache.GetStringAndRelease(psb));
             sb.Append(")");
+
+            cmd.CommandText = StringBuilderCache.GetStringAndRelease(sb);
+            return cmd;
+        }
+
+        protected internal virtual DbCommand BuildDeleteCommand(Entity entity, EntityModel model)
+        {
+            var cmd = MakeCommand();
+            var sb = StringBuilderCache.Acquire();
+            int pindex = 0;
+            sb.Append($"Delete From {NameEscaper}{model.Name}{NameEscaper} Where ");
+            //根据主键生成条件
+            SqlField pk;
+            EntityMemberModel mm;
+            for (int i = 0; i < model.SqlStoreOptions.PrimaryKeys.Count; i++)
+            {
+                pk = model.SqlStoreOptions.PrimaryKeys[i];
+                mm = model.GetMember(pk.MemberId, true);
+
+                pindex++;
+                var para = MakeParameter();
+                para.ParameterName = $"V{pindex}";
+                para.Value = entity.GetMember(pk.MemberId).BoxedValue;
+                cmd.Parameters.Add(para);
+
+                if (i != 0) sb.Append(" And");
+                sb.Append($" {NameEscaper}{mm.Name}{NameEscaper}=@{para.ParameterName}");
+            }
 
             cmd.CommandText = StringBuilderCache.GetStringAndRelease(sb);
             return cmd;

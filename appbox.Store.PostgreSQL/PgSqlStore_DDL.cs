@@ -18,7 +18,7 @@ namespace appbox.Store
 
             var sb = StringBuilderCache.Acquire();
             //Build Create Table
-            sb.Append($"CREATE TABLE {FieldEscaper}{model.Name}{FieldEscaper} (");
+            sb.Append($"CREATE TABLE {NameEscaper}{model.Name}{NameEscaper} (");
             foreach (var mm in model.Members)
             {
                 if (mm.Type == EntityMemberType.DataField)
@@ -41,12 +41,12 @@ namespace appbox.Store
             if (model.SqlStoreOptions.HasPrimaryKeys)
             {
                 sb.AppendLine();
-                sb.Append($"ALTER TABLE {FieldEscaper}{model.Name}{FieldEscaper} ADD CONSTRAINT {FieldEscaper}PK_{model.Id}{FieldEscaper}");
+                sb.Append($"ALTER TABLE {NameEscaper}{model.Name}{NameEscaper} ADD CONSTRAINT {NameEscaper}PK_{model.Id}{NameEscaper}");
                 sb.Append(" PRIMARY KEY (");
                 foreach (var pk in model.SqlStoreOptions.PrimaryKeys)
                 {
                     var mm = model.GetMember(pk.MemberId, true);
-                    sb.Append($"{FieldEscaper}{mm.Name}{FieldEscaper},");
+                    sb.Append($"{NameEscaper}{mm.Name}{NameEscaper},");
                 }
                 sb.Remove(sb.Length - 1, 1);
                 sb.Append(");");
@@ -76,7 +76,7 @@ namespace appbox.Store
             int scale, bool allowNull, StringBuilder sb, bool isAlterFieldType)
         {
             string defaultValue = string.Empty;
-            sb.Append($"{FieldEscaper}{fieldName}{FieldEscaper} ");
+            sb.Append($"{NameEscaper}{fieldName}{NameEscaper} ");
             if (isAlterFieldType)
                 sb.Append("TYPE ");
 

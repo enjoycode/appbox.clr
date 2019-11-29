@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data.Common;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Reflection;
@@ -103,7 +104,9 @@ public sealed class SqlStore
 {
 	private SqlStore() { }
 
-	public Task SaveAsync(SqlEntityBase entity) { return null; }
+	public Task SaveAsync(SqlEntityBase entity, DbTransaction txn = null) { return null; }
+
+    public Task<int> DeleteAsync(SqlEntityBase entity, DbTransaction txn = null) { return null; }
 
 	public Task ExecCommandAsync<TSource>(SqlUpdateCommand<TSource> cmd) where TSource : SqlEntityBase { return null; }
 }
