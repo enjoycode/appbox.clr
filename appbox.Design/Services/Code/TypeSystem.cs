@@ -140,7 +140,7 @@ namespace appbox.Design
                       .AddMetadataReference(ServiceBaseProjectId, MetadataReferences.SystemRuntimLib)
                       .AddMetadataReference(ServiceBaseProjectId, MetadataReferences.TasksLib)
                       .AddMetadataReference(ServiceBaseProjectId, MetadataReferences.TasksExtLib)
-                      //.AddMetadataReference(ServiceBaseProjectId, GetMetadataReference("System.Data.dll"))
+                      .AddMetadataReference(ServiceBaseProjectId, MetadataReferences.DataCommonLib)
                       .AddProjectReference(ServiceBaseProjectId, new ProjectReference(ModelProjectId))
                       //.AddProjectReference(ServiceBaseProjectId, new ProjectReference(SyncSysServiceProjectId))
                       .AddDocument(ServiceBaseDummyCodeDocumentId, "ServiceBaseDummyCode.cs", CodeGenService.GenServiceBaseDummyCode())

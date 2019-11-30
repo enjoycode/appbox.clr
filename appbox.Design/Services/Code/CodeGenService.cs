@@ -15,7 +15,6 @@ namespace appbox.Design
     /// </summary>
     static class CodeGenService //TODO: rename to CodeGenerator
     {
-
         #region ====Generate Base Dummy Code Methods====
         public static string GenBaseDummyCode()
         {
@@ -144,7 +143,7 @@ namespace appbox.Design
                 var ctorsb = StringBuilderCache.Acquire();
                 ctorsb.Append($"public {model.Name}(");
                 sb.AppendFormat("[{0}(\"LoadEntity\")]\n", TypeHelper.InvocationInterceptorAttribute);
-                sb.Append($"public static Task<{model.Name}> LoadAsync(");
+                sb.Append($"public static System.Threading.Tasks.Task<{model.Name}> LoadAsync(");
                 for (int i = 0; i < model.SqlStoreOptions.PrimaryKeys.Count; i++)
                 {
                     var mm = model.GetMember(model.SqlStoreOptions.PrimaryKeys[i].MemberId, true);
