@@ -285,30 +285,14 @@ namespace appbox.Models
             writer.WritePropertyName("IsNew");
             writer.WriteValue(PersistentState == Data.PersistentState.Detached);
 
-            //注意不向前端发送EntityRef的隐藏成员及已标为删除的成员
+            //写入成员列表，注意不向前端发送EntityRef的隐藏成员及已标为删除的成员
             writer.WritePropertyName(nameof(Members));
-            var entityRefs = from t in Members where t.Type == EntityMemberType.EntityRef select (EntityRefModel)t;
-            if (entityRefs.Any())
-            {
-                List<ushort> refKeys = new List<ushort>(entityRefs.Count() * 2);
-                foreach (var item in entityRefs)
-                {
-                    refKeys.Add(item.IdMemberId);
-                    if (item.IsAggregationRef)
-                        refKeys.Add(item.TypeMemberId);
-                }
-                //var q = from t in Members
-                //where !(t is DataFieldModel && ((DataFieldModel)t).IsRefKey) select t;
-                var q = from t in Members
-                        where !refKeys.Contains(t.MemberId) && t.PersistentState != Data.PersistentState.Deleted
-                        select t;
-                writer.Serialize(q.ToArray());
-            }
-            else
-            {
-                var q = from t in Members where t.PersistentState != Data.PersistentState.Deleted select t;
-                writer.Serialize(q.ToArray());
-            }
+            var q = from t in Members
+                    where t.PersistentState != Data.PersistentState.Deleted
+                        && !(t is DataFieldModel && ((DataFieldModel)t).IsForeignKey)
+                    select t;
+            writer.Serialize(q.ToArray());
+
             //写入存储选项
             if (StoreOptions != null)
             {
