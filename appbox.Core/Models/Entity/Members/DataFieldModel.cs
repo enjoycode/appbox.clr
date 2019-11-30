@@ -40,6 +40,25 @@ namespace appbox.Models
                 return false;
             }
         }
+
+        /// <summary>
+        /// 是否Sql存储的主键
+        /// </summary>
+        internal bool IsPrimaryKey
+        {
+            get
+            {
+                if (Owner.SqlStoreOptions != null && Owner.SqlStoreOptions.HasPrimaryKeys)
+                {
+                    for (int i = 0; i < Owner.SqlStoreOptions.PrimaryKeys.Count; i++)
+                    {
+                        if (Owner.SqlStoreOptions.PrimaryKeys[i].MemberId == MemberId)
+                            return true;
+                    }
+                }
+                return false;
+            }
+        }
         #endregion
 
         #region ====Ctor====

@@ -6,17 +6,33 @@ using appbox.Runtime;
 using appbox.Models;
 using System.Threading.Tasks;
 using System.Text;
+using Xunit.Abstractions;
 
 namespace appbox.Design.Tests
 {
     public class CodeGeneratorTest
     {
+        private readonly ITestOutputHelper output;
+
+        public CodeGeneratorTest(ITestOutputHelper output)
+        {
+            this.output = output;
+        }
+
         [Fact]
-        public void GenEntityModelTest()
+        public void GenSysEntityModelTest()
         {
             var model = Core.Tests.TestHelper.EmploeeModel;
             var code = CodeGenService.GenEntityDummyCode(model, Consts.SYS, null);
-            Console.WriteLine(code);
+            output.WriteLine(code);
+        }
+
+        [Fact]
+        public void GetSqlEntityModelTest()
+        {
+            var model = Core.Tests.TestHelper.CityModel;
+            var code = CodeGenService.GenEntityDummyCode(model, Consts.SYS, null);
+            output.WriteLine(code);
         }
 
         [Fact]

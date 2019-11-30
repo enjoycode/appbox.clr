@@ -77,7 +77,7 @@ namespace appbox.Design
         /// </summary>
         public static string GenEntityDummyCode(EntityModel model, string appName, DesignTree designTree)
         {
-            StringBuilder sb = new StringBuilder();
+            var sb = StringBuilderCache.Acquire();
             //sb.Append("using System;\n");
             sb.Append($"namespace {appName}.Entities {{\n");
 
@@ -93,10 +93,9 @@ namespace appbox.Design
                 sb.Append(" : sys.SqlEntityBase");
             else
                 sb.Append(" : sys.EntityBase");
-            
             sb.Append(" {\n");
 
-            //生成静态TypeID成员
+            //生成静态TypeId属性
             sb.AppendFormat("[{0}(\"TypeId\")]\n", TypeHelper.MemberAccessInterceptorAttribute);
             sb.AppendLine("public const ulong TypeId = 0;");
 
@@ -122,7 +121,7 @@ namespace appbox.Design
             //如果是分区表,生成带分区参数的构造方法
             if (model.SysStoreOptions != null && model.SysStoreOptions.HasPartitionKeys)
             {
-                sb.Append($"public {model.Name} (");
+                sb.Append($"public {model.Name}(");
                 bool hasPreArg = false;
                 for (int i = 0; i < model.SysStoreOptions.PartitionKeys.Length; i++)
                 {
@@ -139,8 +138,29 @@ namespace appbox.Design
                 }
                 sb.Append("){}");
             }
+            //如果是SqlStore且具备主键生成主键参数构造，同时生成静态LoadAsync方法 //TODO:考虑排除自增主键
+            if (model.SqlStoreOptions != null && model.SqlStoreOptions.HasPrimaryKeys)
+            {
+                var ctorsb = StringBuilderCache.Acquire();
+                ctorsb.Append($"public {model.Name}(");
+                sb.AppendFormat("[{0}(\"LoadEntity\")]\n", TypeHelper.InvocationInterceptorAttribute);
+                sb.Append($"public static Task<{model.Name}> LoadAsync(");
+                for (int i = 0; i < model.SqlStoreOptions.PrimaryKeys.Count; i++)
+                {
+                    var mm = model.GetMember(model.SqlStoreOptions.PrimaryKeys[i].MemberId, true);
+                    string typeString = "object";
+                    bool readOnly = false;
+                    GetEntityMemberTypeStringAndReadOnly(mm, ref typeString, ref readOnly, designTree);
+                    if (i != 0) { sb.Append(","); ctorsb.Append(","); }
+                    sb.Append($"{typeString} {mm.Name}"); //TODO:mm.Name转为小驼峰
+                    ctorsb.Append($"{typeString} {mm.Name}");
+                }
+                sb.Append(") {return null;}\n");
+                ctorsb.Append("){}");
+                sb.Append(StringBuilderCache.GetStringAndRelease(ctorsb));
+            }
 
-            //生成索引接口
+            //系统存储生成索引接口
             if (model.SysStoreOptions != null && model.SysStoreOptions.HasIndexes)
             {
                 foreach (var index in model.SysStoreOptions.Indexes)
@@ -174,7 +194,7 @@ namespace appbox.Design
             //, model.AppID, model.Name, Environment.NewLine);
 
             sb.Append("}\n}");
-            return sb.ToString();
+            return StringBuilderCache.GetStringAndRelease(sb);
         }
 
         private static void GetEntityMemberTypeStringAndReadOnly(EntityMemberModel mm,
@@ -204,7 +224,8 @@ namespace appbox.Design
                         typeString = dmm.DataType.GetValueType().FullName; //TODO:简化类型名称
                     }
 
-                    readOnly |= dmm.IsPartitionKey;
+                    //系统存储分区键与sql存储的主键为只读
+                    readOnly |= dmm.IsPartitionKey || dmm.IsPrimaryKey;
 
                     if (dmm.AllowNull && (dmm.DataType != EntityFieldType.String &&
                             dmm.DataType != EntityFieldType.EntityId &&

@@ -106,7 +106,7 @@ public sealed class SqlStore
 
 	public Task SaveAsync(SqlEntityBase entity, DbTransaction txn = null) { return null; }
 
-    public Task<int> DeleteAsync(SqlEntityBase entity, DbTransaction txn = null) { return null; }
+	public Task<int> DeleteAsync(SqlEntityBase entity, DbTransaction txn = null) { return null; }
 
 	public Task ExecCommandAsync<TSource>(SqlUpdateCommand<TSource> cmd) where TSource : SqlEntityBase { return null; }
 }
