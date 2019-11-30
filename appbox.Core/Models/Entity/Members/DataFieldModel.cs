@@ -13,6 +13,11 @@ namespace appbox.Models
         public EntityFieldType DataType { get; private set; }
 
         /// <summary>
+        /// 是否引用外键
+        /// </summary>
+        internal bool IsForeignKey { get; private set; }
+
+        /// <summary>
         /// 如果DataType = Enum,则必须设置相应的EnumModel.ModelId
         /// </summary>
         internal ulong EnumModelId { get; private set; }
@@ -64,9 +69,11 @@ namespace appbox.Models
         #region ====Ctor====
         internal DataFieldModel() { }
 
-        internal DataFieldModel(EntityModel owner, string name, EntityFieldType dataType) : base(owner, name)
+        internal DataFieldModel(EntityModel owner, string name,
+            EntityFieldType dataType, bool isFK = false) : base(owner, name)
         {
             DataType = dataType;
+            IsForeignKey = isFK;
         }
         #endregion
 
@@ -77,6 +84,7 @@ namespace appbox.Models
             member.Id = MemberId;
             member.MemberType = EntityMemberType.DataField;
             member.ValueType = DataType;
+            member.Flag.IsForeignKey = IsForeignKey;
             member.Flag.AllowNull = AllowNull;
             member.Flag.HasValue = !AllowNull; //必须设置
         }
@@ -127,12 +135,13 @@ namespace appbox.Models
             base.WriteObject(bs);
 
             bs.Write((byte)DataType, 1);
+            bs.Write(IsForeignKey, 2);
             if (DataType == EntityFieldType.Enum)
-                bs.Write(EnumModelId, 2);
+                bs.Write(EnumModelId, 3);
 
             if (DefaultValue.HasValue)
             {
-                bs.Write((uint)3);
+                bs.Write((uint)4);
                 DefaultValue.Value.Write(bs);
             }
 
@@ -143,15 +152,16 @@ namespace appbox.Models
         {
             base.ReadObject(bs);
 
-            uint propIndex = 0;
+            uint propIndex;
             do
             {
                 propIndex = bs.ReadUInt32();
                 switch (propIndex)
                 {
                     case 1: DataType = (EntityFieldType)bs.ReadByte(); break;
-                    case 2: EnumModelId = bs.ReadUInt64(); break;
-                    case 3:
+                    case 2: IsForeignKey = bs.ReadBoolean(); break;
+                    case 3: EnumModelId = bs.ReadUInt64(); break;
+                    case 4:
                         {
                             var dv = new EntityMember();
                             dv.Read(bs);

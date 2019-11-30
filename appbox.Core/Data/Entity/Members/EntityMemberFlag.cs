@@ -10,22 +10,22 @@ namespace appbox.Data
         private const byte HasValue_Flag = 4;
         private const byte HasChanged_Flag = 8;
         private const byte IsAttached_Flag = 16; //TODO:确认存在必要性，改为IsPartitionKey_Flag
-        private const byte IsRefKeyOfDataField_Flag = 32; //TODO:待移除
+        private const byte IsForeignKey_Flag = 32;
 
         internal byte Data;
 
         /// <summary>
         /// Get or Set DataField成员是否引用外键
         /// </summary>
-        internal bool IsRefKeyOfDataField
+        internal bool IsForeignKey
         {
-            get { return (Data & IsRefKeyOfDataField_Flag) == IsRefKeyOfDataField_Flag; }
+            get { return (Data & IsForeignKey_Flag) == IsForeignKey_Flag; }
             set
             {
                 if (value)
-                    Data |= IsRefKeyOfDataField_Flag;
+                    Data |= IsForeignKey_Flag;
                 else
-                    Data = (byte)(Data & ~IsRefKeyOfDataField_Flag);
+                    Data = (byte)(Data & ~IsForeignKey_Flag);
             }
         }
 

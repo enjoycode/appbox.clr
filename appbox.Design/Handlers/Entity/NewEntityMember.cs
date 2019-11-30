@@ -65,7 +65,7 @@ namespace appbox.Design
                         throw new Exception("Name has exists");
 
                     // 添加ID列
-                    var erfid = new DataFieldModel(model, $"{memberName}Id", EntityFieldType.EntityId);
+                    var erfid = new DataFieldModel(model, $"{memberName}Id", EntityFieldType.EntityId, true);
                     erfid.AllowNull = true;
                     model.AddMember(erfid);
                     // 如果为聚合引用则添加对应的Type列

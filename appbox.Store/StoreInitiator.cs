@@ -221,16 +221,16 @@ namespace appbox.Store
             var name = new DataFieldModel(model, Consts.NAME, EntityFieldType.String);
             model.AddSysMember(name, Consts.ORGUNIT_NAME_ID);
 
-            var baseId = new DataFieldModel(model, "BaseId", EntityFieldType.EntityId);
+            var baseId = new DataFieldModel(model, "BaseId", EntityFieldType.EntityId, true);
             model.AddSysMember(baseId, Consts.ORGUNIT_BASEID_ID);
-            var baseType = new DataFieldModel(model, "BaseType", EntityFieldType.UInt64);
+            var baseType = new DataFieldModel(model, "BaseType", EntityFieldType.UInt64, true);
             model.AddSysMember(baseType, Consts.ORGUNIT_BASETYPE_ID);
             var Base = new EntityRefModel(model, "Base",
                 new List<ulong>() { Consts.SYS_ENTERPRISE_MODEL_ID, Consts.SYS_WORKGROUP_MODEL_ID, Consts.SYS_EMPLOEE_MODEL_ID },
                 baseId.MemberId, baseType.MemberId);
             model.AddSysMember(Base, Consts.ORGUNIT_BASE_ID);
 
-            var parentId = new DataFieldModel(model, "ParentId", EntityFieldType.EntityId);
+            var parentId = new DataFieldModel(model, "ParentId", EntityFieldType.EntityId, true);
             parentId.AllowNull = true;
             model.AddSysMember(parentId, Consts.ORGUNIT_PARENTID_ID);
             var parent = new EntityRefModel(model, "Parent", Consts.SYS_ORGUNIT_MODEL_ID, parentId.MemberId);
