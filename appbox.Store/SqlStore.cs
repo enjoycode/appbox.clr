@@ -109,6 +109,51 @@ namespace appbox.Store
         #endregion
 
         #region ====DML Methods====
+        /// <summary>
+        /// 从存储加载指定主键的单个实体，不存在返回null
+        /// </summary>
+        public Task<Entity> LoadAsync(ulong modelId, params EntityMember[] pks)
+        {
+            return LoadAsync(modelId, null, pks);
+        }
+
+        /// <summary>
+        /// 从存储加载指定主键的单个实体，不存在返回null
+        /// </summary>
+        public async Task<Entity> LoadAsync(ulong modelId, DbTransaction txn, params EntityMember[] pks)
+        {
+            if (pks == null || pks.Length == 0) throw new ArgumentNullException(nameof(pks));
+
+            var model = await RuntimeContext.Current.GetModelAsync<EntityModel>(modelId);
+            if (model.SqlStoreOptions == null || !model.SqlStoreOptions.HasPrimaryKeys
+                || model.SqlStoreOptions.PrimaryKeys.Count != pks.Length)
+                throw new InvalidOperationException("Can't load entity from sqlstore");
+
+            var cmd = BuildLoadCommand(model, pks);
+            cmd.Connection = txn != null ? txn.Connection : MakeConnection();
+            if (txn == null)
+                await cmd.Connection.OpenAsync();
+
+            try
+            {
+                using var reader = await cmd.ExecuteReaderAsync();
+                if (await reader.ReadAsync())
+                {
+                    return SqlQuery.FillEntity(model, reader);
+                }
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Log.Warn($"Exec sql error: {ex.Message}\n{cmd.CommandText}");
+                throw;
+            }
+            finally
+            {
+                if (txn == null) cmd.Connection.Dispose();
+            }
+        }
+
         public async Task<int> InsertAsync(Entity entity, DbTransaction txn)
         {
             if (entity == null) throw new ArgumentNullException(nameof(entity));
@@ -231,6 +276,35 @@ namespace appbox.Store
                     throw new NotImplementedException(); //TODO:读取输出参数值
                 }
             }
+        }
+
+        /// <summary>
+        /// 根据主键值生成加载单个实体的sql
+        /// </summary>
+        protected internal virtual DbCommand BuildLoadCommand(EntityModel model, EntityMember[] pks)
+        {
+            var cmd = MakeCommand();
+            var sb = StringBuilderCache.Acquire();
+            int pindex = 0;
+            EntityMemberModel mm;
+
+            sb.Append($"Select * From {NameEscaper}{model.Name}{NameEscaper} Where ");
+            for (int i = 0; i < pks.Length; i++)
+            {
+                pindex++;
+                var para = MakeParameter();
+                para.ParameterName = $"V{pindex}";
+                para.Value = pks[i].BoxedValue;
+                cmd.Parameters.Add(para);
+
+                mm = model.GetMember(pks[i].Id, true);
+                if (i != 0) sb.Append(" And ");
+                sb.Append($"{NameEscaper}{mm.Name}{NameEscaper}=@{para.ParameterName}");
+            }
+            sb.Append(" Limit 1");
+
+            cmd.CommandText = StringBuilderCache.GetStringAndRelease(sb);
+            return cmd;
         }
 
         /// <summary>

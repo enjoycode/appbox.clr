@@ -421,7 +421,7 @@ namespace appbox.Store
         /// <summary>
         /// 将查询行转换为实体实例
         /// </summary>
-        private static Entity FillEntity(EntityModel model, System.Data.Common.DbDataReader reader)
+        internal static Entity FillEntity(EntityModel model, System.Data.Common.DbDataReader reader)
         {
             Entity obj = new Entity(model);
             //填充实体成员

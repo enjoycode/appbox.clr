@@ -66,27 +66,50 @@ namespace appbox.Data
         }
 
         /// <summary>
-        /// Initializes a new instance for partitioned entity
+        /// Initializes a new instance for partitioned entity or sql entity with pk
         /// </summary>
         public Entity(ulong modelId, params EntityMember[] pks)
         {
             ModelId = modelId;
-            if (Model.SysStoreOptions == null || !Model.SysStoreOptions.HasPartitionKeys
-                /*|| Model.PartitionKeys.Length != pks.Length 不能判断长度相等，因CreateTime*/)
-                throw new ArgumentException("Only ctor for partitioned entity");
-            Id = new EntityId();
-            InitMembers(Model);
-
-            for (int i = 0; i < Model.SysStoreOptions.PartitionKeys.Length; i++)
+            if (Model.SysStoreOptions != null)
             {
-                //TODO:验证Value类型是否一致
-                if (Model.SysStoreOptions.PartitionKeys[i].MemberId != 0)
+                if (!Model.SysStoreOptions.HasPartitionKeys
+                    /*|| Model.PartitionKeys.Length != pks.Length 不能判断长度相等，因CreateTime*/)
+                    throw new ArgumentException("Only ctor for partitioned entity");
+
+                Id = new EntityId();
+                InitMembers(Model);
+
+                for (int i = 0; i < Model.SysStoreOptions.PartitionKeys.Length; i++)
                 {
-                    ref EntityMember m = ref GetMember(Model.SysStoreOptions.PartitionKeys[i].MemberId);
+                    //TODO:验证Value类型是否一致
+                    if (Model.SysStoreOptions.PartitionKeys[i].MemberId != 0)
+                    {
+                        ref EntityMember m = ref GetMember(Model.SysStoreOptions.PartitionKeys[i].MemberId);
+                        m.GuidValue = pks[i].GuidValue;
+                        m.ObjectValue = pks[i].ObjectValue;
+                        m.Flag.HasValue = true;
+                    }
+                }
+            }
+            else if (Model.SqlStoreOptions != null)
+            {
+                if (!Model.SqlStoreOptions.HasPrimaryKeys
+                    || Model.SqlStoreOptions.PrimaryKeys.Count != pks.Length)
+                    throw new ArgumentException("Only ctor for entity with pk");
+
+                InitMembers(Model);
+                for (int i = 0; i < Model.SqlStoreOptions.PrimaryKeys.Count; i++)
+                {
+                    ref EntityMember m = ref GetMember(Model.SqlStoreOptions.PrimaryKeys[i].MemberId);
                     m.GuidValue = pks[i].GuidValue;
                     m.ObjectValue = pks[i].ObjectValue;
                     m.Flag.HasValue = true;
                 }
+            }
+            else
+            {
+                throw new InvalidOperationException();
             }
         }
 
