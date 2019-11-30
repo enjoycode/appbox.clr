@@ -185,6 +185,43 @@ namespace appbox.Store
         }
 
         /// <summary>
+        /// 仅适用于更新具备主键的实体，否则使用SqlUpdateCommand明确字段及条件更新
+        /// </summary>
+        public async Task<int> UpdateAsync(Entity entity, DbTransaction txn)
+        {
+            if (entity == null) throw new ArgumentNullException(nameof(entity));
+            if (entity.PersistentState == PersistentState.Detached)
+                throw new InvalidOperationException("Can't update new entity");
+            if (entity.PersistentState == PersistentState.Deleted)
+                throw new InvalidOperationException("Entity already deleted");
+
+            var model = await RuntimeContext.Current.GetModelAsync<EntityModel>(entity.ModelId);
+            if (model.SqlStoreOptions == null)
+                throw new InvalidOperationException("Can't update entity to sqlstore");
+            if (!model.SqlStoreOptions.HasPrimaryKeys)
+                throw new InvalidOperationException("Can't update entity without primary key");
+
+            var cmd = BuildUpdateCommand(entity, model);
+            cmd.Connection = txn != null ? txn.Connection : MakeConnection();
+            if (txn == null)
+                await cmd.Connection.OpenAsync();
+            //执行命令
+            try
+            {
+                return await cmd.ExecuteNonQueryAsync();
+            }
+            catch (Exception ex)
+            {
+                Log.Warn($"Exec sql error: {ex.Message}\n{cmd.CommandText}");
+                throw;
+            }
+            finally
+            {
+                if (txn == null) cmd.Connection.Dispose();
+            }
+        }
+
+        /// <summary>
         /// 仅适用于删除具备主键的实体，否则使用SqlDeleteCommand明确指定条件删除
         /// </summary>
         public async Task<int> DeleteAsync(Entity entity, DbTransaction txn)
@@ -375,6 +412,51 @@ namespace appbox.Store
             return cmd;
         }
 
+        protected internal virtual DbCommand BuildUpdateCommand(Entity entity, EntityModel model)
+        {
+            var cmd = MakeCommand();
+            var sb = StringBuilderCache.Acquire();
+            int pindex = 0;
+            EntityMemberModel mm;
+            bool hasChangedMember = false;
+            for (int i = 0; i < model.Members.Count; i++)
+            {
+                mm = model.Members[i];
+                if (mm.Type == EntityMemberType.DataField)
+                {
+                    var dfm = (DataFieldModel)mm;
+                    if (dfm.IsPrimaryKey) continue; //跳过主键
+                    ref EntityMember m = ref entity.GetMember(dfm.MemberId);
+                    if (!m.HasChanged) continue;    //没有变更
+
+                    pindex++;
+                    var para = MakeParameter();
+                    para.ParameterName = $"V{pindex}";
+                    if (m.HasValue)
+                    {
+                        para.Value = m.BoxedValue;
+                    }
+                    else
+                    {
+                        //if (dfm.DataType == EntityFieldType.Binary) //why?
+                        //    para.DbType = DbType.Binary;
+                        para.Value = DBNull.Value;
+                    }
+                    cmd.Parameters.Add(para);
+
+                    if (hasChangedMember)
+                        sb.Append(",");
+                    else
+                        hasChangedMember = true;
+                    sb.Append($"{NameEscaper}{dfm.Name}{NameEscaper}=@{para.ParameterName}");
+                }
+            }
+
+            cmd.CommandText = StringBuilderCache.GetStringAndRelease(sb);
+            if (!hasChangedMember) throw new InvalidOperationException("entity has no changed member");
+            return cmd;
+        }
+
         /// <summary>
         /// 将SqlUpdateCommand转换为sql
         /// </summary>
@@ -391,12 +473,12 @@ namespace appbox.Store
                 case PersistentState.Detached:
                     await InsertAsync(entity, txn);
                     break;
-                //case PersistentState.Modified:
-                //case PersistentState.Unchanged: //TODO: remove this, test only
-                //    await UpdateEntityAsync(entity, txn);
-                //    break;
+                case PersistentState.Modified:
+                case PersistentState.Unchanged: //TODO: remove this, test only
+                    await UpdateAsync(entity, txn);
+                    break;
                 default:
-                    throw ExceptionHelper.NotImplemented();
+                    throw new InvalidOperationException($"Can't save entity with state: {entity.PersistentState}");
             }
         }
         #endregion
