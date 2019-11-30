@@ -195,6 +195,7 @@ namespace appbox.Design
                 MetadataReferences.NetstandardLib,
                 MetadataReferences.SystemRuntimLib,
                 MetadataReferences.SystemRuntimExtLib,
+                MetadataReferences.DataCommonLib,
                 MetadataReferences.TasksLib,
                 MetadataReferences.TasksExtLib
             };

@@ -289,7 +289,7 @@ namespace appbox.Store
             EntityMemberModel mm;
 
             sb.Append($"Select * From {NameEscaper}{model.Name}{NameEscaper} Where ");
-            for (int i = 0; i < pks.Length; i++)
+            for (int i = 0; i < model.SqlStoreOptions.PrimaryKeys.Count; i++)
             {
                 pindex++;
                 var para = MakeParameter();
@@ -297,7 +297,8 @@ namespace appbox.Store
                 para.Value = pks[i].BoxedValue;
                 cmd.Parameters.Add(para);
 
-                mm = model.GetMember(pks[i].Id, true);
+                //注意隐式转换的pk的MemberId = 0, 所以不要读pks[i].Id
+                mm = model.GetMember(model.SqlStoreOptions.PrimaryKeys[i].MemberId, true);
                 if (i != 0) sb.Append(" And ");
                 sb.Append($"{NameEscaper}{mm.Name}{NameEscaper}=@{para.ParameterName}");
             }
