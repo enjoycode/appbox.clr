@@ -34,6 +34,9 @@ namespace appbox.Models
 
         public ushort IdMemberId { get; private set; }
 
+        /// <summary>
+        /// 聚合引用时的类型字段，存储引用目标的EntityModel.Id
+        /// </summary>
         public ushort TypeMemberId { get; private set; }
         #endregion
 

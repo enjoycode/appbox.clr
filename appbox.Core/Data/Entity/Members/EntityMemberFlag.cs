@@ -10,13 +10,13 @@ namespace appbox.Data
         private const byte HasValue_Flag = 4;
         private const byte HasChanged_Flag = 8;
         private const byte IsAttached_Flag = 16; //TODO:确认存在必要性，改为IsPartitionKey_Flag
-        /// <summary>
-        /// 是否DataField成员的引用外键
-        /// </summary>
         private const byte IsRefKeyOfDataField_Flag = 32; //TODO:待移除
 
         internal byte Data;
 
+        /// <summary>
+        /// Get or Set DataField成员是否引用外键
+        /// </summary>
         internal bool IsRefKeyOfDataField
         {
             get { return (Data & IsRefKeyOfDataField_Flag) == IsRefKeyOfDataField_Flag; }
