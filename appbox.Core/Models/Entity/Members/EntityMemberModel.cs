@@ -21,6 +21,7 @@ namespace appbox.Models
         public abstract EntityMemberType Type { get; }
 
         internal string OriginalName => string.IsNullOrEmpty(_originalName) ? Name : _originalName;
+        internal bool IsNameChanged => !string.IsNullOrEmpty(_originalName) && _originalName != Name;
 
         public PersistentState PersistentState { get; private set; }
 

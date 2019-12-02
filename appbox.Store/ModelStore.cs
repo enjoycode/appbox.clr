@@ -442,16 +442,16 @@ namespace appbox.Store
 
         internal static async ValueTask DeleteModelAsync(ModelBase model, Transaction txn, Func<uint, ApplicationModel> getApp)
         {
-            if (model.ModelType == ModelType.Entity)
+            if (model.ModelType == ModelType.Entity && ((EntityModel)model).SysStoreOptions != null)
             {
                 //TODO:考虑先保存删除状态的实体模型，存储层异步任务完成后会删除相应的实体模型
                 var app = getApp(model.AppId);
                 EntityModel em = (EntityModel)model;
                 var tableId = em.TableId | ((uint)app.StoreId << 24);
-                //TODO:全局索引入参
+                //TODO:全局索引入参处理
                 await HostApi.ExecMetaDropTableAsync(txn.Handle, tableId, model.Id, IntPtr.Zero, IntPtr.Zero, false);
             }
-            else
+            else //----以下非系统存储的实体模型直接删除原数据----
             {
                 IntPtr keyPtr;
                 unsafe

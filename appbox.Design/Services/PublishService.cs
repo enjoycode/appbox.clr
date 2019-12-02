@@ -229,7 +229,7 @@ namespace appbox.Design
                 await ModelStore.UpsertFolderAsync(folder, txn);
             }
 
-            //保存模型
+            //保存模型，注意映射至系统存储的实体模型的变更与删除暂由ModelStore处理，映射至SqlStore的DDL暂在这里处理
             foreach (var model in package.Models)
             {
                 switch (model.PersistentState)

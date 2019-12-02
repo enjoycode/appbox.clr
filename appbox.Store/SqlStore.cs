@@ -103,7 +103,7 @@ namespace appbox.Store
 
         protected internal abstract IList<DbCommand> MakeCreateTable(EntityModel model, Server.IDesignContext ctx);
 
-        protected internal abstract IList<DbCommand> MakeAlterTable(EntityModel model);
+        protected internal abstract IList<DbCommand> MakeAlterTable(EntityModel model, Server.IDesignContext ctx);
 
         protected internal abstract DbCommand MakeDropTable(EntityModel model);
         #endregion

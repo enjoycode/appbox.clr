@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Text;
@@ -13,49 +14,26 @@ namespace appbox.Store
         protected override IList<DbCommand> MakeCreateTable(EntityModel model, Server.IDesignContext ctx)
         {
             //List<DbCommand> funcCmds = new List<DbCommand>();
-            ////加入引用关系
-            List<string> refRelations = new List<string>(); //引用关系
+            List<string> fks = new List<string>(); //引用外键集合
 
             var sb = StringBuilderCache.Acquire();
             //Build Create Table
-            sb.Append($"CREATE TABLE \"{model.Name}\" (");
+            sb.Append($"CREATE TABLE \"{model.SqlTableName}\" (");
             foreach (var mm in model.Members)
             {
                 if (mm.Type == EntityMemberType.DataField)
                 {
                     var dfm = (DataFieldModel)mm;
-                    BuildFieldDefine(dfm.Name, false /*fix isrefKey*/,
+                    BuildFieldDefine(dfm.SqlColName, false /*fix isrefKey*/,
                         dfm.DataType, 0 /*fix length*/, 0/*fix scale*/, dfm.AllowNull, sb, false);
                     sb.Append(',');
                 }
                 else if (mm.Type == EntityMemberType.EntityRef)
                 {
-                    //只有非聚合引合创建外键
                     var rm = (EntityRefModel)mm;
-                    if (!rm.IsAggregationRef)
+                    if (!rm.IsAggregationRef) //只有非聚合引合创建外键
                     {
-                        var refModel = ctx.GetEntityModel(rm.RefModelIds[0]);
-                        //使用成员标识作为fk name以减少重命名带来的影响
-                        var fkName = $"FK_{mm.MemberId}";
-                        var rsb = StringBuilderCache.Acquire();
-                        rsb.Append($"ALTER TABLE \"{model.Name}\" ADD CONSTRAINT \"{fkName}\" FOREIGN KEY (");
-                        for (int i = 0; i < rm.FKMemberIds.Length; i++)
-                        {
-                            var fk = model.GetMember(rm.FKMemberIds[i], true);
-                            if (i != 0) rsb.Append(',');
-                            rsb.Append($"\"{fk.Name}\"");
-                        }
-                        rsb.Append($") REFERENCES \"{refModel.Name}\" (");
-                        for (int i = 0; i < refModel.SqlStoreOptions.PrimaryKeys.Count; i++)
-                        {
-                            var pk = refModel.GetMember(refModel.SqlStoreOptions.PrimaryKeys[i].MemberId, true);
-                            if (i != 0) rsb.Append(',');
-                            rsb.Append($"\"{pk.Name}\"");
-                        }
-                        //TODO:pg's MATCH SIMPLE?
-                        rsb.Append($") ON UPDATE {GetActionRuleString(rm.UpdateRule)} ON DELETE {GetActionRuleString(rm.DeleteRule)};");
-
-                        refRelations.Add(StringBuilderCache.GetStringAndRelease(rsb));
+                        fks.Add(BuildForeignKey(rm, ctx));
                         //考虑CreateGetTreeNodeChildsDbFuncCommand
                     }
                 }
@@ -80,9 +58,9 @@ namespace appbox.Store
             }
             //加入EntityRef引用外键
             sb.AppendLine();
-            for (int i = 0; i < refRelations.Count; i++)
+            for (int i = 0; i < fks.Count; i++)
             {
-                sb.AppendLine(refRelations[i]);
+                sb.AppendLine(fks[i]);
             }
 
             //TODO: Build Indexes
@@ -93,14 +71,147 @@ namespace appbox.Store
             return res;
         }
 
-        protected override IList<DbCommand> MakeAlterTable(EntityModel model)
+        protected override IList<DbCommand> MakeAlterTable(EntityModel model, Server.IDesignContext ctx)
         {
-            throw new NotImplementedException();
+            //TODO:***处理主键变更
+            StringBuilder sb;
+            bool needCommand = false; //用于判断是否需要处理NpgsqlCommand
+            List<string> fks = new List<string>(); //引用外键列表
+            List<DbCommand> commands = new List<DbCommand>();
+            //List<DbCommand> funcCmds = new List<DbCommand>();
+            //1.先处理表名称有没有变更，后续全部使用新名称
+            if (model.IsNameChanged)
+            {
+                var renameTableCmd = new NpgsqlCommand($"ALTER TABLE \"{model.SqlTableOriginalName}\" RENAME TO \"{model.SqlTableName}\"");
+                commands.Add(renameTableCmd);
+            }
+
+            //2.处理删除的成员
+            var deletedMembers = model.Members.Where(t => t.PersistentState == Data.PersistentState.Deleted).ToArray();
+            if (deletedMembers != null && deletedMembers.Length > 0)
+            {
+                #region ----删除的成员----
+                sb = StringBuilderCache.Acquire();
+                foreach (var m in deletedMembers)
+                {
+                    if (m.Type == EntityMemberType.DataField)
+                    {
+                        needCommand = true;
+                        sb.AppendFormat("ALTER TABLE \"{0}\" DROP COLUMN \"{1}\";",
+                            model.SqlTableName, ((DataFieldModel)m).SqlColOriginalName);
+                    }
+                    else if (m.Type == EntityMemberType.EntityRef)
+                    {
+                        EntityRefModel rm = (EntityRefModel)m;
+                        if (!rm.IsAggregationRef)
+                        {
+                            var fkName = $"FK_{rm.MemberId}"; //TODO:特殊处理DbFirst导入表的外键约束名称
+                            fks.Add($"ALTER TABLE \"{model.SqlTableName}\" DROP CONSTRAINT \"{fkName}\";");
+                        }
+                    }
+                }
+
+                var cmdText = StringBuilderCache.GetStringAndRelease(sb);
+                if (needCommand)
+                {
+                    //加入删除的外键SQL
+                    for (int i = 0; i < fks.Count; i++)
+                    {
+                        sb.Insert(0, fks[i]);
+                        sb.AppendLine();
+                    }
+
+                    commands.Add(new NpgsqlCommand(cmdText));
+                }
+                #endregion
+            }
+
+            //reset
+            needCommand = false;
+            fks.Clear();
+
+            //3.处理新增的成员
+            var addedMembers = model.Members.Where(t => t.PersistentState == Data.PersistentState.Detached).ToArray();
+            if (addedMembers != null && addedMembers.Length > 0)
+            {
+                #region ----新增的成员----
+                sb = StringBuilderCache.Acquire();
+                foreach (var m in addedMembers)
+                {
+                    if (m.Type == EntityMemberType.DataField)
+                    {
+                        needCommand = true;
+                        sb.AppendFormat("ALTER TABLE \"{0}\" ADD COLUMN ", model.SqlTableName);
+                        DataFieldModel dfm = (DataFieldModel)m;
+                        BuildFieldDefine(dfm.Name, false /*fix isrefKey*/,
+                            dfm.DataType, 0 /*fix length*/, 0/*fix scale*/, dfm.AllowNull, sb, false);
+                        sb.Append(";");
+                    }
+                    else if (m.Type == EntityMemberType.EntityRef)
+                    {
+                        var rm = (EntityRefModel)m;
+                        if (!rm.IsAggregationRef) //只有非聚合引合创建外键
+                        {
+                            fks.Add(BuildForeignKey(rm, ctx));
+                            //考虑CreateGetTreeNodeChildsDbFuncCommand
+                        }
+                    }
+                }
+
+                var cmdText = StringBuilderCache.GetStringAndRelease(sb);
+                if (needCommand)
+                {
+                    //加入关系
+                    sb.AppendLine();
+                    for (int i = 0; i < fks.Count; i++)
+                    {
+                        sb.AppendLine(fks[i]);
+                    }
+
+                    commands.Add(new NpgsqlCommand(cmdText));
+                }
+                #endregion
+            }
+
+            //reset
+            needCommand = false;
+            fks.Clear();
+
+            //4.处理修改的成员
+            var changedMembers = model.Members.Where(t => t.PersistentState == Data.PersistentState.Modified).ToArray();
+            if (changedMembers != null && changedMembers.Length > 0)
+            {
+                #region ----修改的成员----
+                foreach (var m in changedMembers)
+                {
+                    if (m.Type == EntityMemberType.DataField)
+                    {
+                        DataFieldModel dfm = (DataFieldModel)m;
+                        //TODO: 先处理数据类型变更 ALTER TABLE products ALTER COLUMN price TYPE numeric(10,2);
+
+                        //再处理重命名列
+                        if (m.IsNameChanged)
+                        {
+                            var renameColCmd = new NpgsqlCommand($"ALTER TABLE \"{model.SqlTableName}\" RENAME COLUMN \"{dfm.SqlColOriginalName}\" TO \"{dfm.SqlColName}\"");
+                            commands.Add(renameColCmd);
+                        }
+                    }
+
+                    //TODO:处理EntityRef更新与删除规则
+                    //注意不再需要同旧实现一样变更EntityRef的外键约束名称 "ALTER TABLE \"XXX\" RENAME CONSTRAINT \"XXX\" TO \"XXX\""
+                    //因为ModelFirst的外键名称为FK_{MemberId}；CodeFirst为导入的名称
+                }
+                #endregion
+            }
+
+            //TODO:处理索引变更
+
+            return commands;
         }
 
         protected override DbCommand MakeDropTable(EntityModel model)
         {
-            return new NpgsqlCommand($"DROP TABLE IF EXISTS \"{model.OriginalName}\"");
+            return new NpgsqlCommand($"DROP TABLE IF EXISTS \"{model.SqlTableOriginalName}\"");
         }
 
         #region ====Help Methods====
@@ -197,6 +308,31 @@ namespace appbox.Store
             }
 
             return defaultValue;
+        }
+
+        private static string BuildForeignKey(EntityRefModel rm, Server.IDesignContext ctx)
+        {
+            var refModel = ctx.GetEntityModel(rm.RefModelIds[0]);
+            //使用成员标识作为fk name以减少重命名带来的影响
+            var fkName = $"FK_{rm.MemberId}";
+            var rsb = StringBuilderCache.Acquire();
+            rsb.Append($"ALTER TABLE \"{rm.Owner.SqlTableName}\" ADD CONSTRAINT \"{fkName}\" FOREIGN KEY (");
+            for (int i = 0; i < rm.FKMemberIds.Length; i++)
+            {
+                var fk = (DataFieldModel)rm.Owner.GetMember(rm.FKMemberIds[i], true);
+                if (i != 0) rsb.Append(',');
+                rsb.Append($"\"{fk.SqlColName}\"");
+            }
+            rsb.Append($") REFERENCES \"{refModel.SqlTableName}\" (");
+            for (int i = 0; i < refModel.SqlStoreOptions.PrimaryKeys.Count; i++)
+            {
+                var pk = (DataFieldModel)refModel.GetMember(refModel.SqlStoreOptions.PrimaryKeys[i].MemberId, true);
+                if (i != 0) rsb.Append(',');
+                rsb.Append($"\"{pk.SqlColName}\"");
+            }
+            //TODO:pg's MATCH SIMPLE?
+            rsb.Append($") ON UPDATE {GetActionRuleString(rm.UpdateRule)} ON DELETE {GetActionRuleString(rm.DeleteRule)};");
+            return StringBuilderCache.GetStringAndRelease(rsb);
         }
         #endregion
     }
