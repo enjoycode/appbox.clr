@@ -244,7 +244,7 @@ namespace appbox.Design
                                 {
                                     var sqlStore = SqlStore.Get(em.SqlStoreOptions.StoreModelId);
                                     sqlTxn = await MakeOtherStoreTxn(em.SqlStoreOptions.StoreModelId, otherStoreTxns);
-                                    await sqlStore.CreateTableAsync(em, sqlTxn);
+                                    await sqlStore.CreateTableAsync(em, sqlTxn, hub);
                                 }
                             }
                             else if (model.ModelType == ModelType.View) //TODO:暂在这里保存视图模型的路由

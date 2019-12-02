@@ -42,6 +42,11 @@ namespace appbox.Models
         /// 是否聚合引用至不同的实体模型
         /// </summary>
         public bool IsAggregationRef => TypeMemberId != 0;
+
+        public EntityRefActionRule UpdateRule { get; private set; } = EntityRefActionRule.Cascade;
+
+        public EntityRefActionRule DeleteRule { get; private set; } = EntityRefActionRule.NoAction;
+
         #endregion
 
         #region ====Ctor====
@@ -100,6 +105,8 @@ namespace appbox.Models
             bs.Write(IsReverse, 1);
             bs.Write(IsForeignKeyConstraint, 4);
             bs.Write(TypeMemberId, 6);
+            bs.Write((byte)UpdateRule, 7);
+            bs.Write((byte)DeleteRule, 8);
 
             bs.Write(3u);
             bs.Write(RefModelIds.Count);
@@ -150,6 +157,8 @@ namespace appbox.Models
                             }
                         }
                         break;
+                    case 7: UpdateRule = (EntityRefActionRule)bs.ReadByte(); break;
+                    case 8: DeleteRule = (EntityRefActionRule)bs.ReadByte(); break;
                     case 0: break;
                     default: throw new Exception($"Deserialize_ObjectUnknownFieldIndex: {GetType().Name}");
                 }
@@ -171,5 +180,12 @@ namespace appbox.Models
             writer.WriteList(RefModelIds, objrefs);
         }
         #endregion
+    }
+
+    public enum EntityRefActionRule : byte
+    {
+        NoAction = 0,
+        Cascade = 1,
+        SetNull = 2
     }
 }

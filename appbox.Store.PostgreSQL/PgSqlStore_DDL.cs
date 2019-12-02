@@ -10,15 +10,15 @@ namespace appbox.Store
 {
     partial class PgSqlStore
     {
-        protected override IList<DbCommand> MakeCreateTable(EntityModel model)
+        protected override IList<DbCommand> MakeCreateTable(EntityModel model, Server.IDesignContext ctx)
         {
             //List<DbCommand> funcCmds = new List<DbCommand>();
             ////加入引用关系
-            //List<string> refRelations = new List<string>(); //引用关系
+            List<string> refRelations = new List<string>(); //引用关系
 
             var sb = StringBuilderCache.Acquire();
             //Build Create Table
-            sb.Append($"CREATE TABLE {NameEscaper}{model.Name}{NameEscaper} (");
+            sb.Append($"CREATE TABLE \"{model.Name}\" (");
             foreach (var mm in model.Members)
             {
                 if (mm.Type == EntityMemberType.DataField)
@@ -30,7 +30,34 @@ namespace appbox.Store
                 }
                 else if (mm.Type == EntityMemberType.EntityRef)
                 {
-                    throw new NotImplementedException();
+                    //只有非聚合引合创建外键
+                    var rm = (EntityRefModel)mm;
+                    if (!rm.IsAggregationRef)
+                    {
+                        var refModel = ctx.GetEntityModel(rm.RefModelIds[0]);
+                        //使用成员标识作为fk name以减少重命名带来的影响
+                        var fkName = $"FK_{mm.MemberId}";
+                        var rsb = StringBuilderCache.Acquire();
+                        rsb.Append($"ALTER TABLE \"{model.Name}\" ADD CONSTRAINT \"{fkName}\" FOREIGN KEY (");
+                        for (int i = 0; i < rm.FKMemberIds.Length; i++)
+                        {
+                            var fk = model.GetMember(rm.FKMemberIds[i], true);
+                            if (i != 0) rsb.Append(',');
+                            rsb.Append($"\"{fk.Name}\"");
+                        }
+                        rsb.Append($") REFERENCES \"{refModel.Name}\" (");
+                        for (int i = 0; i < refModel.SqlStoreOptions.PrimaryKeys.Count; i++)
+                        {
+                            var pk = refModel.GetMember(refModel.SqlStoreOptions.PrimaryKeys[i].MemberId, true);
+                            if (i != 0) rsb.Append(',');
+                            rsb.Append($"\"{pk.Name}\"");
+                        }
+                        //TODO:pg's MATCH SIMPLE?
+                        rsb.Append($") ON UPDATE {GetActionRuleString(rm.UpdateRule)} ON DELETE {GetActionRuleString(rm.DeleteRule)};");
+
+                        refRelations.Add(StringBuilderCache.GetStringAndRelease(rsb));
+                        //考虑CreateGetTreeNodeChildsDbFuncCommand
+                    }
                 }
             }
 
@@ -41,18 +68,23 @@ namespace appbox.Store
             if (model.SqlStoreOptions.HasPrimaryKeys)
             {
                 sb.AppendLine();
-                sb.Append($"ALTER TABLE {NameEscaper}{model.Name}{NameEscaper} ADD CONSTRAINT {NameEscaper}PK_{model.Id}{NameEscaper}");
+                sb.Append($"ALTER TABLE \"{model.Name}\" ADD CONSTRAINT \"PK_{model.Id}\"");
                 sb.Append(" PRIMARY KEY (");
                 foreach (var pk in model.SqlStoreOptions.PrimaryKeys)
                 {
                     var mm = model.GetMember(pk.MemberId, true);
-                    sb.Append($"{NameEscaper}{mm.Name}{NameEscaper},");
+                    sb.Append($"\"{mm.Name}\",");
                 }
                 sb.Remove(sb.Length - 1, 1);
                 sb.Append(");");
             }
+            //加入EntityRef引用外键
+            sb.AppendLine();
+            for (int i = 0; i < refRelations.Count; i++)
+            {
+                sb.AppendLine(refRelations[i]);
+            }
 
-            //TODO: Build EntityRef's外键
             //TODO: Build Indexes
 
             var res = new List<DbCommand>();
@@ -68,15 +100,26 @@ namespace appbox.Store
 
         protected override DbCommand MakeDropTable(EntityModel model)
         {
-            throw new NotImplementedException();
+            return new NpgsqlCommand($"DROP TABLE IF EXISTS \"{model.OriginalName}\"");
         }
 
         #region ====Help Methods====
-        private string BuildFieldDefine(string fieldName, bool isRefKey, EntityFieldType dataType, int length,
+        private static string GetActionRuleString(EntityRefActionRule rule)
+        {
+            return rule switch
+            {
+                EntityRefActionRule.NoAction => "NO ACTION",
+                EntityRefActionRule.Cascade => "CASCADE",
+                EntityRefActionRule.SetNull => "SET NULL",
+                _ => "NO ACTION",
+            };
+        }
+
+        private static string BuildFieldDefine(string fieldName, bool isRefKey, EntityFieldType dataType, int length,
             int scale, bool allowNull, StringBuilder sb, bool isAlterFieldType)
         {
             string defaultValue = string.Empty;
-            sb.Append($"{NameEscaper}{fieldName}{NameEscaper} ");
+            sb.Append($"\"{fieldName}\" ");
             if (isAlterFieldType)
                 sb.Append("TYPE ");
 

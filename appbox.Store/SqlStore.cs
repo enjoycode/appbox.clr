@@ -90,10 +90,10 @@ namespace appbox.Store
         #endregion
 
         #region ====DDL Methods====
-        public async Task CreateTableAsync(EntityModel model, DbTransaction txn)
+        public async Task CreateTableAsync(EntityModel model, DbTransaction txn, Server.IDesignContext ctx)
         {
             Debug.Assert(txn != null);
-            var cmds = MakeCreateTable(model);
+            var cmds = MakeCreateTable(model, ctx);
             foreach (var cmd in cmds)
             {
                 cmd.Connection = txn.Connection;
@@ -101,7 +101,7 @@ namespace appbox.Store
             }
         }
 
-        protected internal abstract IList<DbCommand> MakeCreateTable(EntityModel model);
+        protected internal abstract IList<DbCommand> MakeCreateTable(EntityModel model, Server.IDesignContext ctx);
 
         protected internal abstract IList<DbCommand> MakeAlterTable(EntityModel model);
 

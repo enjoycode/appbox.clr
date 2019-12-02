@@ -7,7 +7,7 @@ namespace appbox.Design
     /// <summary>
     /// 一个开发者对应一个DesignHub实例
     /// </summary>
-    public sealed class DesignHub : IDisposable //TODO: rename to DesignContext
+    public sealed class DesignHub : Server.IDesignContext, IDisposable //TODO: rename to DesignContext
     {
 
         /// <summary>
@@ -125,7 +125,7 @@ namespace appbox.Design
         #endregion
 
         #region ====DesignTimeModelContainer====
-        internal EntityModel GetEntityModel(ulong modelID)
+        public EntityModel GetEntityModel(ulong modelID)
         {
             if (!DesignTree.HasLoad) //注意：签出根文件夹重新加载导致该判断无效
                 throw new Exception("DesignTree has not load");
@@ -156,7 +156,7 @@ namespace appbox.Design
         #endregion
 
         #region ====IDisposable Support====
-        private bool disposedValue = false; // To detect redundant calls
+        private bool disposedValue; // To detect redundant calls
 
         void Dispose(bool disposing)
         {
