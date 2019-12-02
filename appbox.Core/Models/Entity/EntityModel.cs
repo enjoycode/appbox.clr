@@ -35,6 +35,13 @@ namespace appbox.Models
         /// 存储用的标识号，模型标识号后3字节
         /// </summary>
         internal uint TableId => (uint)(Id & 0xFFFFFF);
+
+        /// <summary>
+        /// 保留用于根据规则生成Sql表的名称, eg:相同前缀、命名规则等
+        /// </summary>
+        internal string SqlTableName => Name;
+
+        internal string SqlTableOriginalName => OriginalName;
         #endregion
         #endregion
 

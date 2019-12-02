@@ -28,6 +28,13 @@ namespace appbox.Models
         internal EntityMember? DefaultValue { get; private set; }
 
         /// <summary>
+        /// 保留用于根据规则生成Sql列的名称, eg:相同前缀、命名规则等
+        /// </summary>
+        internal string SqlColName => Name;
+
+        internal string SqlColOriginalName => OriginalName;
+
+        /// <summary>
         /// 是否系统存储的分区键
         /// </summary>
         internal bool IsPartitionKey
