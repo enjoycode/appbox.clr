@@ -95,7 +95,6 @@ namespace appbox.Serialization
             //RegisterKnownType(new UserSerializer(PayloadType.AutomationActivityModel, typeof(AutomationActivityModel), () => new AutomationActivityModel()));
             RegisterKnownType(new UserSerializer(PayloadType.EntityModel, typeof(EntityModel), () => new EntityModel()));
             //RegisterKnownType(new UserSerializer(PayloadType.InheritEntityModel, typeof(InheritEntityModel), () => new InheritEntityModel()));
-            RegisterKnownType(new UserSerializer(PayloadType.EntityIndexModel, typeof(EntityIndexModel), () => new EntityIndexModel()));
             //RegisterKnownType(new UserSerializer(PayloadType.AutoNumberModel, typeof(AutoNumberModel), () => new AutoNumberModel()));
             RegisterKnownType(new UserSerializer(PayloadType.DataFieldModel, typeof(DataFieldModel), () => new DataFieldModel()));
             RegisterKnownType(new UserSerializer(PayloadType.EntityRefModel, typeof(EntityRefModel), () => new EntityRefModel()));
@@ -110,6 +109,8 @@ namespace appbox.Serialization
             //RegisterKnownType(new UserSerializer(PayloadType.ObjectArray, typeof(ObjectArray), () => new ObjectArray()));
             RegisterKnownType(new UserSerializer(PayloadType.SysStoreOptions, typeof(SysStoreOptions), () => new SysStoreOptions()));
             RegisterKnownType(new UserSerializer(PayloadType.SqlStoreOptions, typeof(SqlStoreOptions), () => new SqlStoreOptions()));
+            RegisterKnownType(new UserSerializer(PayloadType.EntityIndexModel, typeof(EntityIndexModel), () => new EntityIndexModel()));
+            RegisterKnownType(new UserSerializer(PayloadType.SqlIndexModel, typeof(SqlIndexModel), () => new SqlIndexModel()));
             //RegisterKnownType(new UserSerializer(PayloadType.AppPackage, typeof(AppPackage), () => new AppPackage()));
 
             //模型实例
@@ -180,8 +181,7 @@ namespace appbox.Serialization
                 //注意：先尝试直接获取
                 if (knownTypes.TryGetValue(targetType, out serializer))
                     return serializer;
-                else
-                    targetType = type.GetGenericTypeDefinition();
+                targetType = type.GetGenericTypeDefinition();
             }
             else if (type.IsArray)
                 targetType = type.BaseType;

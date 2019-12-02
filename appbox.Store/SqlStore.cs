@@ -391,7 +391,7 @@ namespace appbox.Store
             int pindex = 0;
             sb.Append($"Delete From {NameEscaper}{model.Name}{NameEscaper} Where ");
             //根据主键生成条件
-            SqlField pk;
+            FieldWithOrder pk;
             EntityMemberModel mm;
             for (int i = 0; i < model.SqlStoreOptions.PrimaryKeys.Count; i++)
             {

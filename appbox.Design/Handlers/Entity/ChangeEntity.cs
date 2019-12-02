@@ -63,10 +63,10 @@ namespace appbox.Design
             }
             else
             {
-                var newvalue = new List<SqlField>(array.Count);
+                var newvalue = new List<FieldWithOrder>(array.Count);
                 for (int i = 0; i < array.Count; i++)
                 {
-                    var key = new SqlField
+                    var key = new FieldWithOrder
                     {
                         MemberId = (ushort)array[i]["MemberId"],
                         OrderByDesc = (bool)array[i]["OrderByDesc"]
@@ -112,10 +112,10 @@ namespace appbox.Design
             if (!CodeHelper.IsValidIdentifier(indexInfo.Name)) throw new Exception("Index name not valid");
             if (indexInfo.Fields == null || indexInfo.Fields.Length == 0) throw new Exception("Index has no fields");
 
-            var fields = new EntityIndexField[indexInfo.Fields.Length];
+            var fields = new FieldWithOrder[indexInfo.Fields.Length];
             for (int i = 0; i < indexInfo.Fields.Length; i++)
             {
-                fields[i] = new EntityIndexField(indexInfo.Fields[i].MID, indexInfo.Fields[i].OrderByDesc);
+                fields[i] = new FieldWithOrder(indexInfo.Fields[i].MID, indexInfo.Fields[i].OrderByDesc);
             }
 
             //新建索引并添加至模型内

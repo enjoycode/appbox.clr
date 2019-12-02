@@ -183,7 +183,7 @@ namespace appbox.Store
 
             //Add indexes
             var ui_account = new EntityIndexModel(emploee, "UI_Account", true,
-                                                       new EntityIndexField[] { new EntityIndexField(Consts.EMPLOEE_ACCOUNT_ID) },
+                                                       new FieldWithOrder[] { new FieldWithOrder(Consts.EMPLOEE_ACCOUNT_ID) },
                                                        new ushort[] { Consts.EMPLOEE_PASSWORD_ID });
             emploee.SysStoreOptions.AddSysIndex(emploee, ui_account, Consts.EMPLOEE_UI_ACCOUNT_ID);
 
@@ -283,10 +283,10 @@ namespace appbox.Store
 
             //Add indexes
             var ui_nodeType_targetId = new EntityIndexModel(model, "UI_NodeType_TargetId", true,
-                                                            new EntityIndexField[]
+                                                            new FieldWithOrder[]
             {
-                new EntityIndexField(Consts.CHECKOUT_NODETYPE_ID),
-                new EntityIndexField(Consts.CHECKOUT_TARGETID_ID)
+                new FieldWithOrder(Consts.CHECKOUT_NODETYPE_ID),
+                new FieldWithOrder(Consts.CHECKOUT_TARGETID_ID)
             });
             model.SysStoreOptions.AddSysIndex(model, ui_nodeType_targetId, Consts.CHECKOUT_UI_NODETYPE_TARGETID_ID);
 

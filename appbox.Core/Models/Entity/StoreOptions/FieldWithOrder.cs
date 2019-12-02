@@ -5,12 +5,18 @@ using Newtonsoft.Json;
 namespace appbox.Models
 {
     /// <summary>
-    /// 作为主键或索引的字段
+    /// 作为主键或索引的字段，SysStore与SqlStore通用
     /// </summary>
-    public struct SqlField : IJsonSerializable
+    public struct FieldWithOrder : IJsonSerializable
     {
         public ushort MemberId;
         public bool OrderByDesc;
+
+        public FieldWithOrder(ushort memberId, bool orderByDesc = false)
+        {
+            MemberId = memberId;
+            OrderByDesc = orderByDesc;
+        }
 
         #region ====Serialization====
         internal void WriteObject(BinSerializer bs)
@@ -31,7 +37,7 @@ namespace appbox.Models
                     case 1: MemberId = bs.ReadUInt16(); break;
                     case 2: OrderByDesc = bs.ReadBoolean(); break;
                     case 0: break;
-                    default: throw new Exception(string.Format("Deserialize_ObjectUnknownFieldIndex: {0} at {1} ", GetType().Name, propIndex));
+                    default: throw new Exception($"Deserialize_ObjectUnknownFieldIndex: {GetType().Name} at {propIndex} ");
                 }
             } while (propIndex != 0);
         }
@@ -46,10 +52,7 @@ namespace appbox.Models
             writer.WriteValue(OrderByDesc);
         }
 
-        public void ReadFromJson(JsonTextReader reader, ReadedObjects objrefs)
-        {
-            throw new NotSupportedException();
-        }
+        public void ReadFromJson(JsonTextReader reader, ReadedObjects objrefs) => throw new NotSupportedException();
         #endregion
     }
 }

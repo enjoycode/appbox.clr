@@ -24,7 +24,7 @@ namespace appbox.Models
         /// <summary>
         /// 主键成员
         /// </summary>
-        public List<SqlField> PrimaryKeys { get; private set; }
+        public List<FieldWithOrder> PrimaryKeys { get; private set; }
         internal bool HasPrimaryKeys => PrimaryKeys != null && PrimaryKeys.Count > 0;
         internal bool PrimaryKeysHasChanged { get; private set; } = false;
 
@@ -43,7 +43,7 @@ namespace appbox.Models
             PrimaryKeysHasChanged = false;
         }
 
-        internal void SetPrimaryKeys(EntityModel owner, List<SqlField> fields)
+        internal void SetPrimaryKeys(EntityModel owner, List<FieldWithOrder> fields)
         {
             owner.CheckDesignMode();
             PrimaryKeys = fields;
@@ -83,11 +83,11 @@ namespace appbox.Models
                     case 2:
                         {
                             if (PrimaryKeys == null)
-                                PrimaryKeys = new List<SqlField>();
+                                PrimaryKeys = new List<FieldWithOrder>();
                             int count = bs.ReadInt32();
                             for (int i = 0; i < count; i++)
                             {
-                                var f = new SqlField();
+                                var f = new FieldWithOrder();
                                 f.ReadObject(bs);
                                 PrimaryKeys.Add(f);
                             }

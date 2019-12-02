@@ -21,9 +21,9 @@ namespace appbox.Store.Tests
             var m_name = new DataFieldModel(model, "Name", EntityFieldType.String);
             model.AddSysMember(m_name, 2);
 
-            var pk = new List<SqlField>
+            var pk = new List<FieldWithOrder>
             {
-                new SqlField { MemberId = 1, OrderByDesc = false }
+                new FieldWithOrder { MemberId = 1, OrderByDesc = false }
             };
             model.SqlStoreOptions.SetPrimaryKeys(model, pk);
             return model;

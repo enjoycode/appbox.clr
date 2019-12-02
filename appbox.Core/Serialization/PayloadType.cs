@@ -77,7 +77,7 @@ namespace appbox.Serialization
         //InheritEntityModel = 51,
         //ImageRefModel = 52,
         EntityIndexModel = 53,
-        //AggregateModel = 54,
+        SqlIndexModel = 54,
         //AggregationRefModel = 55,
         //AutoNumberModel = 56,
         DataFieldModel = 57,

@@ -24,8 +24,7 @@ namespace appbox.Store
                 if (mm.Type == EntityMemberType.DataField)
                 {
                     var dfm = (DataFieldModel)mm;
-                    BuildFieldDefine(dfm.SqlColName, false /*fix isrefKey*/,
-                        dfm.DataType, 0 /*fix length*/, 0/*fix scale*/, dfm.AllowNull, sb, false);
+                    BuildFieldDefine(dfm.SqlColName, dfm.DataType, 0 /*fix length*/, 0/*fix scale*/, dfm.AllowNull, sb, false);
                     sb.Append(',');
                 }
                 else if (mm.Type == EntityMemberType.EntityRef)
@@ -143,8 +142,7 @@ namespace appbox.Store
                         needCommand = true;
                         sb.AppendFormat("ALTER TABLE \"{0}\" ADD COLUMN ", model.SqlTableName);
                         DataFieldModel dfm = (DataFieldModel)m;
-                        BuildFieldDefine(dfm.Name, false /*fix isrefKey*/,
-                            dfm.DataType, 0 /*fix length*/, 0/*fix scale*/, dfm.AllowNull, sb, false);
+                        BuildFieldDefine(dfm.Name, dfm.DataType, 0 /*fix length*/, 0/*fix scale*/, dfm.AllowNull, sb, false);
                         sb.Append(";");
                     }
                     else if (m.Type == EntityMemberType.EntityRef)
@@ -226,7 +224,7 @@ namespace appbox.Store
             };
         }
 
-        private static string BuildFieldDefine(string fieldName, bool isRefKey, EntityFieldType dataType, int length,
+        private static string BuildFieldDefine(string fieldName, EntityFieldType dataType, int length,
             int scale, bool allowNull, StringBuilder sb, bool isAlterFieldType)
         {
             string defaultValue = string.Empty;
