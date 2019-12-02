@@ -20,7 +20,7 @@ namespace appbox.Design
             // 验证类名称的合法性
             if (string.IsNullOrEmpty(storeName))
                 throw new Exception("DataStore name can not be null");
-            if (!CodeHelper.IsValidIdentifier(storeName))
+            if (!CodeHelper.IsValidIdentifier(storeName) || storeName == "Default")
                 throw new Exception("DataStore name invalid");
             // TODO: 验证名称是否已存在
 

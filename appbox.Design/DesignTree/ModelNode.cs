@@ -163,12 +163,24 @@ namespace appbox.Design
             writer.WritePropertyName("ModelType");
             writer.WriteValue((int)Model.ModelType);
 
-            //if (Model.ModelType == ModelType.Entity)
-            //{
-            //    var entityModel = (EntityModel)Model;
-            //    writer.WritePropertyName("LocalizedName");
-            //    writer.WriteValue(entityModel.LocalizedName.Value);
-            //}
+            if (Model.ModelType == ModelType.Entity)
+            {
+                var entityModel = (EntityModel)Model;
+                //writer.WritePropertyName("LocalizedName");
+                //writer.WriteValue(entityModel.LocalizedName.Value);
+
+                //EntityModel输出对应的存储标识，方便前端IDE筛选相同存储的实体
+                if (entityModel.SysStoreOptions != null)
+                {
+                    writer.WritePropertyName("StoreId");
+                    writer.WriteValue(0);
+                }
+                else if (entityModel.SqlStoreOptions != null)
+                {
+                    writer.WritePropertyName("StoreId");
+                    writer.WriteValue(entityModel.SqlStoreOptions.StoreModelId);
+                }
+            }
         }
         #endregion
     }
