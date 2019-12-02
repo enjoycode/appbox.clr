@@ -415,8 +415,8 @@ namespace appbox.Store
                 {
                     for (int i = 0; i < refs.Count; i++)
                     {
-                        var oldField = storedEntity.GetEntityId(refs[i].IdMemberId);
-                        var newField = entity.GetEntityId(refs[i].IdMemberId);
+                        var oldField = storedEntity.GetEntityId(refs[i].FKMemberIds[0]);
+                        var newField = entity.GetEntityId(refs[i].FKMemberIds[0]);
                         if (oldField != null)
                         {
                             if (newField != null)
@@ -775,7 +775,7 @@ namespace appbox.Store
         {
             list.Add(new TreeNodeInfo { ID = node.Id, Text = node.GetString(textMemberId) });
 
-            var parentId = node.GetEntityId(refModel.IdMemberId);
+            var parentId = node.GetEntityId(refModel.FKMemberIds[0]);
             if (parentId == null) return;
 
             var parent = await LoadAsync(node.ModelId, parentId);
@@ -845,7 +845,7 @@ namespace appbox.Store
                 unsafe
                 {
                     byte* bk = stackalloc byte[toKeySize];
-                    KeyUtil.WriteRefToKeyPrefix(bk, id, targetRefModel.IdMemberId, fromGroups[i]);
+                    KeyUtil.WriteRefToKeyPrefix(bk, id, targetRefModel.FKMemberIds[0], fromGroups[i]);
                     toKeyPtr = new IntPtr(bk);
                 }
                 var req2 = new ClrScanRequire

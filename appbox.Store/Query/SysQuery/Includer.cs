@@ -182,7 +182,7 @@ namespace appbox.Store
         {
             //TODO:从事务缓存内先查找是否存在
             var refModel = (EntityRefModel)owner.Model.GetMember(memberId, true);
-            var refId = owner.GetEntityId(refModel.IdMemberId);
+            var refId = owner.GetEntityId(refModel.FKMemberIds[0]);
             if (refId == null) return null;
 
             ulong refModelId = refModel.RefModelIds[0];

@@ -67,7 +67,7 @@ namespace appbox.Store
             Debug.Assert(diff != 0);
             Debug.Assert(fromEntity.Id.RaftGroupId != 0);
 
-            var targetId = fromEntity.GetEntityId(entityRef.IdMemberId);
+            var targetId = fromEntity.GetEntityId(entityRef.FKMemberIds[0]);
             if (targetId == null || targetId.IsEmpty) return;
             ulong targetModelId = entityRef.IsAggregationRef ? fromEntity.GetUInt64(entityRef.TypeMemberId) : entityRef.RefModelIds[0];
             var targetModel = await RuntimeContext.Current.GetModelAsync<EntityModel>(targetModelId);

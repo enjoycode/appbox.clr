@@ -17,27 +17,31 @@ namespace appbox.Models
         public bool IsReverse { get; private set; }
 
         /// <summary>
-        /// 是否聚合引用至不同的实体模型
-        /// </summary>
-        /// <remarks>不能根据RefModelIds数量判断，因运行时可能再添加聚合引用目标</remarks>
-        public bool IsAggregationRef { get; private set; }
-
-        /// <summary>
         /// 是否强制外键约束
         /// </summary>
         public bool IsForeignKeyConstraint { get; private set; } = true;
 
         /// <summary>
-        /// 引用实体模型标识号集合
+        /// 引用的实体模型标识号集合，聚合引用有多个
         /// </summary>
         public List<ulong> RefModelIds { get; private set; }
 
-        public ushort IdMemberId { get; private set; }
+        /// <summary>
+        /// 引用的外键成员标识集合，
+        /// 1. SysStore只有一个Id, eg: Order->Customer为Order.CustomerId
+        /// 2. SqlStore有一或多个，与引用目标的主键的数量、顺序、类型一致
+        /// </summary>
+        public ushort[] FKMemberIds { get; private set; }
 
         /// <summary>
         /// 聚合引用时的类型字段，存储引用目标的EntityModel.Id
         /// </summary>
         public ushort TypeMemberId { get; private set; }
+
+        /// <summary>
+        /// 是否聚合引用至不同的实体模型
+        /// </summary>
+        public bool IsAggregationRef => TypeMemberId != 0;
         #endregion
 
         #region ====Ctor====
@@ -47,27 +51,32 @@ namespace appbox.Models
         /// 设计时新建非聚合引用成员
         /// </summary>
         internal EntityRefModel(EntityModel owner, string name, ulong refModelId, 
-            ushort idMemberId, bool foreignConstraint = true) : base(owner, name)
+            ushort[] fkMemberIds, bool foreignConstraint = true) : base(owner, name)
         {
+            if (fkMemberIds == null || fkMemberIds.Length == 0)
+                throw new ArgumentNullException(nameof(fkMemberIds));
+
             RefModelIds = new List<ulong> { refModelId };
-            IsAggregationRef = false;
             IsReverse = false;
-            IdMemberId = idMemberId;
+            FKMemberIds = fkMemberIds;
+            TypeMemberId = 0;
             IsForeignKeyConstraint = foreignConstraint;
         }
 
         /// <summary>
         /// 设计时新建聚合引用成员
         /// </summary>
-        internal EntityRefModel(EntityModel owner, string name, List<ulong> refModelIds, 
-            ushort idMemberId, ushort typeMemberId, bool foreignConstraint = true) : base(owner, name)
+        internal EntityRefModel(EntityModel owner, string name, List<ulong> refModelIds,
+            ushort[] fkMemberIds, ushort typeMemberId, bool foreignConstraint = true) : base(owner, name)
         {
+            if (fkMemberIds == null || fkMemberIds.Length == 0)
+                throw new ArgumentNullException(nameof(fkMemberIds));
             if (refModelIds == null || refModelIds.Count <= 0)
                 throw new ArgumentNullException(nameof(refModelIds));
+
             RefModelIds = refModelIds;
-            IsAggregationRef = true;
             IsReverse = false;
-            IdMemberId = idMemberId;
+            FKMemberIds = fkMemberIds;
             TypeMemberId = typeMemberId;
             IsForeignKeyConstraint = foreignConstraint;
         }
@@ -89,9 +98,7 @@ namespace appbox.Models
             base.WriteObject(bs);
 
             bs.Write(IsReverse, 1);
-            bs.Write(IsAggregationRef, 2);
             bs.Write(IsForeignKeyConstraint, 4);
-            bs.Write(IdMemberId, 5);
             bs.Write(TypeMemberId, 6);
 
             bs.Write(3u);
@@ -101,23 +108,38 @@ namespace appbox.Models
                 bs.Write(RefModelIds[i]);
             }
 
-            bs.Write((uint)0);
+            bs.Write(5u);
+            bs.Write(FKMemberIds.Length);
+            for (int i = 0; i < FKMemberIds.Length; i++)
+            {
+                bs.Write(FKMemberIds[i]);
+            }
+
+            bs.Write(0u);
         }
 
         public override void ReadObject(BinSerializer bs)
         {
             base.ReadObject(bs);
 
-            uint propIndex = 0;
+            uint propIndex;
             do
             {
                 propIndex = bs.ReadUInt32();
                 switch (propIndex)
                 {
                     case 1: IsReverse = bs.ReadBoolean(); break;
-                    case 2: IsAggregationRef = bs.ReadBoolean(); break;
                     case 4: IsForeignKeyConstraint = bs.ReadBoolean(); break;
-                    case 5: IdMemberId = bs.ReadUInt16(); break;
+                    case 5:
+                        {
+                            int count = bs.ReadInt32();
+                            FKMemberIds = new ushort[count];
+                            for (int i = 0; i < count; i++)
+                            {
+                                FKMemberIds[i] = bs.ReadUInt16();
+                            }
+                        }
+                        break;
                     case 6: TypeMemberId = bs.ReadUInt16(); break;
                     case 3:
                         {

@@ -175,7 +175,7 @@ namespace appbox.Store
             foreach (var obj in list /*sortedList*/)
             {
                 //根据上级标识依次加入
-                var parentId = obj.GetEntityId(refModel.IdMemberId);
+                var parentId = obj.GetEntityId(refModel.FKMemberIds[0]);
                 if (parentId == null)
                 {
                     res.Add(obj);

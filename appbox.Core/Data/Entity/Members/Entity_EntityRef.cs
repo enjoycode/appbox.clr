@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using appbox.Models;
 
@@ -6,6 +7,9 @@ namespace appbox.Data
 {
     partial class Entity
     {
+        /// <summary>
+        /// 仅适用于系统存储
+        /// </summary>
         public EntityId GetEntityId(ushort mid)
         {
             ref EntityMember m = ref GetMember(mid);
@@ -17,6 +21,9 @@ namespace appbox.Data
             throw new InvalidOperationException("Member type invalid");
         }
 
+        /// <summary>
+        /// 仅适用于系统存储
+        /// </summary>
         public void SetEntityId(ushort mid, EntityId value, bool byJsonReader = false)
         {
             ref EntityMember m = ref GetMember(mid);
@@ -47,9 +54,12 @@ namespace appbox.Data
                 if (Members[i].MemberType == EntityMemberType.EntityRef)
                 {
                     var refMember = (EntityRefModel)Model.GetMember(Members[i].Id, true);
-                    if (refMember.IdMemberId == refKey)
+                    for (int j = 0; j < refMember.FKMemberIds.Length; j++)
                     {
-                        SetEntityRefInternal(ref Members[i], null, true);
+                        if (refMember.FKMemberIds[j] == refKey)
+                        {
+                            SetEntityRefInternal(ref Members[i], null, true);
+                        }
                     }
                 }
             }
@@ -85,14 +95,16 @@ namespace appbox.Data
                 if (m.ObjectValue != null)
                 {
                     m.ObjectValue = null;
-                    ClearDataFieldValueInternal(ref GetMember(memberModel.IdMemberId), false);
+                    for (int i = 0; i < memberModel.FKMemberIds.Length; i++)
+                    {
+                        ClearDataFieldValueInternal(ref GetMember(memberModel.FKMemberIds[i]), false);
+                    }
                     if (memberModel.IsAggregationRef)
                         ClearDataFieldValueInternal(ref GetMember(memberModel.TypeMemberId), false);
 
                     m.Flag.HasValue = false;
                     m.Flag.HasLoad = !byClear;
-                    //激发已变更事件
-                    //this.OnPropertyChanged(m.Name);
+                    OnMemberValueChanged(m.Id); //激发已变更事件
                 }
                 #endregion
             }
@@ -102,37 +114,62 @@ namespace appbox.Data
                 if (!memberModel.RefModelIds.Contains(value.ModelId))
                     throw new ArgumentException($"EntityModel [{value.ModelId}] is not validated.");
 
-                ref EntityMember idMember = ref GetMember(memberModel.IdMemberId);
-                if ((!idMember.HasValue) || (idMember.HasValue && value.Id != (EntityId)idMember.ObjectValue)) //引用成员无值或值不同
+                bool fkValuesSame = true;
+                //系统存储与第三方存储分别设置相关外键成员的值
+                if (Model.SqlStoreOptions != null)
                 {
-                    SetEntityId(memberModel.IdMemberId, value.Id);
-                    if (memberModel.IsAggregationRef)
-                        SetUInt64(memberModel.TypeMemberId, value.ModelId);
-                    //注意:与上一语句的顺序不能交换
-                    m.ObjectValue = value;
-                    m.Flag.HasLoad = true;
-                    //处理EntityParent
-                    //注意：EntitySet内某一项对父项的EntityRef设置实例时，不应设置父项的EntityOwner为当前的EntityRef
-                    //即判断当前EntityRef的Owner是否在某个EntitySet下，是则判断这个EntitySet的Owner是否就是当前设置的value
-                    if (Parent == null || Parent.Parent != value)
-                        value.Parent = this;
+                    var pks = value.Model.SqlStoreOptions.PrimaryKeys; //引用目标的主键
+                    for (int i = 0; i < memberModel.FKMemberIds.Length; i++)
+                    {
+                        //当前的实体的外键成员
+                        ref EntityMember fkMember = ref GetMember(memberModel.FKMemberIds[i]);
+                        //设置的实体的主键成员
+                        ref EntityMember pkMember = ref value.GetMember(pks[i].MemberId);
+                        Debug.Assert(fkMember.Id == pkMember.Id);
+                        if ((!fkMember.HasValue)
+                            || !(fkMember.GuidValue == pkMember.GuidValue && fkMember.ObjectValue == pkMember.ObjectValue))
+                        {
+                            fkMember.GuidValue = pkMember.GuidValue;
+                            fkMember.ObjectValue = pkMember.ObjectValue;
+                            fkMember.Flag.HasValue = true;
+                            fkMember.Flag.HasChanged |= PersistentState != PersistentState.Detached;
+                            OnMemberValueChanged(fkMember.Id);
+                            fkValuesSame = false;
+                        }
+                    }
+                }
+                else
+                {
+                    ref EntityMember fkMember = ref GetMember(memberModel.FKMemberIds[0]);
+                    if ((!fkMember.HasValue) || (value.Id != (EntityId)fkMember.ObjectValue))
+                    {
+                        //引用成员无值或值不同
+                        //SetEntityId(memberModel.FKMemberIds[0], value.Id);
+                        fkMember.ObjectValue = value.Id;
+                        fkMember.Flag.HasValue = true; //value != null;
+                        fkMember.Flag.HasChanged |= PersistentState != PersistentState.Detached;
+                        OnMemberValueChanged(fkMember.Id);
+                        fkValuesSame = false;
+                    }
+                }
 
-                    //this.OnPropertyChanged(m.Name); //激发已变更事件
-                }
-                else //值相同时 用于EntitySet的EntityList插入子对象时同步设置其父对象实例，注意：需要修改EntityList.EntitySet属性内设置过
-                {
-                    m.ObjectValue = value;
-                    m.Flag.HasLoad = true;
-                    //处理EntityParent
-                    //注意：EntitySet内某一项对父项的EntityRef设置实例时，不应设置父项的EntityOwner为当前的EntityRef
-                    //即判断当前EntityRef的Owner是否在某个EntitySet下，是则判断这个EntitySet的Owner是否就是当前设置的value
-                    if (Parent == null || Parent.Parent != value)
-                        value.Parent = this;
-                }
+                //如果是聚合引用设置TypeMember成员的值
+                if (memberModel.IsAggregationRef)
+                    SetUInt64(memberModel.TypeMemberId, value.ModelId);
+                //设置本身值，注意与上面的顺序不要交换
+                m.ObjectValue = value;
+                m.Flag.HasLoad = true;
+                //最后处理EntityParent
+                //注意：EntitySet内某一项对父项的EntityRef设置实例时，不应设置父项的EntityOwner为当前的EntityRef
+                //即判断当前EntityRef的Owner是否在某个EntitySet下，是则判断这个EntitySet的Owner是否就是当前设置的value
+                if (Parent == null || Parent.Parent != value)
+                    value.Parent = this;
+                if (!fkValuesSame)
+                    OnMemberValueChanged(m.Id); //激发已变更事件
                 #endregion
             }
         }
-    
+
         internal void InitEntityRefForLoad(ushort refMemberId, Entity refEntity)
         {
             ref EntityMember m = ref GetMember(refMemberId);

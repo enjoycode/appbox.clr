@@ -178,7 +178,10 @@ namespace appbox.Models
             {
                 if (m is EntityRefModel refModel)
                 {
-                    Members.Remove(GetMember(refModel.IdMemberId, true));
+                    foreach (var fk in refModel.FKMemberIds)
+                    {
+                        Members.Remove(GetMember(fk, true));
+                    }
                     if (refModel.IsAggregationRef)
                         Members.Remove(GetMember(refModel.TypeMemberId, true));
                 }
@@ -190,7 +193,10 @@ namespace appbox.Models
             m.MarkDeleted();
             if (m is EntityRefModel refModel2)
             {
-                GetMember(refModel2.IdMemberId, true).MarkDeleted();
+                foreach (var fk in refModel2.FKMemberIds)
+                {
+                    GetMember(fk, true).MarkDeleted();
+                }
                 if (refModel2.IsAggregationRef)
                     GetMember(refModel2.TypeMemberId, true).MarkDeleted();
             }
