@@ -218,7 +218,7 @@ namespace appbox.Design
             return txn;
         }
 
-        static async Task SaveModelsAsync(DesignHub hub, PublishPackage package, Transaction txn,
+        private static async Task SaveModelsAsync(DesignHub hub, PublishPackage package, Transaction txn,
             Dictionary<ulong, DbTransaction> otherStoreTxns)
         {
             DbTransaction sqlTxn = null;
@@ -264,7 +264,17 @@ namespace appbox.Design
                         {
                             //TODO:判断服务及视图模型是否改名，是则将旧名称加入package内在下面删除掉旧的
                             await ModelStore.UpdateModelAsync(model, txn, aid => hub.DesignTree.FindApplicationNode(aid).Model);
-                            if (model.ModelType == ModelType.View)
+                            if (model.ModelType == ModelType.Entity)
+                            {
+                                var em = (EntityModel)model;
+                                if (em.SqlStoreOptions != null) //映射至第三方数据库的需要变更表
+                                {
+                                    var sqlStore = SqlStore.Get(em.SqlStoreOptions.StoreModelId);
+                                    sqlTxn = await MakeOtherStoreTxn(em.SqlStoreOptions.StoreModelId, otherStoreTxns);
+                                    await sqlStore.AlterTableAsync(em, sqlTxn, hub);
+                                }
+                            }
+                            else if (model.ModelType == ModelType.View)
                             {
                                 var viewModel = (ViewModel)model;
                                 var app = hub.DesignTree.FindApplicationNode(model.AppId);
@@ -285,8 +295,19 @@ namespace appbox.Design
                     case PersistentState.Deleted:
                         {
                             await ModelStore.DeleteModelAsync(model, txn, aid => hub.DesignTree.FindApplicationNode(aid).Model);
+                            
+                            if (model.ModelType == ModelType.Entity)
+                            {
+                                var em = (EntityModel)model;
+                                if (em.SqlStoreOptions != null) //映射至第三方数据库的需要删除相应的表
+                                {
+                                    var sqlStore = SqlStore.Get(em.SqlStoreOptions.StoreModelId);
+                                    sqlTxn = await MakeOtherStoreTxn(em.SqlStoreOptions.StoreModelId, otherStoreTxns);
+                                    await sqlStore.DropTableAsync(em, sqlTxn);
+                                }
+                            }
                             //判断模型类型删除相关代码及编译好的组件
-                            if (model.ModelType == ModelType.Service)
+                            else if (model.ModelType == ModelType.Service)
                             {
                                 var app = hub.DesignTree.FindApplicationNode(model.AppId);
                                 await ModelStore.DeleteModelCodeAsync(model.Id, txn);

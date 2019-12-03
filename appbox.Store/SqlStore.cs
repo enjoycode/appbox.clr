@@ -101,6 +101,25 @@ namespace appbox.Store
             }
         }
 
+        public async Task AlterTableAsync(EntityModel model, DbTransaction txn, Server.IDesignContext ctx)
+        {
+            Debug.Assert(txn != null);
+            var cmds = MakeAlterTable(model, ctx);
+            foreach (var cmd in cmds)
+            {
+                cmd.Connection = txn.Connection;
+                await cmd.ExecuteNonQueryAsync();
+            }
+        }
+
+        public async Task DropTableAsync(EntityModel model, DbTransaction txn)
+        {
+            Debug.Assert(txn != null);
+            var cmd = MakeDropTable(model);
+            cmd.Connection = txn.Connection;
+            await cmd.ExecuteNonQueryAsync();
+        }
+
         protected internal abstract IList<DbCommand> MakeCreateTable(EntityModel model, Server.IDesignContext ctx);
 
         protected internal abstract IList<DbCommand> MakeAlterTable(EntityModel model, Server.IDesignContext ctx);
