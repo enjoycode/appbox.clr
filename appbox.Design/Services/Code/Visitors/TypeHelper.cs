@@ -409,7 +409,10 @@ namespace appbox.Design
             string type;
             switch (valueTypeString)
             {
+                //TODO: fix others
+                case "short": type = "Int16"; break;
                 case "int": type = "Int32"; break;
+                case "long": type = "Int64"; break;
                 case "ulong": type = "UInt64"; break;
                 case "bool": type = "Boolean"; break;
                 case "byte": type = "Byte"; break;

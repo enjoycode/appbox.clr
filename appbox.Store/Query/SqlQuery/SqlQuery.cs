@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Threading.Tasks;
 using appbox.Data;
 using appbox.Expressions;
@@ -142,35 +143,11 @@ namespace appbox.Store
         #endregion
 
         #region ====Select Methods====
-
         public void AddSelectItem(SqlSelectItemExpression item)
         {
             item.Owner = this;
             this.Selects.Add(item.AliasName, item);
         }
-
-        //public AppBox.Core.DataTable ToDataTable(params SelectItem[] selectItem)
-        //{
-        //    if (selectItem == null || selectItem.Length <= 0)
-        //        throw new ArgumentException("must select some one");
-
-        //    if (this.PageIndex > -1 && !this.HasSortItems)
-        //        throw new ArgumentException("Paged query must has sort items."); //todo:加入默认ID排序
-
-        //    this.Purpose = QueryPurpose.ToDataTable;
-
-        //    if (this._selects != null)
-        //        this._selects.Clear();
-        //    for (int i = 0; i < selectItem.Length; i++)
-        //    {
-        //        this.AddSelectItem(selectItem[i].Target);
-        //    }
-
-        //    //递交查询
-        //    var db = SqlStore.Get(this.StoreName);
-        //    var cmd = db.DbCommandBuilder.CreateQueryCommand(this);
-        //    return db.ExecuteToTable(cmd);
-        //}
 
         public SqlSubQuery AsSubQuery(params SqlSelectItem[] selectItem)
         {
@@ -179,7 +156,7 @@ namespace appbox.Store
 
             foreach (var item in selectItem)
             {
-                this.AddSelectItem(item.Target);
+                AddSelectItem(item.Target);
             }
 
             return new SqlSubQuery(this);
@@ -234,40 +211,43 @@ namespace appbox.Store
         }
 
         /// <summary>
-        /// 动态查询
+        /// 动态查询，返回匿名类列表
         /// </summary>
-        //public List<TResult> ToList<TResult>(Func<SqlRow, TResult> selector, params SelectItem[] selectItem)
-        //{
-        //if (selectItem == null || selectItem.Length <= 0)
-        //    throw new ArgumentException("must select some one");
+        public async Task<IList<TResult>> ToListAsync<TResult>(Func<SqlRowReader,
+            TResult> selector, params SqlSelectItem[] selectItem)
+        {
+            if (selectItem == null || selectItem.Length <= 0)
+                throw new ArgumentException("must select some one");
 
-        //if (this.PageIndex > -1 && !this.HasSortItems)
-        //    throw new ArgumentException("Paged query must has sort items."); //todo:加入默认ID排序
+            if (PageIndex > -1 && !HasSortItems)
+                throw new ArgumentException("Paged query must has sort items."); //TODO:加入默认主键排序
 
-        //this.Purpose = QueryPurpose.ToDataTable;
+            Purpose = QueryPurpose.ToDataTable;
 
-        //if (this._selects != null)
-        //    this._selects.Clear();
-        //for (int i = 0; i < selectItem.Length; i++)
-        //{
-        //    this.AddSelectItem(selectItem[i].Target);
-        //}
+            if (_selects != null)
+                _selects.Clear();
+            for (int i = 0; i < selectItem.Length; i++)
+            {
+                AddSelectItem(selectItem[i].Target);
+            }
 
-        ////递交查询
-        //var db = SqlStore.Get(this.StoreName);
-        //var cmd = db.DbCommandBuilder.CreateQueryCommand(this);
-        //var list = new List<TResult>();
-        //SqlRow row;
-        //db.ExecuteReader(cmd, dr =>
-        //{
-        //    while (dr.Read())
-        //    {
-        //        row = new SqlRow(dr);
-        //        list.Add(selector(row));
-        //    }
-        //});
-        //return list;
-        //}
+            //递交查询
+            var model = await Runtime.RuntimeContext.Current.GetModelAsync<EntityModel>(T.ModelID);
+            var db = SqlStore.Get(model.SqlStoreOptions.StoreModelId);
+            var cmd = db.BuildQuery(this);
+            using var conn = db.MakeConnection();
+            await conn.OpenAsync();
+            cmd.Connection = conn;
+
+            var list = new List<TResult>();
+            using var reader = await cmd.ExecuteReaderAsync();
+            SqlRowReader rr = new SqlRowReader(reader);
+            while (await reader.ReadAsync())
+            {
+                list.Add(selector(rr));
+            }
+            return list;
+        }
 
         public async Task<EntityList> ToListAsync()
         {
@@ -421,7 +401,7 @@ namespace appbox.Store
         /// <summary>
         /// 将查询行转换为实体实例
         /// </summary>
-        internal static Entity FillEntity(EntityModel model, System.Data.Common.DbDataReader reader)
+        internal static Entity FillEntity(EntityModel model, DbDataReader reader)
         {
             Entity obj = new Entity(model);
             //填充实体成员
@@ -444,8 +424,7 @@ namespace appbox.Store
         /// </summary>
         /// <param name="target">Target.</param>
         /// <param name="path">eg: Order.Customer.ID or Name</param>
-        private static void FillMemberValue(Entity target, string path,
-            System.Data.Common.DbDataReader reader, int clIndex)
+        private static void FillMemberValue(Entity target, string path, DbDataReader reader, int clIndex)
         {
             if (path.IndexOf('.') < 0)
             {

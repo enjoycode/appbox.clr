@@ -20,12 +20,12 @@ namespace appbox.Store
             //else if (query.Purpose == QueryPurpose.ToTreeNodePath)
             //    BuildTreeNodePathQuery(query, ctx);
             //else
-            BuildQuery(query, ctx);
+            BuildNormalQuery(query, ctx);
 
             return cmd;
         }
 
-        private void BuildQuery(ISqlSelectQuery query, BuildQueryContext ctx)
+        private void BuildNormalQuery(ISqlSelectQuery query, BuildQueryContext ctx)
         {
             //设置上下文
             ctx.BeginBuildQuery(query);
@@ -72,7 +72,7 @@ namespace appbox.Store
                 SqlFromQuery q = (SqlFromQuery)ctx.CurrentQuery;
                 //开始构建From子查询
                 ctx.Append("(");
-                BuildQuery(q.Target, ctx);
+                BuildNormalQuery(q.Target, ctx);
                 ctx.Append(")");
                 ctx.AppendFormat(" {0}", ((SqlQueryBase)q.Target).AliasName);// ((QueryBase)query).AliasName);
             }

@@ -273,20 +273,7 @@ public class SqlQuery<TSource> : ISqlQueryJoin<TSource> where TSource : SqlEntit
 
 	#region ----ToXXXX Methods----
 	//[QueryMethod()]
-	//public sys.DataTable ToDataTable<TResult>(Func<TSource, TResult> selector)
-	//{ return null; }
-
-	//[QueryMethod()]
-	//public sys.DataTable ToDataTable<TJoin, TResult>(IQueryJoin<TJoin> join, Func<TSource, TJoin, TResult> selector)
-	//{ return null; }
-
-	//[QueryMethod()]
-	//public sys.DataTable ToDataTable<TJoin1, TJoin2, TResult>(IQueryJoin<TJoin1> join1, IQueryJoin<TJoin2> join2, Func<TSource, TJoin1, TJoin2, TResult> selector)
-	//{ return null; }
-
-	//[QueryMethod()]
-	//public sys.DataTable ToDataTable<TJoin1, TJoin2, TJoin3, TResult>(IQueryJoin<TJoin1> join1, IQueryJoin<TJoin2> join2, IQueryJoin<TJoin3> join3, Func<TSource, TJoin1, TJoin2, TJoin3, TResult> selector)
-	//{ return null; }
+	//public TResult ToScalar<TResult>(Func<TSource, TResult> selector) { return default(TResult); }
 
 	//public TSource ToSingle() { return default(TSource); }
 
@@ -295,22 +282,25 @@ public class SqlQuery<TSource> : ISqlQueryJoin<TSource> where TSource : SqlEntit
 	//[QueryMethod()]
 	//public EntityList<TSource> ToTreeList<TResult>(Func<TSource, TResult> selector) { return null; }
 
-	//[QueryMethod()]
-	//public List<TResult> ToList<TResult>(Func<TSource, TResult> selector) { return null; }
+	[QueryMethod()]
+	public Task<IList<TResult>> ToListAsync<TResult>(Func<TSource, TResult> selector)
+	{ return null; }
 
-	//[QueryMethod()]
-	//public List<TResult> ToList<TJoin, TResult>(IQueryJoin<TJoin> join, Func<TSource, TJoin, TResult> selector) { return null; }
+	[QueryMethod()]
+	public Task<IList<TResult>> ToListAsync<TJoin, TResult>(IQueryJoin<TJoin> join,
+		Func<TSource, TJoin, TResult> selector)
+	{ return null; }
 
-	//[QueryMethod()]
-	//public List<TResult> ToList<TJoin1, TJoin2, TResult>(ISqlQueryJoin<TJoin1> join1, ISqlQueryJoin<TJoin2> join2, Func<TSource, TJoin1, TJoin2, TResult> selector)
-	//{ return null; }
+	[QueryMethod()]
+	public Task<IList<TResult>> ToListAsync<TJoin1, TJoin2, TResult>(ISqlQueryJoin<TJoin1> join1,
+		ISqlQueryJoin<TJoin2> join2, Func<TSource, TJoin1, TJoin2, TResult> selector)
+	{ return null; }
 
-	//[QueryMethod()]
-	//public List<TResult> ToList<TJoin1, TJoin2, TJoin3, TResult>(ISqlQueryJoin<TJoin1> join1, ISqlQueryJoin<TJoin2> join2, ISqlQueryJoin<TJoin3> join3, Func<TSource, TJoin1, TJoin2, TJoin3, TResult> selector)
-	//{ return null; }
-
-	//[QueryMethod()]
-	//public TResult ToScalar<TResult>(Func<TSource, TResult> selector) { return default(TResult); }
+	[QueryMethod()]
+	public Task<IList<TResult>> ToListAsync<TJoin1, TJoin2, TJoin3, TResult>(ISqlQueryJoin<TJoin1> join1,
+		ISqlQueryJoin<TJoin2> join2, ISqlQueryJoin<TJoin3> join3,
+		Func<TSource, TJoin1, TJoin2, TJoin3, TResult> selector)
+	{ return null; }
 	#endregion
 
 	#region ----AsXXXX Methods----
