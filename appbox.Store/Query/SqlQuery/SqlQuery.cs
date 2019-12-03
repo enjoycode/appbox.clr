@@ -436,6 +436,9 @@ namespace appbox.Store
         {
             if (path.IndexOf('.') < 0)
             {
+                if (reader.IsDBNull(clIndex))
+                    return;
+
                 ref EntityMember m = ref target.GetMember(path); //TODO:不存在的作为附加成员
                 m.Flag.HasLoad = true;
                 m.Flag.HasValue = !reader.IsDBNull(clIndex);
