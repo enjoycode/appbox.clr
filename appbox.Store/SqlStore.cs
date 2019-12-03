@@ -344,7 +344,7 @@ namespace appbox.Store
             int pindex = 0;
             EntityMemberModel mm;
 
-            sb.Append($"Select * From {NameEscaper}{model.Name}{NameEscaper} Where ");
+            sb.Append($"Select * From {NameEscaper}{model.SqlTableName}{NameEscaper} Where ");
             for (int i = 0; i < model.SqlStoreOptions.PrimaryKeys.Count; i++)
             {
                 pindex++;
@@ -376,19 +376,20 @@ namespace appbox.Store
             string sep = "";
             EntityMemberModel mm;
             //开始构建Sql
-            sb.Append($"Insert Into {NameEscaper}{model.Name}{NameEscaper} (");
+            sb.Append($"Insert Into {NameEscaper}{model.SqlTableName}{NameEscaper} (");
             for (int i = 0; i < entity.Members.Length; i++)
             {
                 mm = model.GetMember(entity.Members[i].Id, true);
                 if (mm.Type == EntityMemberType.DataField && entity.Members[i].Flag.HasValue)
                 {
+                    var dfm = (DataFieldModel)mm;
                     pindex++;
                     var para = MakeParameter();
                     para.ParameterName = $"V{pindex}";
                     para.Value = entity.Members[i].BoxedValue;
                     cmd.Parameters.Add(para);
 
-                    sb.Append($"{sep}{NameEscaper}{mm.Name}{NameEscaper}");
+                    sb.Append($"{sep}{NameEscaper}{dfm.SqlColName}{NameEscaper}");
                     psb.Append($"{sep}@{para.ParameterName}");
 
                     if (pindex == 1) sep = ",";
@@ -408,14 +409,14 @@ namespace appbox.Store
             var cmd = MakeCommand();
             var sb = StringBuilderCache.Acquire();
             int pindex = 0;
-            sb.Append($"Delete From {NameEscaper}{model.Name}{NameEscaper} Where ");
+            sb.Append($"Delete From {NameEscaper}{model.SqlTableName}{NameEscaper} Where ");
             //根据主键生成条件
             FieldWithOrder pk;
-            EntityMemberModel mm;
+            DataFieldModel mm;
             for (int i = 0; i < model.SqlStoreOptions.PrimaryKeys.Count; i++)
             {
                 pk = model.SqlStoreOptions.PrimaryKeys[i];
-                mm = model.GetMember(pk.MemberId, true);
+                mm = (DataFieldModel)model.GetMember(pk.MemberId, true);
 
                 pindex++;
                 var para = MakeParameter();
@@ -424,7 +425,7 @@ namespace appbox.Store
                 cmd.Parameters.Add(para);
 
                 if (i != 0) sb.Append(" And");
-                sb.Append($" {NameEscaper}{mm.Name}{NameEscaper}=@{para.ParameterName}");
+                sb.Append($" {NameEscaper}{mm.SqlColName}{NameEscaper}=@{para.ParameterName}");
             }
 
             cmd.CommandText = StringBuilderCache.GetStringAndRelease(sb);
@@ -438,6 +439,8 @@ namespace appbox.Store
             int pindex = 0;
             EntityMemberModel mm;
             bool hasChangedMember = false;
+
+            sb.Append($"Update \"{model.SqlTableName}\" Set ");
             for (int i = 0; i < model.Members.Count; i++)
             {
                 mm = model.Members[i];
@@ -467,7 +470,7 @@ namespace appbox.Store
                         sb.Append(",");
                     else
                         hasChangedMember = true;
-                    sb.Append($"{NameEscaper}{dfm.Name}{NameEscaper}=@{para.ParameterName}");
+                    sb.Append($"{NameEscaper}{dfm.SqlColName}{NameEscaper}=@{para.ParameterName}");
                 }
             }
 

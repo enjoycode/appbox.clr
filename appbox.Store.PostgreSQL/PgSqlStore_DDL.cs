@@ -46,13 +46,14 @@ namespace appbox.Store
             //Build PrimaryKey
             if (model.SqlStoreOptions.HasPrimaryKeys)
             {
+                //使用模型标识作为PK名称以避免重命名影响
                 sb.AppendLine();
-                sb.Append($"ALTER TABLE \"{model.Name}\" ADD CONSTRAINT \"PK_{model.Id}\"");
+                sb.Append($"ALTER TABLE \"{model.SqlTableName}\" ADD CONSTRAINT \"PK_{model.Id}\"");
                 sb.Append(" PRIMARY KEY (");
                 foreach (var pk in model.SqlStoreOptions.PrimaryKeys)
                 {
-                    var mm = model.GetMember(pk.MemberId, true);
-                    sb.Append($"\"{mm.Name}\",");
+                    var mm = (DataFieldModel)model.GetMember(pk.MemberId, true);
+                    sb.Append($"\"{mm.SqlColName}\",");
                 }
                 sb.Remove(sb.Length - 1, 1);
                 sb.Append(");");
@@ -107,7 +108,7 @@ namespace appbox.Store
                         EntityRefModel rm = (EntityRefModel)m;
                         if (!rm.IsAggregationRef)
                         {
-                            var fkName = $"FK_{rm.MemberId}"; //TODO:特殊处理DbFirst导入表的外键约束名称
+                            var fkName = $"FK_{rm.Owner.Id}_{rm.MemberId}"; //TODO:特殊处理DbFirst导入表的外键约束名称
                             fks.Add($"ALTER TABLE \"{model.SqlTableName}\" DROP CONSTRAINT \"{fkName}\";");
                         }
                     }
@@ -315,8 +316,8 @@ namespace appbox.Store
         private static string BuildForeignKey(EntityRefModel rm, Server.IDesignContext ctx)
         {
             var refModel = ctx.GetEntityModel(rm.RefModelIds[0]);
-            //使用成员标识作为fk name以减少重命名带来的影响
-            var fkName = $"FK_{rm.MemberId}";
+            //使用模型标识+成员标识作为fk name以减少重命名带来的影响
+            var fkName = $"FK_{rm.Owner.Id}_{rm.MemberId}";
             var rsb = StringBuilderCache.Acquire();
             rsb.Append($"ALTER TABLE \"{rm.Owner.SqlTableName}\" ADD CONSTRAINT \"{fkName}\" FOREIGN KEY (");
             for (int i = 0; i < rm.FKMemberIds.Length; i++)
@@ -348,7 +349,7 @@ namespace appbox.Store
                 var deletedIndexes = model.SqlStoreOptions.Indexes.Where(t => t.PersistentState == PersistentState.Deleted);
                 foreach (var index in deletedIndexes)
                 {
-                    commands.Add(new NpgsqlCommand($"DROP INDEX IF EXISTS \"IX_{index.IndexId}\""));
+                    commands.Add(new NpgsqlCommand($"DROP INDEX IF EXISTS \"IX_{model.Id}_{index.IndexId}\""));
                 }
             }
 
@@ -358,7 +359,7 @@ namespace appbox.Store
                 var sb = StringBuilderCache.Acquire();
                 sb.Append("CREATE ");
                 if (index.Unique) sb.Append("UNIQUE ");
-                sb.Append($"INDEX \"IX_{index.IndexId}\" ON \"{model.SqlTableName}\" (");
+                sb.Append($"INDEX \"IX_{model.Id}_{index.IndexId}\" ON \"{model.SqlTableName}\" (");
                 for (int i = 0; i < index.Fields.Length; i++)
                 {
                     if (i != 0) sb.Append(',');

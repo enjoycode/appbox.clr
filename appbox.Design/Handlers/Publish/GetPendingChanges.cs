@@ -15,7 +15,7 @@ namespace appbox.Design
         {
             var staged = await StagedService.LoadStagedAsync(onlyModelsAndFolders: false); //TODO:暂重新加载
             hub.PendingChanges = staged.Items;
-            if (hub.PendingChanges.Length == 0)
+            if (hub.PendingChanges == null || hub.PendingChanges.Length == 0)
                 return null;
 
             var res = new List<ChangedInfo>();
