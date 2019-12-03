@@ -22,22 +22,29 @@ namespace appbox.Design
             var model = modelNode.Model as EntityModel;
             if (!modelNode.IsCheckoutByMe)
                 throw new Exception("Node has not checkout");
-
-            //判断索引引用
-            if (model.SysStoreOptions != null && model.SysStoreOptions.HasIndexes)
+            var mm = model.GetMember(memberName, true);
+            //判断是否外键及被索引使 用,仅DataField
+            if (mm.Type == EntityMemberType.DataField)
             {
-                var memberId = model.GetMember(memberName, true).MemberId;
-                foreach (var index in model.SysStoreOptions.Indexes)
+                var dfm = (DataFieldModel)mm;
+                if (dfm.IsForeignKey)
+                    throw new Exception("Can't delete a foregn key member");
+               
+                if (model.StoreOptions != null && model.StoreOptions.HasIndexes)
                 {
-                    if (index.Fields.Any(t => t.MemberId == memberId))
-                        throw new Exception($"Member are used in Index[{index.Name}]");
-                    if (index.HasStoringFields)
+                    foreach (var index in model.StoreOptions.Indexes)
                     {
-                        if (index.StoringFields.Any(t => t == memberId))
+                        if (index.Fields.Any(t => t.MemberId == mm.MemberId))
                             throw new Exception($"Member are used in Index[{index.Name}]");
+                        if (index.HasStoringFields)
+                        {
+                            if (index.StoringFields.Any(t => t == mm.MemberId))
+                                throw new Exception($"Member are used in Index[{index.Name}]");
+                        }
                     }
                 }
             }
+            
             //查找成员引用
             var refs = await RefactoringService.FindUsagesAsync(hub,
                        ModelReferenceType.EntityMemberName, modelNode.AppNode.Model.Name, model.Name, memberName);
