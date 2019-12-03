@@ -334,6 +334,32 @@ namespace appbox.Store
             }
         }
 
+        public async Task<int> ExecCommandAsync(SqlDeleteCommand deleteCommand, DbTransaction txn = null)
+        {
+            //暂不支持无条件删除，以防止误操作
+            if (Expressions.Expression.IsNull(deleteCommand.Filter))
+                throw new NotSupportedException("Delete must assign Where condition");
+
+            var cmd = BuildDeleteCommand(deleteCommand);
+            cmd.Connection = txn != null ? txn.Connection : MakeConnection();
+            if (txn == null)
+                await cmd.Connection.OpenAsync();
+            //执行命令
+            try
+            {
+                return await cmd.ExecuteNonQueryAsync();
+            }
+            catch (Exception ex)
+            {
+                Log.Warn($"Exec sql error: {ex.Message}\n{cmd.CommandText}");
+                throw;
+            }
+            finally
+            {
+                if (txn == null) cmd.Connection.Dispose();
+            }
+        }
+
         /// <summary>
         /// 根据主键值生成加载单个实体的sql
         /// </summary>
@@ -478,6 +504,8 @@ namespace appbox.Store
             if (!hasChangedMember) throw new InvalidOperationException("entity has no changed member");
             return cmd;
         }
+
+        protected internal abstract DbCommand BuildDeleteCommand(SqlDeleteCommand deleteCommand);
 
         /// <summary>
         /// 将SqlUpdateCommand转换为sql

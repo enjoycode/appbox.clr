@@ -364,4 +364,24 @@ public sealed class SqlUpdateCommand<TSource> where TSource : SqlEntityBase
 	[QueryMethod()]
 	public SqlUpdateCommand<TSource> Output<TResult>(Func<TSource, TResult> selector) { return this; }
 }
+
+[RealType("appbox.Store.SqlDeleteCommand")]
+[GenericCreate()]
+[QueriableClass(false)]
+public sealed class SqlDeleteCommand<TSource> where TSource : SqlEntityBase
+{
+	[QueryMethod()]
+	public SqlUpdateCommand<TSource> Where(Func<TSource, bool> condition) { return this; }
+
+	[QueryMethod()]
+	public SqlUpdateCommand<TSource> Where<TJoin>(ISqlQueryJoin<TJoin> j, Func<TSource, TJoin, bool> condition) where TJoin : class
+	{ return this; }
+
+	[QueryMethod()]
+	public SqlUpdateCommand<TSource> Where<TJoin1, TJoin2>(ISqlQueryJoin<TJoin1> j1, ISqlQueryJoin<TJoin2> j2,
+		Func<TSource, TJoin1, TJoin2, bool> condition)
+		where TJoin1 : class
+		where TJoin2 : class
+	{ return this; }
+}
 #endregion

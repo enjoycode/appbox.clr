@@ -248,13 +248,9 @@ namespace appbox.Store
             return e.AliasName;
         }
 
-        //public EntityExpression[] GetQueryAutoJoins(SqlQueryBase target)
-        //{
-        //    Dictionary<string, EntityExpression> ds = null;
-        //    AutoJoins.TryGetValue(target, out ds);
-        //    return ds.Values.ToArray();
-        //}
-
+        /// <summary>
+        /// 用于生成EntityRef的自动Join
+        /// </summary>
         public void BuildQueryAutoJoins(SqlQueryBase target)
         {
             if (!AutoJoins.TryGetValue(target, out Dictionary<string, EntityExpression> ds))

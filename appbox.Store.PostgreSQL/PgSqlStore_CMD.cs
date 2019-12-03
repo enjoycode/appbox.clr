@@ -61,5 +61,36 @@ namespace appbox.Store
             ctx.EndBuildQuery(updateCommand);
             return cmd;
         }
+
+        protected override DbCommand BuildDeleteCommand(SqlDeleteCommand deleteCommand)
+        {
+            NpgsqlCommand cmd = new NpgsqlCommand();
+            BuildQueryContext ctx = new BuildQueryContext(cmd, deleteCommand);
+            //设置上下文
+            ctx.BeginBuildQuery(deleteCommand);
+
+            EntityModel m = Runtime.RuntimeContext.Current.GetModelAsync<EntityModel>(deleteCommand.T.ModelID).Result;
+            ctx.AppendFormat("Delete From \"{0}\" t ", m.SqlTableName);
+
+            //构建Where
+            ctx.CurrentQueryInfo.BuildStep = BuildQueryStep.BuildWhere;
+            if (!Expression.IsNull(deleteCommand.Filter))
+            {
+                ctx.Append(" Where ");
+                BuildExpression(ctx.CurrentQuery.Filter, ctx);
+            }
+
+            //构建Join
+            ctx.CurrentQueryInfo.BuildStep = BuildQueryStep.BuildJoin;
+            var q1 = (SqlQueryBase)ctx.CurrentQuery;
+            if (q1.HasJoins) //先处理每个手工的联接及每个手工联接相应的自动联接
+            {
+                BuildJoins(q1.Joins, ctx);
+            }
+            ctx.BuildQueryAutoJoins(q1); //再处理自动联接
+
+            ctx.EndBuildQuery(deleteCommand);
+            return cmd;
+        }
     }
 }
