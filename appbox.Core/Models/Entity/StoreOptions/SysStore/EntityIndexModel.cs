@@ -66,8 +66,8 @@ namespace appbox.Models
                 propIndex = bs.ReadUInt32();
                 switch (propIndex)
                 {
-                    case 5: State = (EntityIndexState)bs.ReadByte(); break;
-                    case 8: Global = bs.ReadBoolean(); break;
+                    case 1: Global = bs.ReadBoolean(); break;
+                    case 2: State = (EntityIndexState)bs.ReadByte(); break;
                     case 0: break;
                     default: throw new Exception($"Deserialize_ObjectUnknownFieldIndex: {GetType().Name} at {propIndex} ");
                 }
