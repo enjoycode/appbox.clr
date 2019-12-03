@@ -213,8 +213,8 @@ namespace appbox.Store
         /// <summary>
         /// 动态查询，返回匿名类列表
         /// </summary>
-        public async Task<IList<TResult>> ToListAsync<TResult>(Func<SqlRowReader,
-            TResult> selector, params SqlSelectItem[] selectItem)
+        public async Task<IList<TResult>> ToListAsync<TResult>(Func<SqlRowReader, TResult> selector,
+            params SqlSelectItem[] selectItem)
         {
             if (selectItem == null || selectItem.Length <= 0)
                 throw new ArgumentException("must select some one");
@@ -240,11 +240,19 @@ namespace appbox.Store
             cmd.Connection = conn;
 
             var list = new List<TResult>();
-            using var reader = await cmd.ExecuteReaderAsync();
-            SqlRowReader rr = new SqlRowReader(reader);
-            while (await reader.ReadAsync())
+            try
             {
-                list.Add(selector(rr));
+                using var reader = await cmd.ExecuteReaderAsync();
+                SqlRowReader rr = new SqlRowReader(reader);
+                while (await reader.ReadAsync())
+                {
+                    list.Add(selector(rr));
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warn($"Exec sql error: {ex.Message}\n{cmd.CommandText}");
+                throw;
             }
             return list;
         }

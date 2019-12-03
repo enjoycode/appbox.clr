@@ -287,7 +287,7 @@ public class SqlQuery<TSource> : ISqlQueryJoin<TSource> where TSource : SqlEntit
 	{ return null; }
 
 	[QueryMethod()]
-	public Task<IList<TResult>> ToListAsync<TJoin, TResult>(IQueryJoin<TJoin> join,
+	public Task<IList<TResult>> ToListAsync<TJoin, TResult>(ISqlQueryJoin<TJoin> join,
 		Func<TSource, TJoin, TResult> selector)
 	{ return null; }
 

@@ -80,7 +80,7 @@ namespace appbox.Store
             {
                 SqlQuery q = (SqlQuery)ctx.CurrentQuery;
                 var model = Runtime.RuntimeContext.Current.GetModelAsync<EntityModel>(q.T.ModelID).Result;
-                ctx.AppendFormat("\"{0}\" {1}", model.Name, q.AliasName);
+                ctx.AppendFormat("\"{0}\" {1}", model.SqlTableName, q.AliasName);
             }
 
             //构建Where
@@ -114,16 +114,7 @@ namespace appbox.Store
             {
                 BuildJoins(q1.Joins, ctx);
             }
-            //TODO:*****
-            //var autoJoins = ctx.GetQueryAutoJoins(q1); //再处理自动联接
-            //for (int i = 0; i < autoJoins.Length; i++)
-            //{
-            //    var rq = autoJoins[i];
-            //    var rqModel = Runtime.RuntimeContext.Current.GetModelAsync<EntityModel>(rq.ModelID).Result;
-            //    var rqOwnerModel = Runtime.RuntimeContext.Current.GetModelAsync<EntityModel>(rq.Owner.ModelID).Result;
-            //    ctx.AppendFormat(" Left Join \"{0}\" {1} On {1}.\"ID\"={2}.\"{3}\"",
-            //        rqModel.Name, rq.AliasName, rq.Owner.AliasName, ((EntityRefModel)rqOwnerModel[rq.Name]).IDMemberName);
-            //}
+            ctx.BuildQueryAutoJoins(q1); //再处理自动联接
 
             //处理分页或Top
             ctx.CurrentQueryInfo.BuildStep = BuildQueryStep.BuildPageTail;
@@ -192,42 +183,33 @@ namespace appbox.Store
         /// </summary>
         private void BuildJoins(List<SqlJoin> joins, BuildQueryContext ctx)
         {
-            throw new NotImplementedException();
-            //foreach (var item in joins)
-            //{
-            //    //先处理当前的联接
-            //    ctx.Append(GetJoinString(item.JoinType));
-            //    if (item.Right is SqlQueryJoin)
-            //    {
-            //        SqlQueryJoin j = (SqlQueryJoin)item.Right;
-            //        var jModel = Runtime.RuntimeContext.Current.GetModelAsync<EntityModel>(j.T.ModelID).Result;
-            //        ctx.AppendFormat("\"{0}\" {1} On ", jModel.Name, j.AliasName);
-            //        BuildExpression(item.OnConditon, ctx);
+            foreach (var item in joins)
+            {
+                //先处理当前的联接
+                ctx.Append(GetJoinString(item.JoinType));
+                if (item.Right is SqlQueryJoin)
+                {
+                    var j = (SqlQueryJoin)item.Right;
+                    var jModel = Runtime.RuntimeContext.Current.GetModelAsync<EntityModel>(j.T.ModelID).Result;
+                    ctx.AppendFormat("\"{0}\" {1} On ", jModel.SqlTableName, j.AliasName);
+                    BuildExpression(item.OnConditon, ctx);
 
-            //        //再处理手工联接的自动联接
-            //        EntityExpression[] autoJoins = ctx.GetQueryAutoJoins(j);
-            //        for (int i = 0; i < autoJoins.Length; i++)
-            //        {
-            //            var rq = autoJoins[i];
-            //            var rqModel = Runtime.RuntimeContext.Current.GetModelAsync<EntityModel>(rq.ModelID).Result;
-            //            var rqOwnerModel = Runtime.RuntimeContext.Current.GetModelAsync<EntityModel>(rq.Owner.ModelID).Result;
-            //            ctx.AppendFormat(" Left Join \"{0}\" {1} On {1}.\"ID\"={2}.\"{3}\"",
-            //                rqModel.Name, rq.AliasName, rq.Owner.AliasName, ((EntityRefModel)rqOwnerModel[rq.Name]).IDMemberName);
-            //        }
-            //    }
-            //    else //否则表示联接对象是SubQuery，注意：子查询没有自动联接
-            //    {
-            //        SqlSubQuery sq = (SqlSubQuery)item.Right;
-            //        ctx.Append("(");
-            //        BuildQuery(sq.Target, ctx);
-            //        ctx.AppendFormat(") As {0} On ", ((SqlQueryBase)sq.Target).AliasName);
-            //        BuildExpression(item.OnConditon, ctx);
-            //    }
+                    //再处理手工联接的自动联接
+                    ctx.BuildQueryAutoJoins(j);
+                }
+                else //否则表示联接对象是SubQuery，注意：子查询没有自动联接
+                {
+                    SqlSubQuery sq = (SqlSubQuery)item.Right;
+                    ctx.Append("(");
+                    BuildNormalQuery(sq.Target, ctx);
+                    ctx.AppendFormat(") As {0} On ", ((SqlQueryBase)sq.Target).AliasName);
+                    BuildExpression(item.OnConditon, ctx);
+                }
 
-            //    //最后递归当前联接的右部是否还有手工的联接项
-            //    if (item.Right.HasJoins)
-            //        BuildJoins(item.Right.Joins, ctx);
-            //}
+                //最后递归当前联接的右部是否还有手工的联接项
+                if (item.Right.HasJoins)
+                    BuildJoins(item.Right.Joins, ctx);
+            }
         }
 
         #region ====Build Expression Methods====

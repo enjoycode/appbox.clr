@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using appbox.Caching;
 using appbox.Expressions;
+using appbox.Models;
 
 namespace appbox.Store
 {
@@ -247,11 +248,36 @@ namespace appbox.Store
             return e.AliasName;
         }
 
-        public EntityExpression[] GetQueryAutoJoins(SqlQueryBase target)
+        //public EntityExpression[] GetQueryAutoJoins(SqlQueryBase target)
+        //{
+        //    Dictionary<string, EntityExpression> ds = null;
+        //    AutoJoins.TryGetValue(target, out ds);
+        //    return ds.Values.ToArray();
+        //}
+
+        public void BuildQueryAutoJoins(SqlQueryBase target)
         {
-            Dictionary<string, EntityExpression> ds = null;
-            AutoJoins.TryGetValue(target, out ds);
-            return ds.Values.ToArray();
+            if (!AutoJoins.TryGetValue(target, out Dictionary<string, EntityExpression> ds))
+                return;
+
+            foreach (var rq in ds.Values)
+            {
+                //Left Join "City" c ON c."Code" = t."CityCode"
+                //eg: Customer.City的City
+                var rqModel = Runtime.RuntimeContext.Current.GetModelAsync<EntityModel>(rq.ModelID).Result;
+                //eg: Customer.City的Customer
+                var rqOwnerModel = Runtime.RuntimeContext.Current.GetModelAsync<EntityModel>(rq.Owner.ModelID).Result;
+                AppendFormat(" Left Join \"{0}\" {1} On ", rqModel.SqlTableName, rq.AliasName);
+                //Build ON Condition, other.pks == this.fks
+                var rm = (EntityRefModel)rqOwnerModel.GetMember(rq.Name, true);
+                for (int i = 0; i < rqModel.SqlStoreOptions.PrimaryKeys.Count; i++)
+                {
+                    if (i != 0) Append(" And ");
+                    var pk = (DataFieldModel)rqModel.GetMember(rqModel.SqlStoreOptions.PrimaryKeys[i].MemberId, true);
+                    var fk = (DataFieldModel)rqOwnerModel.GetMember(rm.FKMemberIds[i], true);
+                    AppendFormat("{0}.\"{1}\"={2}.\"{3}\"", rq.AliasName, pk.SqlColName, rq.Owner.AliasName, fk.SqlColName);
+                }
+            }
         }
         #endregion
 
