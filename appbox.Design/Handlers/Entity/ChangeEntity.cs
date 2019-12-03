@@ -30,7 +30,16 @@ namespace appbox.Design
             switch (changeType)
             {
                 case "PrimaryKeys":
+                    if (model.PersistentState != PersistentState.Detached)
+                    {
+                        //TODO:如果是修改则必须查找服务方法内的引用，签出节点并修改
+                        //1. new XXXX(pks)改为new XXX(/*fix pk changed*/)
+                        //2. Entities.XXX.LoadAsync(pks)同上
+                        throw new NotImplementedException("改变主键尚未实现");
+                    }
                     ChangePrimaryKeys(model, value);
+                    await hub.TypeSystem.UpdateModelDocumentAsync(modelNode);
+                    //TODO:同时返回签出列表
                     break;
                 case "PartitionKeys":
                     ChangePartitionKeys(model, value);
@@ -51,6 +60,9 @@ namespace appbox.Design
             return null;
         }
 
+        /// <summary>
+        /// 仅SqlStore
+        /// </summary>
         private static void ChangePrimaryKeys(EntityModel entityModel, object value)
         {
             if (entityModel.SqlStoreOptions == null)
@@ -77,6 +89,9 @@ namespace appbox.Design
             }
         }
 
+        /// <summary>
+        /// 仅SysStore
+        /// </summary>
         private static void ChangePartitionKeys(EntityModel entityModel, object value)
         {
             if (entityModel.SysStoreOptions == null)
@@ -104,13 +119,22 @@ namespace appbox.Design
             }
         }
 
-        private static EntityIndexModel AddIndex(EntityModel entityModel, object value)
+        /// <summary>
+        /// SysStore及SqlStore通用
+        /// </summary>
+        private static IndexModelBase AddIndex(EntityModel entityModel, object value)
         {
+            if (entityModel.StoreOptions == null)
+                throw new InvalidOperationException("Can't add index for DTO");
+
             var indexInfo = JsonConvert.DeserializeObject<IndexInfo>((string)value);
             //Validate
             if (string.IsNullOrEmpty(indexInfo.Name)) throw new Exception("Index has no name");
             if (!CodeHelper.IsValidIdentifier(indexInfo.Name)) throw new Exception("Index name not valid");
             if (indexInfo.Fields == null || indexInfo.Fields.Length == 0) throw new Exception("Index has no fields");
+            if (entityModel.StoreOptions.HasIndexes
+                && entityModel.StoreOptions.Indexes.Any(t => t.Name == indexInfo.Name))
+                throw new Exception("Index name has existed");
 
             var fields = new FieldWithOrder[indexInfo.Fields.Length];
             for (int i = 0; i < indexInfo.Fields.Length; i++)
@@ -118,29 +142,47 @@ namespace appbox.Design
                 fields[i] = new FieldWithOrder(indexInfo.Fields[i].MID, indexInfo.Fields[i].OrderByDesc);
             }
 
-            //新建索引并添加至模型内
-            var newIndex = new EntityIndexModel(entityModel, indexInfo.Name, indexInfo.Unique, fields, null);
-            entityModel.SysStoreOptions.AddIndex(entityModel, newIndex);
-            return newIndex;
+            //根据存储类型新建索引并添加至模型内
+            if (entityModel.SysStoreOptions != null)
+            {
+                var newIndex = new EntityIndexModel(entityModel, indexInfo.Name, indexInfo.Unique, fields, null);
+                entityModel.SysStoreOptions.AddIndex(entityModel, newIndex);
+                return newIndex;
+            }
+            else
+            {
+                var newIndex = new SqlIndexModel(entityModel, indexInfo.Name, indexInfo.Unique, fields, null);
+                entityModel.SqlStoreOptions.AddIndex(entityModel, newIndex);
+                return newIndex;
+            }
         }
 
+        /// <summary>
+        /// SysStore及SqlStore通用
+        /// </summary>
         private static async Task RemoveIndex(DesignHub hub, string appName, EntityModel entityModel, object value)
         {
-            if (!entityModel.SysStoreOptions.HasIndexes) throw new Exception($"EntityModel[{entityModel.Name}] not has any indexes.");
+            if (entityModel.StoreOptions == null)
+                throw new InvalidOperationException("Can't remove index for DTO");
+            if (!entityModel.StoreOptions.HasIndexes) throw new Exception($"EntityModel[{entityModel.Name}] not has any indexes.");
 
             byte indexId = Convert.ToByte(value);
-            var index = entityModel.SysStoreOptions.Indexes.SingleOrDefault(t => t.IndexId == indexId);
+            var index = entityModel.StoreOptions.Indexes.SingleOrDefault(t => t.IndexId == indexId);
             if (index == null) throw new Exception($"EntityModel[{entityModel.Name}] has no index: {indexId}");
 
-            //查询服务代码引用项
-            var refs = await RefactoringService.FindUsagesAsync(hub,
-                       ModelReferenceType.EntityIndexName, appName, entityModel.Name, index.Name);
-            if (refs != null && refs.Count > 0)
-                throw new Exception($"EntityIndex[{entityModel.Name}.{index.Name}] has references.");
+            if (entityModel.SysStoreOptions != null)
+            {
+                //查询服务代码引用项
+                var refs = await RefactoringService.FindUsagesAsync(hub,
+                           ModelReferenceType.EntityIndexName, appName, entityModel.Name, index.Name);
+                if (refs != null && refs.Count > 0)
+                    throw new Exception($"EntityIndex[{entityModel.Name}.{index.Name}] has references.");
+            }
 
             index.MarkDeleted();
         }
 
+        #region ====前端参数的Json映射结构====
         struct IndexInfo
         {
             public string Name { get; set; }
@@ -154,5 +196,6 @@ namespace appbox.Design
             public string Name { get; set; }
             public bool OrderByDesc { get; set; }
         }
+        #endregion
     }
 }

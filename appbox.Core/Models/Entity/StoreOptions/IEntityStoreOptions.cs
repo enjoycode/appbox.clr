@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using appbox.Serialization;
 
 namespace appbox.Models
@@ -8,6 +9,14 @@ namespace appbox.Models
     /// </summary>
     public interface IEntityStoreOptions : IBinSerializable, IJsonSerializable
     {
+
+        bool HasIndexes { get; }
+
+        /// <summary>
+        /// 索引列表，仅用于设计时类型消除
+        /// </summary>
+        IEnumerable<IndexModelBase> Indexes { get; }
+
         void AcceptChanges();
 
         //void Import();

@@ -34,7 +34,7 @@ namespace appbox.Models
         /// <summary>
         /// 二级索引列表
         /// </summary>
-        internal List<EntityIndexModel> Indexes
+        public List<EntityIndexModel> Indexes
         {
             get
             {
@@ -43,7 +43,8 @@ namespace appbox.Models
                 return _indexes;
             }
         }
-        internal bool HasIndexes => _indexes != null && _indexes.Count > 0;
+        public bool HasIndexes => _indexes != null && _indexes.Count > 0;
+        IEnumerable<IndexModelBase> IEntityStoreOptions.Indexes => Indexes;
 
         /// <summary>
         /// 主键是否按时间倒序

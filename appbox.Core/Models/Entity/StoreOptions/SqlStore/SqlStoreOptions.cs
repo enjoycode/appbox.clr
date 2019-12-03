@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using appbox.Serialization;
 using Newtonsoft.Json;
@@ -10,6 +11,10 @@ namespace appbox.Models
     /// </summary>
     public sealed class SqlStoreOptions : IEntityStoreOptions
     {
+        private const ushort MaxIndexId = 32; //2的5次方, 2bit Layer，1bit惟一标志
+
+        private byte _devIndexIdSeq;
+        private byte _usrIndexIdSeq;
 
         /// <summary>
         /// 映射的DataStoreModel的标识
@@ -28,6 +33,22 @@ namespace appbox.Models
         internal bool HasPrimaryKeys => PrimaryKeys != null && PrimaryKeys.Count > 0;
         internal bool PrimaryKeysHasChanged { get; private set; } = false;
 
+        private List<SqlIndexModel> _indexes;
+        /// <summary>
+        /// 二级索引列表
+        /// </summary>
+        internal List<SqlIndexModel> Indexes
+        {
+            get
+            {
+                if (_indexes == null)
+                    _indexes = new List<SqlIndexModel>();
+                return _indexes;
+            }
+        }
+        public bool HasIndexes => _indexes != null && _indexes.Count > 0;
+        IEnumerable<IndexModelBase> IEntityStoreOptions.Indexes => Indexes;
+
         #region ====Ctor====
         internal SqlStoreOptions() { }
 
@@ -41,6 +62,17 @@ namespace appbox.Models
         public void AcceptChanges()
         {
             PrimaryKeysHasChanged = false;
+
+            if (HasIndexes)
+            {
+                for (int i = _indexes.Count - 1; i >= 0; i--)
+                {
+                    if (_indexes[i].PersistentState == Data.PersistentState.Deleted)
+                        _indexes.RemoveAt(i);
+                    else
+                        _indexes[i].AcceptChanges();
+                }
+            }
         }
 
         internal void SetPrimaryKeys(EntityModel owner, List<FieldWithOrder> fields)
@@ -49,6 +81,24 @@ namespace appbox.Models
             PrimaryKeys = fields;
             PrimaryKeysHasChanged = true;
         }
+
+        internal void AddIndex(EntityModel owner, SqlIndexModel index)
+        {
+            owner.CheckDesignMode();
+            owner.CheckOwner(index.Owner);
+
+            //TODO:同上AddMember
+            var layer = ModelLayer.DEV;
+            var seq = layer == ModelLayer.DEV ? ++_devIndexIdSeq : ++_usrIndexIdSeq;
+            if (seq >= MaxIndexId) //TODO:找空的
+                throw new Exception("IndexId out of range");
+
+            byte indexId = (byte)(seq << 2 | (byte)layer);
+            if (index.Unique)
+                indexId |= 1 << IdUtil.INDEXID_UNIQUE_OFFSET;
+            index.InitIndexId(indexId);
+            Indexes.Add(index);
+        }
         #endregion
 
         #region ====Serialization====
@@ -56,6 +106,7 @@ namespace appbox.Models
         {
             bs.Write(StoreModelId, 1);
 
+            //写入主键
             if (HasPrimaryKeys)
             {
                 bs.Write(2u);
@@ -66,6 +117,23 @@ namespace appbox.Models
                 }
             }
             bs.Write(PrimaryKeysHasChanged, 3);
+
+            //写入索引
+            if (HasIndexes)
+            {
+                bs.Write(4u);
+                bs.Write(Indexes.Count);
+                for (int i = 0; i < Indexes.Count; i++)
+                {
+                    bs.Serialize(Indexes[i]);
+                }
+            }
+
+            //if (DesignMode)
+            //{
+            bs.Write(_devIndexIdSeq, 6);
+            bs.Write(_usrIndexIdSeq, 7);
+            //}
 
             bs.Write(0u);
         }
@@ -95,17 +163,18 @@ namespace appbox.Models
                         break;
                     case 3:
                         PrimaryKeysHasChanged = bs.ReadBoolean(); break;
-                    //case 4:
-                    //    {
-                    //        int count = bs.ReadInt32();
-                    //        for (int i = 0; i < count; i++)
-                    //        {
-                    //            var mv = new SqlIndex();
-                    //            mv.ReadObject(bs);
-                    //            this.Indexes.Add(mv);
-                    //        }
-                    //    }
-                    //    break;
+                    case 4:
+                        {
+                            int count = bs.ReadInt32();
+                            for (int i = 0; i < count; i++)
+                            {
+                                var idx = (SqlIndexModel)bs.Deserialize();
+                                Indexes.Add(idx);
+                            }
+                        }
+                        break;
+                    case 6: _devIndexIdSeq = bs.ReadByte(); break;
+                    case 7: _usrIndexIdSeq = bs.ReadByte(); break;
                     case 0: break;
                     default: throw new Exception($"Deserialize_ObjectUnknownFieldIndex: {GetType().Name} at {propIndex} ");
                 }
@@ -124,12 +193,15 @@ namespace appbox.Models
                 writer.Serialize(PrimaryKeys);
             else //null发送[]方便前端
                 writer.WriteRawValue("[]");
+
+            writer.WritePropertyName(nameof(Indexes));
+            if (!HasIndexes)
+                writer.WriteRawValue("[]");
+            else
+                writer.Serialize(Indexes.Where(t => t.PersistentState != Data.PersistentState.Deleted).ToArray());
         }
 
-        public void ReadFromJson(JsonTextReader reader, ReadedObjects objrefs)
-        {
-            throw new NotSupportedException();
-        }
+        public void ReadFromJson(JsonTextReader reader, ReadedObjects objrefs) => throw new NotSupportedException();
         #endregion
     }
 }

@@ -6,6 +6,8 @@ using System.Text;
 using Npgsql;
 using appbox.Caching;
 using appbox.Models;
+using appbox.Data;
+using System.Diagnostics;
 
 namespace appbox.Store
 {
@@ -33,7 +35,7 @@ namespace appbox.Store
                     if (!rm.IsAggregationRef) //只有非聚合引合创建外键
                     {
                         fks.Add(BuildForeignKey(rm, ctx));
-                        //考虑CreateGetTreeNodeChildsDbFuncCommand
+                        //考虑旧实现CreateGetTreeNodeChildsDbFuncCommand
                     }
                 }
             }
@@ -62,10 +64,11 @@ namespace appbox.Store
                 sb.AppendLine(fks[i]);
             }
 
-            //TODO: Build Indexes
-
             var res = new List<DbCommand>();
             res.Add(new NpgsqlCommand(StringBuilderCache.GetStringAndRelease(sb)));
+
+            //Build Indexes
+            BuildIndexes(model, res);
 
             return res;
         }
@@ -78,15 +81,15 @@ namespace appbox.Store
             List<string> fks = new List<string>(); //引用外键列表
             List<DbCommand> commands = new List<DbCommand>();
             //List<DbCommand> funcCmds = new List<DbCommand>();
-            //1.先处理表名称有没有变更，后续全部使用新名称
+            //先处理表名称有没有变更，后续全部使用新名称
             if (model.IsNameChanged)
             {
                 var renameTableCmd = new NpgsqlCommand($"ALTER TABLE \"{model.SqlTableOriginalName}\" RENAME TO \"{model.SqlTableName}\"");
                 commands.Add(renameTableCmd);
             }
 
-            //2.处理删除的成员
-            var deletedMembers = model.Members.Where(t => t.PersistentState == Data.PersistentState.Deleted).ToArray();
+            //处理删除的成员
+            var deletedMembers = model.Members.Where(t => t.PersistentState == PersistentState.Deleted).ToArray();
             if (deletedMembers != null && deletedMembers.Length > 0)
             {
                 #region ----删除的成员----
@@ -129,8 +132,8 @@ namespace appbox.Store
             needCommand = false;
             fks.Clear();
 
-            //3.处理新增的成员
-            var addedMembers = model.Members.Where(t => t.PersistentState == Data.PersistentState.Detached).ToArray();
+            //处理新增的成员
+            var addedMembers = model.Members.Where(t => t.PersistentState == PersistentState.Detached).ToArray();
             if (addedMembers != null && addedMembers.Length > 0)
             {
                 #region ----新增的成员----
@@ -175,8 +178,8 @@ namespace appbox.Store
             needCommand = false;
             fks.Clear();
 
-            //4.处理修改的成员
-            var changedMembers = model.Members.Where(t => t.PersistentState == Data.PersistentState.Modified).ToArray();
+            //处理修改的成员
+            var changedMembers = model.Members.Where(t => t.PersistentState == PersistentState.Modified).ToArray();
             if (changedMembers != null && changedMembers.Length > 0)
             {
                 #region ----修改的成员----
@@ -202,7 +205,8 @@ namespace appbox.Store
                 #endregion
             }
 
-            //TODO:处理索引变更
+            //处理索引变更
+            BuildIndexes(model, commands);
 
             return commands;
         }
@@ -331,6 +335,42 @@ namespace appbox.Store
             //TODO:pg's MATCH SIMPLE?
             rsb.Append($") ON UPDATE {GetActionRuleString(rm.UpdateRule)} ON DELETE {GetActionRuleString(rm.DeleteRule)};");
             return StringBuilderCache.GetStringAndRelease(rsb);
+        }
+
+        private static void BuildIndexes(EntityModel model, List<DbCommand> commands)
+        {
+            Debug.Assert(commands != null);
+            if (!model.SqlStoreOptions.HasIndexes)
+                return;
+
+            if (model.PersistentState != PersistentState.Detached)
+            {
+                var deletedIndexes = model.SqlStoreOptions.Indexes.Where(t => t.PersistentState == PersistentState.Deleted);
+                foreach (var index in deletedIndexes)
+                {
+                    commands.Add(new NpgsqlCommand($"DROP INDEX IF EXISTS \"IX_{index.IndexId}\""));
+                }
+            }
+
+            var newIndexes = model.SqlStoreOptions.Indexes.Where(t => t.PersistentState == PersistentState.Detached);
+            foreach (var index in newIndexes)
+            {
+                var sb = StringBuilderCache.Acquire();
+                sb.Append("CREATE ");
+                if (index.Unique) sb.Append("UNIQUE ");
+                sb.Append($"INDEX \"IX_{index.IndexId}\" ON \"{model.SqlTableName}\" (");
+                for (int i = 0; i < index.Fields.Length; i++)
+                {
+                    if (i != 0) sb.Append(',');
+                    var dfm = (DataFieldModel)model.GetMember(index.Fields[i].MemberId, true);
+                    sb.Append($"\"{dfm.SqlColName}\"");
+                    if (index.Fields[i].OrderByDesc) sb.Append(" DESC");
+                }
+                sb.Append(')');
+                commands.Add(new NpgsqlCommand(StringBuilderCache.GetStringAndRelease(sb)));
+            }
+
+            //暂不处理改变的索引
         }
         #endregion
     }
