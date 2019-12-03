@@ -326,52 +326,34 @@ namespace appbox.Models
             if (other == null)
                 return 1;
 
-            //TODO: fix
-            ////判断当前对象有没有EntityRef引用成员至目标对象
-            ////如果引用则大于other对象
-            //List<EntityMemberModel> allMembers = new List<EntityMemberModel>(this._members.Values);
-            //if (HasDeletedMembers)
-            //    allMembers.AddRange(_deletedMembers);
-            //foreach (var member in allMembers)
-            //{
-            //    if (member is EntityRefModel)
-            //    {
-            //        EntityRefModel mref = (EntityRefModel)member;
-            //        foreach (var refModelId in mref.RefModelIDs)
-            //        {
-            //            if (refModelId == other.ID)
-            //            {
-            //                if (other.PersistentState == PersistentState.Deleted) //注意：删除的需要倒过来排序
-            //                    return -1;
-            //                else
-            //                    return 1;
-            //            }
-            //        }
-            //    }
-            //}
+            //判断当前对象有没有EntityRef引用成员至目标对象, 如果引用则大于other对象
+            var refs = Members.Where(t => t.Type == EntityMemberType.EntityRef);
+            foreach (var m in refs)
+            {
+                var rm = (EntityRefModel)m;
+                foreach (var refModelId in rm.RefModelIds)
+                {
+                    if (refModelId == other.Id)
+                    {
+                        //注意：删除的需要倒过来排序
+                        return other.PersistentState == Data.PersistentState.Deleted ? -1 : 1;
+                    }
+                }
+            }
 
-            //allMembers = new List<EntityMemberModel>(other._members.Values);
-            //if (other.HasDeletedMembers)
-            //    allMembers.AddRange(other.DeletedMembers);
-            //foreach (var member in allMembers)
-            //{
-            //    if (member is EntityRefModel)
-            //    {
-            //        EntityRefModel mref = (EntityRefModel)member;
-            //        foreach (var refModelID in mref.RefModelIDs)
-            //        {
-            //            if (refModelID == this.ID)
-            //            {
-            //                if (other.PersistentState == PersistentState.Deleted) //注意：删除的需要倒过来排序
-            //                    return 1;
-            //                else
-            //                    return -1;
-            //            }
-            //        }
-            //    }
-            //}
+            //反过来判断,应该不需要
+            var otherRefs = other.Members.Where(t => t.Type == EntityMemberType.EntityRef);
+            foreach (var m in otherRefs)
+            {
+                var rm = (EntityRefModel)m;
+                foreach (var refModelId in rm.RefModelIds)
+                {
+                    //注意：删除的需要倒过来排序
+                    return other.PersistentState == Data.PersistentState.Deleted ? 1 : -1;
+                }
+            }
 
-            return 0;
+            return Id.CompareTo(other.Id);
         }
         #endregion
     }
