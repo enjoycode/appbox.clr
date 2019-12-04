@@ -37,6 +37,7 @@ namespace appbox.Design
                 { nameof(NewEntityMember), new NewEntityMember() },
                 { nameof(DeleteEntityMember), new DeleteEntityMember() },
                 { nameof(ChangeEntity), new ChangeEntity() },
+                { nameof(ChangeEntityMember), new ChangeEntityMember() },
                 { nameof(GetEntityRefModels), new GetEntityRefModels() },
                 //Service
                 { nameof(NewServiceModel), new NewServiceModel() },
