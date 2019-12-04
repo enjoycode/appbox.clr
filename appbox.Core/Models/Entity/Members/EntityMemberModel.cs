@@ -29,6 +29,7 @@ namespace appbox.Models
 
         public PersistentState PersistentState { get; private set; }
 
+        public string Comment { get; internal set; }
         #endregion
 
         #region ====Ctor====
@@ -82,6 +83,8 @@ namespace appbox.Models
             bs.Write(AllowNull, 2);
             bs.Write(Name, 3);
             bs.Write(MemberId, 4);
+            if (!string.IsNullOrEmpty(Comment))
+                bs.Write(Comment, 7);
 
             if (Owner.DesignMode)
             {
@@ -89,7 +92,7 @@ namespace appbox.Models
                 bs.Write((byte)PersistentState, 6);
             }
 
-            bs.Write((uint)0);
+            bs.Write(0u);
         }
 
         public virtual void ReadObject(BinSerializer bs)
@@ -106,8 +109,9 @@ namespace appbox.Models
                     case 4: MemberId = bs.ReadUInt16(); break;
                     case 5: _originalName = bs.ReadString(); break;
                     case 6: PersistentState = (PersistentState)bs.ReadByte(); break;
+                    case 7: Comment = bs.ReadString(); break;
                     case 0: break;
-                    default: throw new Exception("Deserialize_ObjectUnknownFieldIndex: " + this.GetType().Name);
+                    default: throw new Exception($"Deserialize_ObjectUnknownFieldIndex: {GetType().Name}");
                 }
             } while (propIndex != 0);
         }
@@ -119,16 +123,16 @@ namespace appbox.Models
             writer.WritePropertyName("ID");
             writer.WriteValue(MemberId);
 
-            writer.WritePropertyName("AllowNull");
+            writer.WritePropertyName(nameof(AllowNull));
             writer.WriteValue(AllowNull);
 
-            //writer.WritePropertyName("LocalizedName");
-            //writer.WriteValue(this.LocalizedName);
+            writer.WritePropertyName(nameof(Comment));
+            writer.WriteValue(Comment);
 
             writer.WritePropertyName(nameof(Name));
             writer.WriteValue(Name);
 
-            writer.WritePropertyName("Type");
+            writer.WritePropertyName(nameof(Type));
             writer.WriteValue((int)Type);
 
             WriteMembers(writer, objrefs);
@@ -136,10 +140,7 @@ namespace appbox.Models
 
         protected virtual void WriteMembers(JsonTextWriter writer, WritedObjects objrefs) { }
 
-        void IJsonSerializable.ReadFromJson(JsonTextReader reader, ReadedObjects objrefs)
-        {
-            throw new NotSupportedException();
-        }
+        void IJsonSerializable.ReadFromJson(JsonTextReader reader, ReadedObjects objrefs) => throw new NotSupportedException();
         #endregion
     }
 
