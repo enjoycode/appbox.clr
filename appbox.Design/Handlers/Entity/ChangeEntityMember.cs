@@ -61,10 +61,10 @@ namespace appbox.Design
             if (member.Type == EntityMemberType.DataField)
             {
                 var dfm = (DataFieldModel)member;
-                if (propertyName == "DataType" || propertyName == "Length" || propertyName == "Decimals")
+                if (propertyName == "DataType" || propertyName == "Length"
+                    || propertyName == "Decimals" || propertyName == "DefaultValue"
+                    || propertyName == "AllowNull")
                     dfm.OnDataTypeChanged();
-                else if (propertyName == "DefaultValue")
-                    dfm.OnDefaultValueChanged();
             }
 
             return Task.FromResult<object>(1);
