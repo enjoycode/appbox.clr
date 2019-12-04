@@ -21,9 +21,10 @@ namespace appbox.Models
         /// </summary>
         internal bool IsForeignKey { get; private set; }
 
+        /// <summary>
+        /// 字段类型、AllowNull及DefaultValue变更均视为DataTypeChanged
+        /// </summary>
         internal bool IsDataTypeChanged { get; private set; }
-
-        internal bool IsDefaultValueChanged { get; private set; }
 
         /// <summary>
         /// 如果DataType = Enum,则必须设置相应的EnumModel.ModelId
@@ -46,7 +47,7 @@ namespace appbox.Models
         /// <summary>
         /// 非空的默认值
         /// </summary>
-        /// <remarks>set for design must call OnDefaultValueChanged</remarks>
+        /// <remarks>set for design must call OnDataTypeChanged</remarks>
         internal EntityMember? DefaultValue { get; set; }
 
         /// <summary>
@@ -164,7 +165,7 @@ namespace appbox.Models
             }
 
             DefaultValue = v;
-            OnDefaultValueChanged();
+            OnDataTypeChanged();
         }
 
         internal void OnDataTypeChanged()
@@ -172,15 +173,6 @@ namespace appbox.Models
             if (PersistentState == PersistentState.Unchanged)
             {
                 IsDataTypeChanged = true;
-                OnPropertyChanged();
-            }
-        }
-
-        internal void OnDefaultValueChanged()
-        {
-            if (PersistentState == PersistentState.Unchanged)
-            {
-                IsDefaultValueChanged = true;
                 OnPropertyChanged();
             }
         }
@@ -210,7 +202,6 @@ namespace appbox.Models
             }
 
             bs.Write(IsDataTypeChanged, 7);
-            bs.Write(IsDefaultValueChanged, 8);
 
             bs.Write(0u);
         }
@@ -238,7 +229,6 @@ namespace appbox.Models
                     case 5: Length = bs.ReadUInt32(); break;
                     case 6: Decimals = bs.ReadUInt32(); break;
                     case 7: IsDataTypeChanged = bs.ReadBoolean(); break;
-                    case 8: IsDefaultValueChanged = bs.ReadBoolean(); break;
                     case 0: break;
                     default: throw new Exception($"Deserialize_ObjectUnknownFieldIndex: {GetType().Name}");
                 }

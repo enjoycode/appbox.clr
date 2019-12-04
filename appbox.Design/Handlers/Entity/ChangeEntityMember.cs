@@ -15,9 +15,9 @@ namespace appbox.Design
     {
         public Task<object> Handle(DesignHub hub, InvokeArgs args)
         {
-            var modelID = (string)args.GetObject();
-            var memberName = (string)args.GetObject();
-            var propertyName = (string)args.GetObject();
+            var modelID = args.GetString();
+            var memberName = args.GetString();
+            var propertyName = args.GetString();
             var propertyValue = args.GetObject();
 
             var modelNode = hub.DesignTree.FindModelNode(ModelType.Entity, ulong.Parse(modelID));
@@ -25,6 +25,7 @@ namespace appbox.Design
                 throw new Exception($"Can't find Entity model: {modelID}");
             var model = (EntityModel)modelNode.Model;
             var member = model.GetMember(memberName, true);
+            //TODO:如果改变DataField数据类型预先检查兼容性
 
             PropertyInfo[] dms = null;
             switch (member.Type)

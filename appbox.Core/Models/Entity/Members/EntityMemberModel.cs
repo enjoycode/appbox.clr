@@ -16,6 +16,10 @@ namespace appbox.Models
         public EntityModel Owner { get; private set; }
         public ushort MemberId { get; private set; }
         public string Name { get; private set; }
+        /// <summary>
+        /// 是否允许为null值
+        /// </summary>
+        /// <remarks>设计时改变时如果是DataField需要调用其OnDataTypeChanged</remarks>
         public bool AllowNull { get; internal set; }
 
         public abstract EntityMemberType Type { get; }

@@ -25,8 +25,7 @@ namespace appbox.Store
             {
                 if (mm.Type == EntityMemberType.DataField)
                 {
-                    var dfm = (DataFieldModel)mm;
-                    BuildFieldDefine(dfm.SqlColName, dfm.DataType, 0 /*fix length*/, 0/*fix scale*/, dfm.AllowNull, sb, false);
+                    BuildFieldDefine((DataFieldModel)mm, sb, false);
                     sb.Append(',');
                 }
                 else if (mm.Type == EntityMemberType.EntityRef)
@@ -145,8 +144,7 @@ namespace appbox.Store
                     {
                         needCommand = true;
                         sb.AppendFormat("ALTER TABLE \"{0}\" ADD COLUMN ", model.SqlTableName);
-                        DataFieldModel dfm = (DataFieldModel)m;
-                        BuildFieldDefine(dfm.Name, dfm.DataType, 0 /*fix length*/, 0/*fix scale*/, dfm.AllowNull, sb, false);
+                        BuildFieldDefine((DataFieldModel)m, sb, false);
                         sb.Append(";");
                     }
                     else if (m.Type == EntityMemberType.EntityRef)
@@ -189,7 +187,27 @@ namespace appbox.Store
                     if (m.Type == EntityMemberType.DataField)
                     {
                         DataFieldModel dfm = (DataFieldModel)m;
-                        //TODO: 先处理数据类型变更 ALTER TABLE products ALTER COLUMN price TYPE numeric(10,2);
+                        //先处理数据类型变更，变更类型或者变更AllowNull或者变更默认值
+                        if (dfm.IsDataTypeChanged)
+                        {
+                            sb = StringBuilderCache.Acquire();
+                            sb.AppendFormat("ALTER TABLE \"{0}\" ALTER COLUMN ", m.Owner.SqlTableName);
+                            string defaultValue = BuildFieldDefine(dfm, sb, true);
+
+                            if (dfm.AllowNull)
+                            {
+                                sb.AppendFormat(",ALTER COLUMN \"{0}\" DROP NOT NULL", dfm.SqlColOriginalName);
+                            }
+                            else
+                            {
+                                if (dfm.DataType == EntityFieldType.Binary)
+                                    throw new Exception("Binary field must be allow null");
+                                sb.AppendFormat(",ALTER COLUMN \"{0}\" SET NOT NULL,ALTER COLUMN \"{0}\" SET DEFAULT {1}",
+                                    dfm.SqlColOriginalName, defaultValue);
+                            }
+
+                            commands.Add(new NpgsqlCommand(StringBuilderCache.GetStringAndRelease(sb)));
+                        }
 
                         //再处理重命名列
                         if (m.IsNameChanged)
@@ -229,69 +247,78 @@ namespace appbox.Store
             };
         }
 
-        private static string BuildFieldDefine(string fieldName, EntityFieldType dataType, int length,
-            int scale, bool allowNull, StringBuilder sb, bool isAlterFieldType)
+        private static string BuildFieldDefine(DataFieldModel dfm, StringBuilder sb, bool forAlter)
         {
             string defaultValue = string.Empty;
+            var fieldName = forAlter ? dfm.SqlColOriginalName : dfm.SqlColName;
             sb.Append($"\"{fieldName}\" ");
-            if (isAlterFieldType)
+            if (forAlter)
                 sb.Append("TYPE ");
 
-            switch (dataType)
+            switch (dfm.DataType)
             {
                 case EntityFieldType.String:
-                    defaultValue = "''";
-                    if (length == 0)
+                    defaultValue = dfm.DefaultValue.HasValue ? $"'{dfm.DefaultValue.Value.ObjectValue}'" : "''";
+                    if (dfm.Length == 0)
                         sb.Append("text ");
                     else
-                        sb.Append($"varchar({length}) ");
+                        sb.Append($"varchar({dfm.Length}) ");
                     break;
                 case EntityFieldType.DateTime:
-                    defaultValue = "'0001-1-1'"; //TODO: fix it
+                    defaultValue = dfm.DefaultValue.HasValue ? $"'{dfm.DefaultValue.Value.DateTimeValue}'" : "'1970-1-1'";
                     sb.Append("timestamp ");
                     break;
                 case EntityFieldType.UInt16:
+                    defaultValue = dfm.DefaultValue.HasValue ? dfm.DefaultValue.Value.UInt16Value.ToString() : "0";
+                    sb.Append("int2 ");
+                    break;
                 case EntityFieldType.Int16:
-                    defaultValue = "0";
+                    defaultValue = dfm.DefaultValue.HasValue ? dfm.DefaultValue.Value.Int16Value.ToString() : "0";
                     sb.Append("int2 ");
                     break;
                 case EntityFieldType.UInt32:
+                    defaultValue = dfm.DefaultValue.HasValue ? dfm.DefaultValue.Value.UInt32Value.ToString() : "0";
+                    sb.Append("int4 ");
+                    break;
                 case EntityFieldType.Int32:
-                    defaultValue = "0";
+                    defaultValue = dfm.DefaultValue.HasValue ? dfm.DefaultValue.Value.Int32Value.ToString() : "0";
                     sb.Append("int4 ");
                     break;
                 case EntityFieldType.UInt64:
+                    defaultValue = dfm.DefaultValue.HasValue ? dfm.DefaultValue.Value.UInt64Value.ToString() : "0";
+                    sb.Append("int8 ");
+                    break;
                 case EntityFieldType.Int64:
-                    defaultValue = "0";
+                    defaultValue = dfm.DefaultValue.HasValue ? dfm.DefaultValue.Value.Int64Value.ToString() : "0";
                     sb.Append("int8 ");
                     break;
                 case EntityFieldType.Decimal:
-                    defaultValue = "0";
-                    int l = length + scale;
-                    sb.AppendFormat("decimal({0},{1}) ", l, scale);
+                    defaultValue = dfm.DefaultValue.HasValue ? dfm.DefaultValue.Value.DecimalValue.ToString() : "0";
+                    sb.AppendFormat("decimal({0},{1}) ", dfm.Length + dfm.Decimals, dfm.Decimals);
                     break;
                 case EntityFieldType.Boolean:
-                    defaultValue = "false";
+                    defaultValue = dfm.DefaultValue.HasValue ? dfm.DefaultValue.Value.BooleanValue.ToString() : "false";
                     sb.Append("bool ");
                     break;
                 case EntityFieldType.Guid:
-                    defaultValue = "'00000000-0000-0000-0000-000000000000'";
+                    defaultValue = dfm.DefaultValue.HasValue ?
+                        $"'{dfm.DefaultValue.Value.GuidValue}'" : "'00000000-0000-0000-0000-000000000000'";
                     sb.Append("uuid ");
                     break;
                 case EntityFieldType.Byte:
-                    defaultValue = "0";
+                    defaultValue = dfm.DefaultValue.HasValue ? dfm.DefaultValue.Value.ByteValue.ToString() : "0";
                     sb.Append("int2 ");
                     break;
                 case EntityFieldType.Enum:
-                    defaultValue = "0";
+                    defaultValue = dfm.DefaultValue.HasValue ? dfm.DefaultValue.Value.Int32Value.ToString() : "0";
                     sb.Append("int4 ");
                     break;
                 case EntityFieldType.Float:
-                    defaultValue = "0";
+                    defaultValue = dfm.DefaultValue.HasValue ? dfm.DefaultValue.Value.FloatValue.ToString() : "0";
                     sb.Append("float4 ");
                     break;
                 case EntityFieldType.Double:
-                    defaultValue = "0";
+                    defaultValue = dfm.DefaultValue.HasValue ? dfm.DefaultValue.Value.DoubleValue.ToString() : "0";
                     sb.Append("float8 ");
                     break;
                 case EntityFieldType.Binary:
@@ -301,9 +328,9 @@ namespace appbox.Store
                     throw new NotImplementedException("PgSqlStore.BuildFieldDefine");
             }
 
-            if (!allowNull && !isAlterFieldType)
+            if (!dfm.AllowNull && !forAlter)
             {
-                if (dataType == EntityFieldType.Binary)
+                if (dfm.DataType == EntityFieldType.Binary)
                     throw new Exception("Binary field must be allow null");
 
                 sb.Append("NOT NULL DEFAULT ");
