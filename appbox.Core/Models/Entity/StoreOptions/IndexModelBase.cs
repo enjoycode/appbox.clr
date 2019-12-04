@@ -54,7 +54,7 @@ namespace appbox.Models
         internal void MarkDeleted()
         {
             PersistentState = PersistentState.Deleted;
-            Owner.ChangeToModified();
+            Owner.OnPropertyChanged();
             Owner.ChangeSchemaVersion();
         }
         #endregion

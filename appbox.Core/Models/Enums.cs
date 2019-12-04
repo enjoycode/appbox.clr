@@ -91,43 +91,30 @@ namespace appbox.Models
         Double,
     }
 
-    public static class EntityFieldTypeHelper
+    public static class EntityFieldExtensions
     {
         public static Type GetValueType(this EntityFieldType fieldType)
         {
-            //TODO: fix others
             switch (fieldType)
             {
-                case EntityFieldType.EntityId:
-                    return typeof(EntityId);
-                case EntityFieldType.String:
-                    return typeof(string);
-                case EntityFieldType.DateTime:
-                    return typeof(DateTime);
-                case EntityFieldType.Int32:
-                    return typeof(int);
-                case EntityFieldType.Int64:
-                    return typeof(long);
-                case EntityFieldType.UInt64:
-                    return typeof(ulong);
-                case EntityFieldType.Decimal:
-                    return typeof(decimal);
-                case EntityFieldType.Float:
-                    return typeof(float);
-                case EntityFieldType.Double:
-                    return typeof(double);
-                case EntityFieldType.Boolean:
-                    return typeof(bool);
-                case EntityFieldType.Guid:
-                    return typeof(Guid);
-                case EntityFieldType.Byte:
-                    return typeof(byte);
-                case EntityFieldType.Binary:
-                    return typeof(byte[]);
-                case EntityFieldType.Enum:
-                    return typeof(int);
-                default:
-                    return typeof(object);
+                case EntityFieldType.EntityId: return typeof(EntityId);
+                case EntityFieldType.String: return typeof(string);
+                case EntityFieldType.DateTime: return typeof(DateTime);
+                case EntityFieldType.Int16: return typeof(short);
+                case EntityFieldType.UInt16: return typeof(ushort);
+                case EntityFieldType.Int32: return typeof(int);
+                case EntityFieldType.UInt32: return typeof(uint);
+                case EntityFieldType.Int64: return typeof(long);
+                case EntityFieldType.UInt64: return typeof(ulong);
+                case EntityFieldType.Decimal: return typeof(decimal);
+                case EntityFieldType.Float: return typeof(float);
+                case EntityFieldType.Double: return typeof(double);
+                case EntityFieldType.Boolean: return typeof(bool);
+                case EntityFieldType.Guid: return typeof(Guid);
+                case EntityFieldType.Byte: return typeof(byte);
+                case EntityFieldType.Binary: return typeof(byte[]);
+                case EntityFieldType.Enum: return typeof(int);
+                default: return typeof(object);
             }
         }
     }

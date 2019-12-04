@@ -80,6 +80,7 @@ namespace appbox.Models
             owner.CheckDesignMode();
             PrimaryKeys = fields;
             PrimaryKeysHasChanged = true;
+            owner.OnPropertyChanged();
         }
 
         internal void AddIndex(EntityModel owner, SqlIndexModel index)
@@ -98,6 +99,7 @@ namespace appbox.Models
                 indexId |= 1 << IdUtil.INDEXID_UNIQUE_OFFSET;
             index.InitIndexId(indexId);
             Indexes.Add(index);
+            owner.OnPropertyChanged();
         }
         #endregion
 

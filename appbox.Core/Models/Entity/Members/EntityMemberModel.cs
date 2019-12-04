@@ -58,6 +58,16 @@ namespace appbox.Models
         internal void MarkDeleted()
         {
             PersistentState = PersistentState.Deleted;
+            Owner.OnPropertyChanged();
+        }
+
+        internal void OnPropertyChanged()
+        {
+            if (PersistentState == PersistentState.Unchanged)
+            {
+                PersistentState = PersistentState.Modified;
+                Owner.OnPropertyChanged();
+            }
         }
         #endregion
 

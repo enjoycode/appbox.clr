@@ -69,7 +69,7 @@ namespace appbox.Models
             }
         }
 
-        internal protected void ChangeToModified()
+        internal protected void OnPropertyChanged()
         {
             if (PersistentState == PersistentState.Unchanged)
                 PersistentState = PersistentState.Modified;

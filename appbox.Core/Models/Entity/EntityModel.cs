@@ -157,7 +157,7 @@ namespace appbox.Models
 
             if (!member.AllowNull) //注意仅none nullable
                 ChangeSchemaVersion();
-            ChangeToModified();
+            OnPropertyChanged();
         }
 
         /// <summary>
@@ -209,7 +209,7 @@ namespace appbox.Models
             }
 
             ChangeSchemaVersion();
-            ChangeToModified();
+            OnPropertyChanged();
         }
         #endregion
 

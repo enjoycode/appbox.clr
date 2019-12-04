@@ -109,11 +109,18 @@ namespace appbox.Data
         }
 
         #region ====隐式转换,只转换值不包含MemberId====
-        // 这样做是为了方便设计时将值隐式转换为相应的EntityMember, 只要用于虚拟Entity的构造及Load
+        // 这样做是为了方便设计时将值隐式转换为相应的EntityMember, 只要用于虚拟Entity的构造及Load参数
         //TODO: others
         public static implicit operator EntityMember(DateTime v)
         {
             var r = new EntityMember() { DateTimeValue = v, ValueType = EntityFieldType.DateTime };
+            r.Flag.HasValue = true;
+            return r;
+        }
+
+        public static implicit operator EntityMember(long v)
+        {
+            var r = new EntityMember() { Int64Value = v, ValueType = EntityFieldType.Int64 };
             r.Flag.HasValue = true;
             return r;
         }

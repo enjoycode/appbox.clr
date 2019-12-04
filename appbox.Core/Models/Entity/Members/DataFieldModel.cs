@@ -10,22 +10,44 @@ namespace appbox.Models
         #region ====Fields & Properties====
         public override EntityMemberType Type => EntityMemberType.DataField;
 
-        public EntityFieldType DataType { get; private set; }
+        /// <summary>
+        /// 字段类型
+        /// </summary>
+        /// <remarks>set for design must call OnDataTypeChanged</remarks>
+        public EntityFieldType DataType { get; internal set; }
 
         /// <summary>
         /// 是否引用外键
         /// </summary>
         internal bool IsForeignKey { get; private set; }
 
+        internal bool IsDataTypeChanged { get; private set; }
+
+        internal bool IsDefaultValueChanged { get; private set; }
+
         /// <summary>
         /// 如果DataType = Enum,则必须设置相应的EnumModel.ModelId
         /// </summary>
-        internal ulong EnumModelId { get; private set; }
+        /// <remarks>set for design must call OnPropertyChanged</remarks>
+        internal ulong EnumModelId { get; set; }
+
+        /// <summary>
+        /// 仅用于Sql存储设置字符串最大长度(0=无限制)或Decimal整数部分长度
+        /// </summary>
+        /// <remarks>set for design must call OnDataTypeChanged</remarks>
+        public uint Length { get; internal set; }
+
+        /// <summary>
+        /// 仅用于Sql存储设置Decimal小数部分长度
+        /// </summary>
+        /// <remarks>set for design must call OnDataTypeChanged</remarks>
+        public uint Decimals { get; internal set; }
 
         /// <summary>
         /// 非空的默认值
         /// </summary>
-        internal EntityMember? DefaultValue { get; private set; }
+        /// <remarks>set for design must call OnDefaultValueChanged</remarks>
+        internal EntityMember? DefaultValue { get; set; }
 
         /// <summary>
         /// 保留用于根据规则生成Sql列的名称, eg:相同前缀、命名规则等
@@ -87,13 +109,22 @@ namespace appbox.Models
         #region ====Runtime Methods====
         internal override void InitMemberInstance(Entity owner, ref EntityMember member)
         {
-            //TODO:处理默认值
             member.Id = MemberId;
             member.MemberType = EntityMemberType.DataField;
             member.ValueType = DataType;
             member.Flag.IsForeignKey = IsForeignKey;
             member.Flag.AllowNull = AllowNull;
-            member.Flag.HasValue = !AllowNull; //必须设置
+            //处理默认值
+            if (DefaultValue.HasValue)
+            {
+                member.GuidValue = DefaultValue.Value.GuidValue;
+                member.ObjectValue = DefaultValue.Value.ObjectValue;
+                member.Flag.HasValue = true;
+            }
+            else
+            {
+                member.Flag.HasValue = !AllowNull; //必须设置
+            }
         }
         #endregion
 
@@ -133,6 +164,25 @@ namespace appbox.Models
             }
 
             DefaultValue = v;
+            OnDefaultValueChanged();
+        }
+
+        internal void OnDataTypeChanged()
+        {
+            if (PersistentState == PersistentState.Unchanged)
+            {
+                IsDataTypeChanged = true;
+                OnPropertyChanged();
+            }
+        }
+
+        internal void OnDefaultValueChanged()
+        {
+            if (PersistentState == PersistentState.Unchanged)
+            {
+                IsDefaultValueChanged = true;
+                OnPropertyChanged();
+            }
         }
         #endregion
 
@@ -145,6 +195,13 @@ namespace appbox.Models
             bs.Write(IsForeignKey, 2);
             if (DataType == EntityFieldType.Enum)
                 bs.Write(EnumModelId, 3);
+            else if (DataType == EntityFieldType.String)
+                bs.Write(Length, 5);
+            else if (DataType == EntityFieldType.Decimal)
+            {
+                bs.Write(Length, 5);
+                bs.Write(Decimals, 6);
+            }
 
             if (DefaultValue.HasValue)
             {
@@ -152,7 +209,10 @@ namespace appbox.Models
                 DefaultValue.Value.Write(bs);
             }
 
-            bs.Write((uint)0);
+            bs.Write(IsDataTypeChanged, 7);
+            bs.Write(IsDefaultValueChanged, 8);
+
+            bs.Write(0u);
         }
 
         public override void ReadObject(BinSerializer bs)
@@ -175,6 +235,10 @@ namespace appbox.Models
                             DefaultValue = dv; //Do not use DefaultValue.Value.Read
                             break;
                         }
+                    case 5: Length = bs.ReadUInt32(); break;
+                    case 6: Decimals = bs.ReadUInt32(); break;
+                    case 7: IsDataTypeChanged = bs.ReadBoolean(); break;
+                    case 8: IsDefaultValueChanged = bs.ReadBoolean(); break;
                     case 0: break;
                     default: throw new Exception($"Deserialize_ObjectUnknownFieldIndex: {GetType().Name}");
                 }
@@ -183,13 +247,25 @@ namespace appbox.Models
 
         protected override void WriteMembers(JsonTextWriter writer, WritedObjects objrefs)
         {
-            writer.WritePropertyName("DataType");
+            writer.WritePropertyName(nameof(DataType));
             writer.WriteValue((int)DataType);
 
             if (DataType == EntityFieldType.Enum)
             {
-                writer.WritePropertyName("EnumModelID");
+                writer.WritePropertyName(nameof(EnumModelId));
                 writer.WriteValue(EnumModelId);
+            }
+            else if (DataType == EntityFieldType.String)
+            {
+                writer.WritePropertyName(nameof(Length));
+                writer.WriteValue(Length);
+            }
+            else if (DataType == EntityFieldType.Decimal)
+            {
+                writer.WritePropertyName(nameof(Length));
+                writer.WriteValue(Length);
+                writer.WritePropertyName(nameof(Decimals));
+                writer.WriteValue(Decimals);
             }
         }
         #endregion
