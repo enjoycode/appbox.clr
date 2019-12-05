@@ -10,16 +10,17 @@ namespace appbox.Server.Runtime
     /// </summary>
     static class SysServiceContainer
     {
-        static readonly Dictionary<string, IService> services = new Dictionary<string, IService>();
+        private static readonly Dictionary<ReadOnlyMemory<char>, IService> services =
+            new Dictionary<ReadOnlyMemory<char>, IService>();
 
         internal static void Init()
         {
-            services.Add(nameof(Services.AdminService), new Services.AdminService());
-            services.Add(nameof(Services.ClusterService), new Services.ClusterService());
-            services.Add(nameof(Design.DesignService), new Design.DesignService());
+            services.Add(nameof(Services.AdminService).AsMemory(), new Services.AdminService());
+            services.Add(nameof(Services.ClusterService).AsMemory(), new Services.ClusterService());
+            services.Add(nameof(Design.DesignService).AsMemory(), new Design.DesignService());
         }
 
-        internal static bool TryGet(string serviceName, out IService instance)
+        internal static bool TryGet(ReadOnlyMemory<char> serviceName, out IService instance)
         {
             return services.TryGetValue(serviceName, out instance);
         }

@@ -69,7 +69,7 @@ namespace appbox.Server.Channel
                     return;
                 }
 
-                await ProcessInvokeRequire(msgId, service, args);
+                await ProcessInvokeRequire(msgId, service, args); //TODO:不用等待
             }
         }
 

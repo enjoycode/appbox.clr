@@ -144,12 +144,12 @@ namespace appbox.Server
             if (firstDot == lastDot)
                 throw new ArgumentException(nameof(servicePath));
             var app = span.Slice(0, firstDot);
-            var service = span.Slice(firstDot + 1, lastDot - firstDot - 1);
+            var service = servicePath.AsMemory(firstDot + 1, lastDot - firstDot - 1);
             var method = span.Slice(lastDot + 1);
 
             if (app.SequenceEqual(appbox.Consts.SYS.AsSpan()))
             {
-                if (Runtime.SysServiceContainer.TryGet(service.ToString(), out IService serviceInstance)) //TODO:fix service.ToString()
+                if (Runtime.SysServiceContainer.TryGet(service, out IService serviceInstance))
                 {
                     return InvokeSysAsync(serviceInstance, servicePath, method.ToString(), args);
                 }
