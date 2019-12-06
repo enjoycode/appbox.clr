@@ -16,7 +16,7 @@ namespace OmniSharp.Roslyn.CSharp.Services
 
         public Task<object> Handle(DesignHub hub, InvokeArgs args)
         {
-            var fileName = (string)args.GetObject();
+            var fileName = args.GetString();
             var document = hub.TypeSystem.Workspace.GetOpenedDocumentByName(fileName);
             if (document == null)
                 throw new Exception(string.Format("Cannot find opened document: {0}", fileName));

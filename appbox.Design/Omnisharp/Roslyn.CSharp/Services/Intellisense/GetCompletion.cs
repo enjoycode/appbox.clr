@@ -146,10 +146,10 @@ namespace OmniSharp.Roslyn.CSharp.Services
         public async Task<object> Handle(DesignHub hub, InvokeArgs args)
         {
             int type = args.GetInt32();
-            string fileName = (string)args.GetObject();
+            string fileName = args.GetString();
             int line = args.GetInt32() - 1; //注意：前端传过来的值需要-1
             int column = args.GetInt32() - 1;
-            string wordToComplete = (string)args.GetObject();
+            string wordToComplete = args.GetString();
             WantsType wants = WantsType.WantDocumentationForEveryCompletionResult | WantsType.WantKind | WantsType.WantReturnType; //暂默认
 
             var completions = new HashSet<AutoCompleteItem>();

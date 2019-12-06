@@ -21,7 +21,7 @@ namespace OmniSharp.Roslyn.CSharp.Services
         public Task<object> Handle(DesignHub hub, InvokeArgs args)
         {
             int type = args.GetInt32();
-            string modelId = (string)args.GetObject();
+            string modelId = args.GetString();
 
             if (type == 1)
             {

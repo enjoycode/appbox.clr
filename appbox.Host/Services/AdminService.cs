@@ -118,12 +118,14 @@ namespace appbox.Services
             }
         }
 
-        public Task<object> InvokeAsync(string method, InvokeArgs args)
+        public async ValueTask<AnyValue> InvokeAsync(ReadOnlyMemory<char> method, InvokeArgs args)
         {
             switch (method)
             {
-                case nameof(LoadPermissionNodes): return LoadPermissionNodes();
-                case nameof(SavePermission): return SavePermission(args.GetString(), args.GetObjectArray());
+                case ReadOnlyMemory<char> s when s.Equals(nameof(LoadPermissionNodes).AsMemory()):
+                    return AnyValue.From(await LoadPermissionNodes());
+                case ReadOnlyMemory<char> s when s.Equals( nameof(SavePermission).AsMemory()):
+                    return AnyValue.From(await SavePermission(args.GetString(), args.GetObjectArray()));
                 default:
                     throw new Exception($"Can't find method: {method}");
             }

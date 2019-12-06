@@ -108,9 +108,7 @@ namespace appbox.Controllers
             RuntimeContext.Current.CurrentSession = HttpContext.Session.LoadWebSession();
 
             //调用验证服务
-            var iargs = new Data.InvokeArgs();
-            iargs.Add(args);
-            iargs.Add(formFile.Name);
+            var iargs = Data.InvokeArgs.From(args, formFile.Name);
             string toPath = null;
             try
             {

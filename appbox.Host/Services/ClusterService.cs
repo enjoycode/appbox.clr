@@ -179,15 +179,20 @@ namespace appbox.Services
             return null;
         }
 
-        public Task<object> InvokeAsync(string method, InvokeArgs args)
+        public async ValueTask<AnyValue> InvokeAsync(ReadOnlyMemory<char> method, InvokeArgs args)
         {
             switch (method)
             {
-                case nameof(GetGauges): return GetGauges();
-                case nameof(GetNodes): return GetNodes();
-                case nameof(GetParts): return GetParts();
-                case nameof(SetAsMeta): return SetAsMeta(args.GetString(), args.GetString(), args.GetInt32());
-                case nameof(PromoteReplFactor): return PromoteReplFactor();
+                case ReadOnlyMemory<char> s when s.Equals(nameof(GetGauges).AsMemory()):
+                    return AnyValue.From(await GetGauges());
+                case ReadOnlyMemory<char> s when s.Equals(nameof(GetNodes).AsMemory()):
+                    return AnyValue.From(await GetNodes());
+                case ReadOnlyMemory<char> s when s.Equals(nameof(GetParts).AsMemory()):
+                    return AnyValue.From(await GetParts());
+                case ReadOnlyMemory<char> s when s.Equals(nameof(SetAsMeta).AsMemory()):
+                    return AnyValue.From(await SetAsMeta(args.GetString(), args.GetString(), args.GetInt32()));
+                case ReadOnlyMemory<char> s when s.Equals(nameof(PromoteReplFactor).AsMemory()):
+                    return AnyValue.From(await PromoteReplFactor());
                 default:
                     throw new Exception($"Can't find method: {method}");
             }

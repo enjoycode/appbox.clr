@@ -62,7 +62,6 @@ namespace appbox.Server
             bs.Write(WaitHandle.ToInt64());
             bs.Write(SourceMsgId);
             bs.Write(Service);
-            Args.WriteObject(bs);
             //注意不同类型的Session相同的序列化方式
             bs.Write(Session != null);
             if (Session != null)
@@ -79,6 +78,8 @@ namespace appbox.Server
                     bs.Write(Session.EmploeeID);
                 bs.Write(Session.Tag);
             }
+            //注意最后序列化参数
+            Args.WriteObject(bs);
         }
 
         public void ReadObject(BinSerializer bs)
@@ -88,9 +89,6 @@ namespace appbox.Server
             WaitHandle = new IntPtr(bs.ReadInt64());
             SourceMsgId = bs.ReadInt32();
             Service = bs.ReadString();
-            var temp = new InvokeArgs();
-            temp.ReadObject(bs);
-            Args = temp;
             //注意统一转换为RoutedSession
             if (bs.ReadBoolean())
             {
@@ -108,6 +106,7 @@ namespace appbox.Server
                 string tag = bs.ReadString();
                 Session = new RoutedSession(id, path, empID, tag);
             }
+            Args.ReadObject(bs);
         }
         #endregion
     }

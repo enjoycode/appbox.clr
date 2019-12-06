@@ -169,9 +169,9 @@ namespace appbox.Server
         /// </summary>
         private async Task<object> InvokeSysAsync(IService serviceInstance, string servicePath, string method, InvokeArgs args)
         {
-            args.BeginGet();
+            //args.BeginGet();
             var stopWatch = System.Diagnostics.Stopwatch.StartNew();
-            var res = await serviceInstance.InvokeAsync(method, args);
+            var res = await serviceInstance.InvokeAsync(method.AsMemory(), args);
             stopWatch.Stop();
             ServerMetrics.InvokeDuration.WithLabels(servicePath).Observe(stopWatch.Elapsed.TotalSeconds);
             return res;

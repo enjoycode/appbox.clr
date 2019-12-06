@@ -43,7 +43,7 @@ namespace appbox.Server.Channel
             {
                 for (int i = 0; i < array.Count; i++)
                 {
-                    args.Add(array[i]);
+                    args.Set(i, AnyValue.From(array[i]));
                 }
             }
             jr.Close();
@@ -140,7 +140,7 @@ namespace appbox.Server.Channel
                 while (cur != IntPtr.Zero)
                 {
                     cur = CopyMessageChunkToBuffer(cur, buffer);
-                    await socket.SendAsync(new ArraySegment<byte>(buffer.Buffer, 0, buffer.Length), 
+                    await socket.SendAsync(new ArraySegment<byte>(buffer.Buffer, 0, buffer.Length),
                                            WebSocketMessageType.Text, cur == IntPtr.Zero, CancellationToken.None);
                 }
             }

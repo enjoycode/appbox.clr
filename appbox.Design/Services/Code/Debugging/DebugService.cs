@@ -84,7 +84,7 @@ namespace appbox.Design
                 {
                     for (int i = 0; i < array.Count; i++)
                     {
-                        args.Add(array[i]);
+                        args.Set(i, AnyValue.From(array[i]));
                     }
                 }
             }

@@ -160,17 +160,22 @@ namespace appbox.Data
                 case EntityMemberType.DataField:
                     switch (ValueType)
                     {
-                        case EntityFieldType.Binary: bs.Write(ObjectValue as byte[]); break;
                         case EntityFieldType.Boolean: bs.Write(BooleanValue); break;
                         case EntityFieldType.Byte: bs.Write(ByteValue); break;
-                        case EntityFieldType.DateTime: bs.Write(DateTimeValue); break;
-                        case EntityFieldType.Decimal: bs.Write(DecimalValue); break;
+                        case EntityFieldType.Float: bs.Write(FloatValue); break;
                         case EntityFieldType.Double: bs.Write(DoubleValue); break;
                         case EntityFieldType.Enum: bs.Write(Int32Value); break;
-                        case EntityFieldType.Float: bs.Write(FloatValue); break;
-                        case EntityFieldType.Guid: bs.Write(GuidValue); break;
+                        case EntityFieldType.Int16: bs.Write(Int16Value); break;
+                        case EntityFieldType.UInt16: bs.Write(UInt16Value); break;
                         case EntityFieldType.Int32: bs.Write(Int32Value); break;
+                        case EntityFieldType.UInt32: bs.Write(UInt32Value); break;
+                        case EntityFieldType.Int64: bs.Write(Int64Value); break;
+                        case EntityFieldType.UInt64: bs.Write(UInt64Value); break;
+                        case EntityFieldType.DateTime: bs.Write(DateTimeValue); break;
+                        case EntityFieldType.Guid: bs.Write(GuidValue); break;
+                        case EntityFieldType.Decimal: bs.Write(DecimalValue); break;
                         case EntityFieldType.String: bs.Write(ObjectValue as string); break;
+                        case EntityFieldType.Binary: bs.Write(ObjectValue as byte[]); break;
                         default: throw new NotImplementedException($"Id:{Id} ValueType:{ValueType}");
                     }
                     break;
@@ -257,17 +262,22 @@ namespace appbox.Data
                 case EntityMemberType.DataField:
                     switch (ValueType)
                     {
-                        case EntityFieldType.Binary: ObjectValue = bs.ReadByteArray(); break;
                         case EntityFieldType.Boolean: BooleanValue = bs.ReadBoolean(); break;
                         case EntityFieldType.Byte: ByteValue = bs.ReadByte(); break;
-                        case EntityFieldType.DateTime: DateTimeValue = bs.ReadDateTime(); break;
-                        case EntityFieldType.Decimal: DecimalValue = bs.ReadDecimal(); break;
+                        case EntityFieldType.Float: FloatValue = bs.ReadFloat(); break;
                         case EntityFieldType.Double: DoubleValue = bs.ReadDouble(); break;
                         case EntityFieldType.Enum: Int32Value = bs.ReadInt32(); break;
-                        case EntityFieldType.Float: FloatValue = bs.ReadFloat(); break;
-                        case EntityFieldType.Guid: GuidValue = bs.ReadGuid(); break;
+                        case EntityFieldType.Int16: Int16Value = bs.ReadInt16(); break;
+                        case EntityFieldType.UInt16: UInt16Value = bs.ReadUInt16(); break;
                         case EntityFieldType.Int32: Int32Value = bs.ReadInt32(); break;
+                        case EntityFieldType.UInt32: UInt32Value = bs.ReadUInt32(); break;
+                        case EntityFieldType.Int64: Int64Value = bs.ReadInt64(); break;
+                        case EntityFieldType.UInt64: UInt64Value = bs.ReadUInt64(); break;
+                        case EntityFieldType.DateTime: DateTimeValue = bs.ReadDateTime(); break;
+                        case EntityFieldType.Guid: GuidValue = bs.ReadGuid(); break;
+                        case EntityFieldType.Decimal: DecimalValue = bs.ReadDecimal(); break;
                         case EntityFieldType.String: ObjectValue = bs.ReadString(); break;
+                        case EntityFieldType.Binary: ObjectValue = bs.ReadByteArray(); break;
                         default: throw new NotSupportedException();
                     }
                     break;

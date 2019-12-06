@@ -43,7 +43,7 @@ namespace appbox.Core.Tests
 
             //Add indexes
             var ui_account_pass = new EntityIndexModel(EmploeeModel, "UI_Account_Password", true,
-                                                       new EntityIndexField[] { new EntityIndexField(Consts.EMPLOEE_ACCOUNT_ID) },
+                                                       new FieldWithOrder[] { new FieldWithOrder(Consts.EMPLOEE_ACCOUNT_ID) },
                                                        new ushort[] { Consts.EMPLOEE_PASSWORD_ID });
             EmploeeModel.SysStoreOptions.AddSysIndex(EmploeeModel, ui_account_pass, Consts.EMPLOEE_UI_ACCOUNT_ID);
 
@@ -64,10 +64,10 @@ namespace appbox.Core.Tests
             OrgUnitModel = new EntityModel(orgUnitModelId, "OrgUnit", EntityStoreType.StoreWithMvcc);
             var ouName = new DataFieldModel(OrgUnitModel, "Name", EntityFieldType.String);
             OrgUnitModel.AddSysMember(ouName, 1 << IdUtil.MEMBERID_SEQ_OFFSET);
-            var parentId = new DataFieldModel(OrgUnitModel, "ParentId", EntityFieldType.EntityId);
+            var parentId = new DataFieldModel(OrgUnitModel, "ParentId", EntityFieldType.EntityId, true);
             parentId.AllowNull = true;
             OrgUnitModel.AddSysMember(parentId, 2 << IdUtil.MEMBERID_SEQ_OFFSET);
-            var parent = new EntityRefModel(OrgUnitModel, "Parent", orgUnitModelId, parentId.MemberId);
+            var parent = new EntityRefModel(OrgUnitModel, "Parent", orgUnitModelId, new ushort[] { parentId.MemberId });
             parent.AllowNull = true;
             OrgUnitModel.AddSysMember(parent, 3 << IdUtil.MEMBERID_SEQ_OFFSET);
             var childs = new EntitySetModel(OrgUnitModel, "Childs", orgUnitModelId, parent.MemberId);
