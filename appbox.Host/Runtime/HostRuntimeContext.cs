@@ -19,6 +19,8 @@ namespace appbox.Server
     {
         private readonly List<ApplicationModel> apps = new List<ApplicationModel>(); //TODO:use RWLock
         private readonly LRUCache<ulong, ModelBase> models = new LRUCache<ulong, ModelBase>(128); //TODO:fix limit
+        private readonly ObjectPool<PooledTaskSource<AnyValue>> invokeTasksPool =
+            PooledTaskSource<AnyValue>.Create(1024); //TODO: check count
 
         private static readonly AsyncLocal<ISessionInfo> _session = new AsyncLocal<ISessionInfo>();
 
@@ -119,21 +121,14 @@ namespace appbox.Server
         #region ====Invoke Methods====
         public Task<object> InvokeAsync(string servicePath, InvokeArgs args)
         {
-            return InvokeInternalAsync(InvokeSource.Host, InvokeContentType.Bin, servicePath, args, 0);
+            throw new NotImplementedException();
+            //return InvokeInternalAsync(InvokeSource.Host, InvokeContentType.Bin, servicePath, args, 0);
         }
 
         /// <summary>
-        /// Invokes the by web client async.
+        /// Only for websocket channel
         /// </summary>
-        /// <remarks>
-        /// Caller已经设置当前会话
-        /// </remarks>
-        internal Task<object> InvokeByWebClientAsync(string servicePath, InvokeArgs args, int msgId)
-        {
-            return InvokeInternalAsync(InvokeSource.Client, InvokeContentType.Json, servicePath, args, msgId);
-        }
-
-        private Task<object> InvokeInternalAsync(InvokeSource source, InvokeContentType contentType, string servicePath, InvokeArgs args, int msgId)
+        internal ValueTask<AnyValue> InvokeByClient(string servicePath, int msgId, Channel.WebSocketFrame frame, int offset)
         {
             if (string.IsNullOrEmpty(servicePath))
                 throw new ArgumentNullException(nameof(servicePath));
@@ -145,33 +140,78 @@ namespace appbox.Server
                 throw new ArgumentException(nameof(servicePath));
             var app = span.Slice(0, firstDot);
             var service = servicePath.AsMemory(firstDot + 1, lastDot - firstDot - 1);
-            var method = span.Slice(lastDot + 1);
+            var method = servicePath.AsMemory(lastDot + 1);
 
             if (app.SequenceEqual(appbox.Consts.SYS.AsSpan()))
             {
                 if (Runtime.SysServiceContainer.TryGet(service, out IService serviceInstance))
                 {
-                    return InvokeSysAsync(serviceInstance, servicePath, method.ToString(), args);
+                    return InvokeSysAsync(serviceInstance, servicePath, method, InvokeArgs.From(frame, offset));
                 }
             }
 
-            //转发至应用子进程, 另InvokeArgs在序列化时已归还缓存
-            var tcs = new TaskCompletionSource<object>();
-            var tcsHandle = GCHandle.Alloc(tcs);
-            var require = new InvokeRequire(source, contentType, GCHandle.ToIntPtr(tcsHandle),
-                servicePath, args, msgId, RuntimeContext.Current.CurrentSession); //注意传播会话信息
+            //非系统服务则转发至子进程处理
+            var tcs = invokeTasksPool.Pop();
+            var require = new InvokeRequire(InvokeSource.Client, InvokeContentType.Json,
+                tcs.GCHandlePtr, servicePath, InvokeArgs.From(frame, offset), msgId,
+                RuntimeContext.Current.CurrentSession); //注意传播会话信息
             ChildProcess.AppContainer.Channel.SendMessage(ref require);
-            return tcs.Task;
+            return tcs.WaitAsync();
         }
+
+        /// <summary>
+        /// Invokes the by web client async.
+        /// </summary>
+        /// <remarks>
+        /// Caller已经设置当前会话
+        /// </remarks>
+        internal Task<object> InvokeByWebClientAsync(string servicePath, InvokeArgs args, int msgId)
+        {
+            throw new NotImplementedException();
+            //return InvokeInternalAsync(InvokeSource.Client, InvokeContentType.Json, servicePath, args, msgId);
+        }
+
+        //private ValueTask<AnyValue> InvokeInternalAsync(InvokeSource source, InvokeContentType contentType, string servicePath, InvokeArgs args, int msgId)
+        //{
+        //    if (string.IsNullOrEmpty(servicePath))
+        //        throw new ArgumentNullException(nameof(servicePath));
+
+        //    var span = servicePath.AsSpan();
+        //    var firstDot = span.IndexOf('.');
+        //    var lastDot = span.LastIndexOf('.');
+        //    if (firstDot == lastDot)
+        //        throw new ArgumentException(nameof(servicePath));
+        //    var app = span.Slice(0, firstDot);
+        //    var service = servicePath.AsMemory(firstDot + 1, lastDot - firstDot - 1);
+        //    var method = servicePath.AsMemory(lastDot + 1);
+
+        //    if (app.SequenceEqual(appbox.Consts.SYS.AsSpan()))
+        //    {
+        //        if (Runtime.SysServiceContainer.TryGet(service, out IService serviceInstance))
+        //        {
+        //            return InvokeSysAsync(serviceInstance, servicePath, method, args);
+        //        }
+        //    }
+
+        //    throw new NotImplementedException();
+        //    //转发至应用子进程, 另InvokeArgs在序列化时已归还缓存
+        //    //var tcs = new TaskCompletionSource<object>();
+        //    //var tcsHandle = GCHandle.Alloc(tcs);
+        //    //var require = new InvokeRequire(source, contentType, GCHandle.ToIntPtr(tcsHandle),
+        //    //    servicePath, args, msgId, RuntimeContext.Current.CurrentSession); //注意传播会话信息
+        //    //ChildProcess.AppContainer.Channel.SendMessage(ref require);
+        //    //return tcs.Task;
+        //}
 
         /// <summary>
         /// 调用系统服务，埋点监测
         /// </summary>
-        private async Task<object> InvokeSysAsync(IService serviceInstance, string servicePath, string method, InvokeArgs args)
+        private async ValueTask<AnyValue> InvokeSysAsync(IService serviceInstance,
+            string servicePath, ReadOnlyMemory<char> method, InvokeArgs args)
         {
             //args.BeginGet();
             var stopWatch = System.Diagnostics.Stopwatch.StartNew();
-            var res = await serviceInstance.InvokeAsync(method.AsMemory(), args);
+            var res = await serviceInstance.InvokeAsync(method, args);
             stopWatch.Stop();
             ServerMetrics.InvokeDuration.WithLabels(servicePath).Observe(stopWatch.Elapsed.TotalSeconds);
             return res;

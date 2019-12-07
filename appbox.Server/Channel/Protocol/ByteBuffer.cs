@@ -4,18 +4,21 @@ using appbox.Caching;
 
 namespace appbox.Server
 {
+    /// <summary>
+    /// 非托管的字节缓存
+    /// </summary>
     public static class ByteBuffer //TODO: rename to MessageBuffer or MessageChunkPool
     {
 
-        static readonly int BlockSize = Marshal.SizeOf(typeof(MessageChunk));
-        static ObjectPool<IntPtr> pool = new ObjectPool<IntPtr>(Alloc, Free, 1024);
+        private static readonly int BlockSize = Marshal.SizeOf(typeof(MessageChunk));
+        private static readonly ObjectPool<IntPtr> pool = new ObjectPool<IntPtr>(Alloc, Free, 1024);
 
-        static IntPtr Alloc(ObjectPool<IntPtr> p)
+        private static IntPtr Alloc(ObjectPool<IntPtr> p)
         {
             return Marshal.AllocHGlobal(BlockSize);
         }
 
-        static void Free(IntPtr obj)
+        private static void Free(IntPtr obj)
         {
             Marshal.FreeHGlobal(obj);
         }

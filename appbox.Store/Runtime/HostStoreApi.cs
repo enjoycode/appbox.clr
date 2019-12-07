@@ -16,7 +16,8 @@ namespace appbox.Store
     /// </summary>
     sealed class HostStoreApi : IStoreApi
     {
-        private readonly ObjectPool<PooledTaskSource<NativeMessage>> taskPool = PooledTaskSource<NativeMessage>.Create(1024); //TODO: check count
+        private readonly ObjectPool<PooledTaskSource<NativeMessage>> taskPool =
+            PooledTaskSource<NativeMessage>.Create(1024); //TODO: check count
 
         #region ====Meta====
         /// <summary>

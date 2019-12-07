@@ -6,6 +6,7 @@ using appbox.Serialization;
 using System.Threading.Tasks;
 using System.Net.WebSockets;
 using System.Threading;
+using System.Text.Json;
 
 namespace appbox.Server.Channel
 {
@@ -13,7 +14,38 @@ namespace appbox.Server.Channel
     static class InvokeHelper //TODO: rename to JsonInvokeHelper
     {
 
-        static readonly Exception RequireFormatException = new Exception("请求格式错误");
+        private static readonly Exception RequireFormatException = new Exception("请求格式错误");
+
+        private static readonly byte[] RequireIdPropertyName = System.Text.Encoding.UTF8.GetBytes("I");
+        private static readonly byte[] RequireServicePropertyName = System.Text.Encoding.UTF8.GetBytes("S");
+
+        /// <summary>
+        /// 读取调用请求的消息头，不读取参数，仅用于WebSocket通道
+        /// </summary>
+        /// <returns>消耗的字节数</returns>
+        internal static int ReadRequireHead(WebSocketFrame first, ref int id, ref string service)
+        {
+            var jr = new Utf8JsonReader(first.Buffer.AsSpan());
+
+            if (!jr.Read() || jr.TokenType != JsonTokenType.StartObject)
+                throw RequireFormatException;
+
+            if (!jr.Read() || jr.TokenType != JsonTokenType.PropertyName
+                || !jr.ValueSpan.SequenceEqual(RequireIdPropertyName.AsSpan()))
+                throw RequireFormatException;
+            id = jr.GetInt32();
+
+            if (!jr.Read() || jr.TokenType != JsonTokenType.PropertyName
+                || !jr.ValueSpan.SequenceEqual(RequireServicePropertyName.AsSpan()))
+                throw RequireFormatException;
+            service = jr.GetString();
+            //TODO:考虑读到参数数组开始
+            //if (string.IsNullOrEmpty(service))
+            //    throw RequireFormatException;
+            //if (!jr.Read() || jr.TokenType != JsonToken.PropertyName || (string)jr.Value != "A")
+            //    throw RequireFormatException;
+            return (int)jr.BytesConsumed;
+        }
 
         /// <summary>
         /// 读取并解析为调用请求

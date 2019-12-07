@@ -6,8 +6,8 @@ namespace appbox.Server.Channel
     sealed class WebSocketFrameReadStream : Stream
     {
 
-        WebSocketFrame current;
-        int position = 0;
+        private WebSocketFrame current;
+        private int position = 0;
 
         public WebSocketFrameReadStream(WebSocketFrame frame)
         {
@@ -31,17 +31,13 @@ namespace appbox.Server.Channel
         {
             int left = current.Length - position;
             if (left >= 1)
-            {
                 return current.Buffer[position++];
-            }
-            else
-            {
-                position = 0;
-                if (current.Next == null)
-                    return -1;
-                current = current.Next;
-                return ReadByte();
-            }
+
+            position = 0;
+            if (current.Next == null)
+                return -1;
+            current = current.Next;
+            return ReadByte();
         }
 
         public override int Read(byte[] buffer, int offset, int count)
@@ -53,17 +49,15 @@ namespace appbox.Server.Channel
                 position += count;
                 return count;
             }
-            else
-            {
-                Buffer.BlockCopy(current.Buffer, position, buffer, offset, left);
-                position = 0;
-                if (current.Next == null)
-                    return left;
 
-                current = current.Next;
-                int readed = Read(buffer, offset + left, count - left);
-                return readed + left;
-            }
+            Buffer.BlockCopy(current.Buffer, position, buffer, offset, left);
+            position = 0;
+            if (current.Next == null)
+                return left;
+
+            current = current.Next;
+            int readed = Read(buffer, offset + left, count - left);
+            return readed + left;
         }
 
         public override long Seek(long offset, SeekOrigin origin)

@@ -10,8 +10,8 @@ namespace appbox.Server.Channel
     internal static class WebSocketManager
     {
 
-        static readonly Dictionary<WebSocket, WebSocketClient> clients = new Dictionary<WebSocket, WebSocketClient>();
-        //TODO:use rwlock
+        private static readonly Dictionary<ulong, WebSocketClient> clients = new Dictionary<ulong, WebSocketClient>();
+        //TODO:use rwlock, 另想办法不需要此字典表
 
         internal static async Task OnAccept(HttpContext context, WebSocket webSocket)
         {
@@ -20,45 +20,32 @@ namespace appbox.Server.Channel
             Log.Debug($"接受WebSocket连接, {webSocket.GetType()} Session = {webSession}");
 
             //加入至列表
+            var client = new WebSocketClient(webSocket, webSession);
             lock (clients)
             {
-                clients.Add(webSocket, new WebSocketClient(webSocket, webSession));
+                clients.Add(webSession.SessionID, client);
             }
 
             //开始接收数据
-            WebSocketReceiveResult result = null;
-            try
+            ValueWebSocketReceiveResult result;
+            WebSocketFrame frame;
+            do
             {
-                do
+                frame = WebSocketFrame.Pop();
+                try
                 {
-                    var frame = WebSocketFrame.Pop();
-                    result = await webSocket.ReceiveAsync(new ArraySegment<byte>(frame.Buffer), CancellationToken.None);
-                    if (result.CloseStatus.HasValue)
-                    {
-                        WebSocketFrame.Push(frame); //释放缓存
-                        break;
-                    }
-                    frame.Length = result.Count;
+                    result = await webSocket.ReceiveAsync(frame.Buffer.AsMemory(), CancellationToken.None);
+                }
+                catch (Exception ex)
+                {
+                    WebSocketFrame.Push(frame);
+                    Log.Warn($"WebSocket receive error: {ex.Message}");
+                    break;
+                }
+                frame.Length = result.Count;
 
-                    //找到WebSocketClient后组装消息
-                    WebSocketClient client = null;
-                    lock (clients)
-                    {
-                        clients.TryGetValue(webSocket, out client);
-                    }
-                    if (client == null)
-                    {
-                        WebSocketFrame.Push(frame); //释放缓存
-                        break;
-                    }
-
-                    await client.OnReceiveMessage(frame, result.EndOfMessage);
-                } while (true);
-            }
-            catch (Exception ex)
-            {
-                Log.Warn($"接收数据错误：{ExceptionHelper.GetExceptionDetailInfo(ex)}");
-            }
+                await client.OnReceiveMessage(frame, result.EndOfMessage); //不需要捕获异常
+            } while (true);
 
             try
             {
@@ -77,7 +64,7 @@ namespace appbox.Server.Channel
             var leftCount = 0;
             lock (clients)
             {
-                clients.Remove(webSocket);
+                clients.Remove(webSession.SessionID);
                 leftCount = clients.Count;
             }
             Log.Debug(string.Format("WebSocket关闭, 还余: {0}", leftCount));
@@ -91,13 +78,10 @@ namespace appbox.Server.Channel
         {
             lock (clients)
             {
-                foreach (var item in clients.Values)
-                {
-                    if (item.Session.SessionID == sessionID)
-                        return item.Session;
-                }
+                if (clients.TryGetValue(sessionID, out WebSocketClient client))
+                    return client.Session;
+                return null;
             }
-            return null;
         }
 
     }

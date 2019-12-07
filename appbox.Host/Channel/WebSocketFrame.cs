@@ -5,11 +5,12 @@ using appbox.Caching;
 namespace appbox.Server.Channel
 {
 
-    sealed class WebSocketFrame //TODO: rename to BytesChunk
+    public sealed class WebSocketFrame : IBytesSegment //TODO: rename to BytesChunk
     {
-        static ObjectPool<WebSocketFrame> buffers = new ObjectPool<WebSocketFrame>(p => new WebSocketFrame(), null, 32);
+        private static readonly ObjectPool<WebSocketFrame> buffers =
+            new ObjectPool<WebSocketFrame>(p => new WebSocketFrame(), null, 32);
 
-        const int FrameSize = MessageChunk.PayloadDataSize; //注意: 等于MessageChunk的数据部分大小
+        private const int FrameSize = MessageChunk.PayloadDataSize; //注意: 等于MessageChunk的数据部分大小
 
         internal static WebSocketFrame Pop()
         {
@@ -30,7 +31,7 @@ namespace appbox.Server.Channel
         internal static void PushAll(WebSocketFrame item)
         {
             var current = item.First;
-            WebSocketFrame next = null;
+            WebSocketFrame next;
             while(current != null)
             {   
                 next = current.Next;
@@ -47,7 +48,7 @@ namespace appbox.Server.Channel
 
         public WebSocketFrame First { get; private set; }
 
-        public WebSocketFrame()
+        private WebSocketFrame()
         {
             Buffer = new byte[FrameSize];
         }

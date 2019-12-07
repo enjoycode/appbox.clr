@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using appbox.Data;
 using appbox.Runtime;
 using System.Threading.Tasks;
+using System.Text.Json;
 
 namespace appbox.Server.Channel
 {
@@ -27,7 +28,7 @@ namespace appbox.Server.Channel
             Session = session;
         }
 
-        internal async Task OnReceiveMessage(WebSocketFrame frame, bool isEnd)
+        internal async ValueTask OnReceiveMessage(WebSocketFrame frame, bool isEnd)
         {
             if (!isEnd)
             {
@@ -46,21 +47,18 @@ namespace appbox.Server.Channel
 
                 //开始读取消息
                 int msgId = 0;
-                string service = null;
-                InvokeArgs args = new InvokeArgs();
+                string service = null; //TODO:优化不创建string
+                int offset = 0;
                 Exception requireError = null;
                 try
                 {
-                    using (var ws = new WebSocketFrameReadStream(frame)) //todo: thread cache it
-                    {
-                        using (var sr = new StreamReader(ws))
-                        {
-                            InvokeHelper.ReadInvokeRequire(sr, ref msgId, ref service, ref args);
-                        }
-                    }
+                    offset = InvokeHelper.ReadRequireHead(frame.First, ref msgId, ref service);
                 }
-                catch (Exception ex) { requireError = ex; }
-                finally { WebSocketFrame.PushAll(frame); } //释放WebSocketFrame
+                catch (Exception ex)
+                {
+                    requireError = ex;
+                    WebSocketFrame.PushAll(frame); //读消息头异常释放WebSocketFrame
+                }
 
                 if (requireError != null)
                 {
@@ -69,18 +67,18 @@ namespace appbox.Server.Channel
                     return;
                 }
 
-                await ProcessInvokeRequire(msgId, service, args); //TODO:不用等待
+                _ = ProcessInvokeRequire(msgId, service, frame, offset); //no need await
             }
         }
 
-        async Task ProcessInvokeRequire(int msgId, string service, InvokeArgs args)
+        private async ValueTask ProcessInvokeRequire(int msgId, string service, WebSocketFrame frame, int offset)
         {
             //设置当前会话,TODO:考虑在后面设置
             RuntimeContext.Current.CurrentSession = Session;
             //注意：不要使用Task.ContinueWith, 异常会传播至上级
             try
             {
-                var res = await ((HostRuntimeContext)RuntimeContext.Current).InvokeByWebClientAsync(service, args, msgId);
+                var res = await ((HostRuntimeContext)RuntimeContext.Current).InvokeByClient(service, msgId, frame, offset);
                 await SendInvokeResponse(msgId, res);
             }
             catch (Exception ex)
@@ -90,7 +88,7 @@ namespace appbox.Server.Channel
             }
         }
 
-        async Task SendInvokeResponse(int msgId, object res)
+        private async Task SendInvokeResponse(int msgId, object res)
         {
             if (res is IntPtr ptr) //返回结果服务域已经序列化
             {

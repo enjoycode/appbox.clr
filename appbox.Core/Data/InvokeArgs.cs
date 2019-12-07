@@ -1,29 +1,36 @@
 ﻿using System;
+using System.Text.Json;
 using appbox.Caching;
 using appbox.Serialization;
 
 namespace appbox.Data
 {
     /// <summary>
-    /// 封装服务调用的参数列表
+    /// 封装服务调用的参数列表,减少装拆箱
     /// </summary>
     /// <remarks>目前最多支持5个参数</remarks>
     public struct InvokeArgs
     {
-
         private AnyValue Arg1;
         private AnyValue Arg2;
         private AnyValue Arg3;
         private AnyValue Arg4;
         private AnyValue Arg5;
         /// <summary>
-        /// 0表示空，255表示第一个参数内的Object为Stream，需要从其中反序列化，用于服务主子进程封送参数
+        /// 0表示空
+        /// 255表示第一个参数内的Object为Stream，主要用于Ajax封送
+        /// 254表示第一个参数内的Object为BytesChunk，主要用于WebSocket封送
         /// </summary>
         private byte Count;
         private int Postion;
 
         #region ====From Methods, 仅用于简化服务端编码====
         public static InvokeArgs Empty() { return new InvokeArgs { Count = 0 }; }
+
+        public static InvokeArgs From(IBytesSegment chunk, int offset)
+        {
+            return new InvokeArgs { Count = 254, Arg1 = AnyValue.From(chunk), Postion = offset };
+        }
 
         public static InvokeArgs From(AnyValue arg)
         {
@@ -101,7 +108,20 @@ namespace appbox.Data
 
         public string GetString()
         {
-            return (string)Current().ObjectValue;
+            if (Count == 254)
+            {
+                //var chunk = (IBytesChunk)Arg1.ObjectValue;
+                //var jr = new Utf8JsonReader();
+                throw new NotImplementedException();
+            }
+            else if (Count == 255)
+            {
+                throw new NotImplementedException();
+            }
+            else
+            {
+                return (string)Current().ObjectValue;
+            }
         }
 
         public object GetObject()
