@@ -102,13 +102,12 @@ namespace appbox.Server
             if (firstDot == lastDot)
                 throw new ArgumentException(nameof(servicePath));
             var service = servicePath.Substring(0, lastDot);
-            var method = servicePath.Substring(lastDot + 1);
+            var method = servicePath.AsMemory(lastDot + 1);
 
             var instance = await services.TryGetAsync(service);
             if (instance == null)
                 throw new Exception($"Cannot find service:{service}");
 
-            args.BeginGet();
             var stopWatch = System.Diagnostics.Stopwatch.StartNew();
             var res = await instance.InvokeAsync(method, args); //ConfigureAwait(false)??
             stopWatch.Stop();

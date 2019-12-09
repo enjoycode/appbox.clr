@@ -104,5 +104,15 @@ namespace appbox.Core.Tests
             Assert.Equal(123, *ptr);
             Assert.Equal(456, *(ptr + 1));
         }
+
+        [Fact]
+        public void Test4()
+        {
+            var s1 = "Hello Future!";
+            var s2 = "Hello World!";
+            var m1 = new Caching.CharsKey(s1.AsMemory(0, 5));
+            var m2 = new Caching.CharsKey(s2.AsMemory(0, 5));
+            Assert.True(m1.GetHashCode() == m2.GetHashCode());
+        }
     }
 }

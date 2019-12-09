@@ -4,6 +4,7 @@ using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using appbox.Caching;
 
 namespace appbox.Server.Channel
 {
@@ -28,17 +29,17 @@ namespace appbox.Server.Channel
 
             //开始接收数据
             ValueWebSocketReceiveResult result;
-            WebSocketFrame frame;
+            BytesSegment frame;
             do
             {
-                frame = WebSocketFrame.Pop();
+                frame = BytesSegment.Rent();
                 try
                 {
                     result = await webSocket.ReceiveAsync(frame.Buffer.AsMemory(), CancellationToken.None);
                 }
                 catch (Exception ex)
                 {
-                    WebSocketFrame.Push(frame);
+                    BytesSegment.ReturnOne(frame);
                     Log.Warn($"WebSocket receive error: {ex.Message}");
                     break;
                 }

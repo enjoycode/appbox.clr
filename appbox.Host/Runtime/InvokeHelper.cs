@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using Newtonsoft.Json;
 using appbox.Data;
+using appbox.Caching;
 using appbox.Serialization;
 using System.Threading.Tasks;
 using System.Net.WebSockets;
@@ -18,33 +19,47 @@ namespace appbox.Server.Channel
 
         private static readonly byte[] RequireIdPropertyName = System.Text.Encoding.UTF8.GetBytes("I");
         private static readonly byte[] RequireServicePropertyName = System.Text.Encoding.UTF8.GetBytes("S");
+        private static readonly byte[] RequireArgsPropertyName = System.Text.Encoding.UTF8.GetBytes("A");
 
         /// <summary>
         /// 读取调用请求的消息头，不读取参数，仅用于WebSocket通道
         /// </summary>
-        /// <returns>消耗的字节数</returns>
-        internal static int ReadRequireHead(WebSocketFrame first, ref int id, ref string service)
+        /// <returns>消息头至参数数组开始消耗的字节数，-1表示空参数列表</returns>
+        /// <remarks>目前实现只从第一包读取，即消息头长度不能超过一包的长度</remarks>
+        internal static int ReadRequireHead(BytesSegment first, ref int id, ref string service)
         {
+            if (first.First != first)
+                throw new ArgumentException(nameof(first));
+
             var jr = new Utf8JsonReader(first.Buffer.AsSpan());
 
             if (!jr.Read() || jr.TokenType != JsonTokenType.StartObject)
                 throw RequireFormatException;
-
+            //I property
             if (!jr.Read() || jr.TokenType != JsonTokenType.PropertyName
                 || !jr.ValueSpan.SequenceEqual(RequireIdPropertyName.AsSpan()))
                 throw RequireFormatException;
+            if (!jr.Read())
+                throw RequireFormatException;
             id = jr.GetInt32();
-
+            //S property
             if (!jr.Read() || jr.TokenType != JsonTokenType.PropertyName
                 || !jr.ValueSpan.SequenceEqual(RequireServicePropertyName.AsSpan()))
                 throw RequireFormatException;
+            if (!jr.Read())
+                throw RequireFormatException;
             service = jr.GetString();
-            //TODO:考虑读到参数数组开始
-            //if (string.IsNullOrEmpty(service))
-            //    throw RequireFormatException;
-            //if (!jr.Read() || jr.TokenType != JsonToken.PropertyName || (string)jr.Value != "A")
-            //    throw RequireFormatException;
-            return (int)jr.BytesConsumed;
+            //A property
+            if (!jr.Read() || jr.TokenType != JsonTokenType.PropertyName
+                || !jr.ValueSpan.SequenceEqual(RequireArgsPropertyName.AsSpan()))
+                throw RequireFormatException;
+            if (!jr.Read() || jr.TokenType != JsonTokenType.StartArray)
+                throw RequireFormatException;
+            //注意预先判断参数数组是否为空
+            int arrtyStartIndex = (int)jr.TokenStartIndex; //注意返回指向参数数组开始,非jr.BytesConsumed
+            if (jr.Read() && jr.TokenType == JsonTokenType.EndArray)
+                return -1;
+            return arrtyStartIndex;
         }
 
         /// <summary>
@@ -164,7 +179,7 @@ namespace appbox.Server.Channel
         {
             //TODO:暂简单Copy发送
             //var buffer = System.Buffers.MemoryPool<byte>.Shared.Rent(MessageChunk.PayloadDataSize);
-            var buffer = WebSocketFrame.Pop();
+            var buffer = BytesSegment.Rent();
 
             IntPtr cur = resPtr;
             try
@@ -187,11 +202,11 @@ namespace appbox.Server.Channel
                     Host.ChildProcess.AppContainer.Channel.ReturnMessageChunks((MessageChunk*)resPtr.ToPointer()); //TODO:暂直接归还
                 }
                 //buffer.Dispose();
-                WebSocketFrame.Push(buffer);
+                BytesSegment.ReturnOne(buffer);
             }
         }
 
-        private static IntPtr CopyMessageChunkToBuffer(IntPtr msgPtr, WebSocketFrame buffer)
+        private static IntPtr CopyMessageChunkToBuffer(IntPtr msgPtr, BytesSegment buffer)
         {
             IntPtr next = IntPtr.Zero;
             int dataSize = 0;

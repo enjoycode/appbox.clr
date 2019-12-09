@@ -128,35 +128,45 @@ namespace appbox.Server
         /// <summary>
         /// Only for websocket channel
         /// </summary>
-        internal ValueTask<AnyValue> InvokeByClient(string servicePath, int msgId, Channel.WebSocketFrame frame, int offset)
+        internal async ValueTask<AnyValue> InvokeByClient(string servicePath, int msgId,
+            BytesSegment frame, int offset)
         {
             if (string.IsNullOrEmpty(servicePath))
                 throw new ArgumentNullException(nameof(servicePath));
 
-            var span = servicePath.AsSpan();
-            var firstDot = span.IndexOf('.');
-            var lastDot = span.LastIndexOf('.');
+            var span = servicePath.AsMemory();
+            var firstDot = span.Span.IndexOf('.');
+            var lastDot = span.Span.LastIndexOf('.');
             if (firstDot == lastDot)
                 throw new ArgumentException(nameof(servicePath));
             var app = span.Slice(0, firstDot);
             var service = servicePath.AsMemory(firstDot + 1, lastDot - firstDot - 1);
             var method = servicePath.AsMemory(lastDot + 1);
 
-            if (app.SequenceEqual(appbox.Consts.SYS.AsSpan()))
+            if (app.Span.SequenceEqual(appbox.Consts.SYS.AsSpan()))
             {
                 if (Runtime.SysServiceContainer.TryGet(service, out IService serviceInstance))
                 {
-                    return InvokeSysAsync(serviceInstance, servicePath, method, InvokeArgs.From(frame, offset));
+                    try
+                    {
+                        var res = await InvokeSysAsync(serviceInstance, servicePath, method, InvokeArgs.From(frame, offset));
+                        return res;
+                    }
+                    finally
+                    {
+                        BytesSegment.ReturnAll(frame); //注意归还
+                    }
                 }
             }
 
-            //非系统服务则转发至子进程处理
+            //非系统服务则包装为InvokeRequire转发至子进程处理
             var tcs = invokeTasksPool.Pop();
             var require = new InvokeRequire(InvokeSource.Client, InvokeContentType.Json,
                 tcs.GCHandlePtr, servicePath, InvokeArgs.From(frame, offset), msgId,
                 RuntimeContext.Current.CurrentSession); //注意传播会话信息
             ChildProcess.AppContainer.Channel.SendMessage(ref require);
-            return tcs.WaitAsync();
+            BytesSegment.ReturnAll(frame); //注意归还
+            return await tcs.WaitAsync();
         }
 
         /// <summary>
@@ -209,7 +219,6 @@ namespace appbox.Server
         private async ValueTask<AnyValue> InvokeSysAsync(IService serviceInstance,
             string servicePath, ReadOnlyMemory<char> method, InvokeArgs args)
         {
-            //args.BeginGet();
             var stopWatch = System.Diagnostics.Stopwatch.StartNew();
             var res = await serviceInstance.InvokeAsync(method, args);
             stopWatch.Stop();

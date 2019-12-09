@@ -10,19 +10,32 @@ namespace appbox.Server.Runtime
     /// </summary>
     static class SysServiceContainer
     {
-        private static readonly Dictionary<ReadOnlyMemory<char>, IService> services =
-            new Dictionary<ReadOnlyMemory<char>, IService>();
+
+        private static readonly IService AdminService = new Services.AdminService();
+        private static readonly IService ClusterService = new Services.ClusterService();
+        private static readonly IService DesignService = new Design.DesignService();
 
         internal static void Init()
         {
-            services.Add(nameof(Services.AdminService).AsMemory(), new Services.AdminService());
-            services.Add(nameof(Services.ClusterService).AsMemory(), new Services.ClusterService());
-            services.Add(nameof(Design.DesignService).AsMemory(), new Design.DesignService());
         }
 
         internal static bool TryGet(ReadOnlyMemory<char> serviceName, out IService instance)
         {
-            return services.TryGetValue(serviceName, out instance);
+            //TODO:待实现ReadOnlyMemoryHasher后从字典表获取
+            if(serviceName.Span.SequenceEqual(nameof(DesignService).AsSpan()))
+            {
+                instance = DesignService; return true;
+            }
+            if (serviceName.Span.SequenceEqual(nameof(AdminService).AsSpan()))
+            {
+                instance = AdminService; return true;
+            }
+            if (serviceName.Span.SequenceEqual(nameof(ClusterService).AsSpan()))
+            {
+                instance = ClusterService; return true;
+            }
+            instance = null;
+            return false;
         }
     }
 

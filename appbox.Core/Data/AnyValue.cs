@@ -82,6 +82,11 @@ namespace appbox.Data
         {
             return new AnyValue { ObjectValue = v, Type = AnyValueType.Object };
         }
+
+        public static AnyValue From(Exception ex)
+        {
+            return new AnyValue { ObjectValue = ex, Type = AnyValueType.Object };
+        }
         #endregion
 
         #region ====隐式转换，仅用于方便服务端编码====

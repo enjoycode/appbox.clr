@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.Text.Json;
 using appbox.Caching;
 using appbox.Serialization;
@@ -19,17 +20,28 @@ namespace appbox.Data
         /// <summary>
         /// 0表示空
         /// 255表示第一个参数内的Object为Stream，主要用于Ajax封送
-        /// 254表示第一个参数内的Object为BytesChunk，主要用于WebSocket封送
+        /// 254表示第一个参数内的Object为当前BytesSegment，第二个参数为last BytesSegment, 主要用于WebSocket封送
         /// </summary>
         private byte Count;
         private int Postion;
+        private JsonReaderState? JsonState;
 
         #region ====From Methods, 仅用于简化服务端编码====
         public static InvokeArgs Empty() { return new InvokeArgs { Count = 0 }; }
 
-        public static InvokeArgs From(IBytesSegment chunk, int offset)
+        public static InvokeArgs From(BytesSegment last, int offset)
         {
-            return new InvokeArgs { Count = 254, Arg1 = AnyValue.From(chunk), Postion = offset };
+            if (offset == -1) return Empty();
+
+            if (last.Next != null)
+                throw new ArgumentException(nameof(last));
+            return new InvokeArgs
+            {
+                Count = 254,
+                Arg1 = AnyValue.From(last.First), //当前包，新建是指向第一包
+                Arg2 = AnyValue.From(last), //最后一包
+                Postion = offset
+            };
         }
 
         public static InvokeArgs From(AnyValue arg)
@@ -93,16 +105,62 @@ namespace appbox.Data
 
         public bool GetBoolean()
         {
+            if (Count == 254)
+            {
+                var cur = (BytesSegment)Arg1.ObjectValue;
+                var last = (BytesSegment)Arg2.ObjectValue;
+                Utf8JsonReader jr;
+                if (last == null || cur == last) //一开始就一包或读到只剩一包
+                    jr = new Utf8JsonReader(cur.Buffer.AsSpan(Postion, cur.Length - Postion),
+                                            true, JsonState ?? (default));
+                else
+                    jr = new Utf8JsonReader(new ReadOnlySequence<byte>(cur, Postion, last, last.Length),
+                                            cur.Next == null, JsonState ?? (default));
+
+                if (!jr.Read() || jr.TokenType == JsonTokenType.EndArray)
+                    throw new Exception("Can't read from utf8 bytes");
+                if (jr.TokenType == JsonTokenType.StartArray)
+                {
+                    if (!jr.Read()) throw new Exception("Can't read from utf8 bytes");
+                }
+                Arg1.ObjectValue = jr.Position.GetObject(); //是否考虑直接归还之前已读完的
+                Postion = jr.Position.GetInteger();
+                JsonState = jr.CurrentState;
+                return jr.GetBoolean();
+            }
+            if (Count == 255)
+                throw new NotImplementedException();
+
             return Current().BooleanValue;
         }
 
         public int GetInt32()
         {
-            if (Count == byte.MaxValue)
+            if (Count == 254)
             {
-                //从第一个参数的流中读取
-                throw new NotImplementedException();
+                var cur = (BytesSegment)Arg1.ObjectValue;
+                var last = (BytesSegment)Arg2.ObjectValue;
+                Utf8JsonReader jr;
+                if (last == null || cur == last) //一开始就一包或读到只剩一包
+                    jr = new Utf8JsonReader(cur.Buffer.AsSpan(Postion, cur.Length - Postion),
+                                            true, JsonState ?? (default));
+                else
+                    jr = new Utf8JsonReader(new ReadOnlySequence<byte>(cur, Postion, last, last.Length),
+                                            cur.Next == null, JsonState ?? (default));
+
+                if (!jr.Read() || jr.TokenType == JsonTokenType.EndArray)
+                    throw new Exception("Can't read from utf8 bytes");
+                if (jr.TokenType == JsonTokenType.StartArray)
+                {
+                    if (!jr.Read()) throw new Exception("Can't read from utf8 bytes");
+                }
+                Arg1.ObjectValue = jr.Position.GetObject(); //是否考虑直接归还之前已读完的
+                Postion = jr.Position.GetInteger();
+                JsonState = jr.CurrentState;
+                return jr.GetInt32();
             }
+            if (Count == 255)
+                throw new NotImplementedException();
             return Current().Int32Value;
         }
 
@@ -110,27 +168,46 @@ namespace appbox.Data
         {
             if (Count == 254)
             {
-                //var chunk = (IBytesChunk)Arg1.ObjectValue;
-                //var jr = new Utf8JsonReader();
-                throw new NotImplementedException();
+                var cur = (BytesSegment)Arg1.ObjectValue;
+                var last = (BytesSegment)Arg2.ObjectValue;
+                Utf8JsonReader jr;
+                if (last == null || cur == last) //一开始就一包或读到只剩一包
+                    jr = new Utf8JsonReader(cur.Buffer.AsSpan(Postion, cur.Length - Postion),
+                                            true, JsonState ?? (default));
+                else
+                    jr = new Utf8JsonReader(new ReadOnlySequence<byte>(cur, Postion, last, last.Length),
+                                            cur.Next == null, JsonState ?? (default));
+
+                if (!jr.Read() || jr.TokenType== JsonTokenType.EndArray)
+                    throw new Exception("Can't read from utf8 bytes");
+                if (jr.TokenType == JsonTokenType.StartArray)
+                {
+                    if (!jr.Read()) throw new Exception("Can't read from utf8 bytes");
+                }
+                Arg1.ObjectValue = jr.Position.GetObject(); //是否考虑直接归还之前已读完的
+                Postion = jr.Position.GetInteger();
+                JsonState = jr.CurrentState;
+                return jr.GetString();
             }
-            else if (Count == 255)
+            if (Count == 255)
             {
                 throw new NotImplementedException();
             }
-            else
-            {
-                return (string)Current().ObjectValue;
-            }
+
+            return (string)Current().ObjectValue;
         }
 
         public object GetObject()
         {
+            if (Count == 254 || Count == 255)
+                throw new NotImplementedException();
             return Current().ObjectValue;
         }
 
         public ObjectArray GetObjectArray()
         {
+            if (Count == 254 || Count == 255)
+                throw new NotImplementedException();
             return (ObjectArray)Current().ObjectValue;
         }
 

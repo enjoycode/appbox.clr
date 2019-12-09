@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using appbox.Data;
+using appbox.Caching;
 using appbox.Runtime;
 using OmniSharp.Mef;
 using OmniSharp.Roslyn.CSharp.Services;
@@ -11,58 +12,58 @@ namespace appbox.Design
 {
     public sealed class DesignService : IService
     {
-        private static readonly Dictionary<ReadOnlyMemory<char>, IRequestHandler> handlers;
+        private static readonly Dictionary<CharsKey, IRequestHandler> handlers;
 
         static DesignService()
         {
-            handlers = new Dictionary<ReadOnlyMemory<char>, IRequestHandler>
+            handlers = new Dictionary<CharsKey, IRequestHandler>
             {
-                { nameof(LoadDesignTree).AsMemory(), new LoadDesignTree() },
+                { nameof(LoadDesignTree), new LoadDesignTree() },
                 //DataStore
-                { nameof(NewDataStore).AsMemory(), new NewDataStore() },
-                { nameof(SaveDataStore).AsMemory(), new SaveDataStore() },
+                { nameof(NewDataStore), new NewDataStore() },
+                { nameof(SaveDataStore), new SaveDataStore() },
                 //Folder
-                { nameof(NewFolder).AsMemory(), new NewFolder() },
+                { nameof(NewFolder), new NewFolder() },
                 //Model
-                { nameof(CloseDesigner).AsMemory(), new CloseDesigner() },
-                { nameof(SaveModel).AsMemory(), new SaveModel() },
-                { nameof(Checkout).AsMemory(), new Checkout()},
-                { nameof(GetPendingChanges).AsMemory(), new GetPendingChanges() },
-                { nameof(Publish).AsMemory(), new Publish() },
-                { nameof(DeleteNode).AsMemory(), new DeleteNode() },
+                { nameof(CloseDesigner), new CloseDesigner() },
+                { nameof(SaveModel), new SaveModel() },
+                { nameof(Checkout), new Checkout()},
+                { nameof(GetPendingChanges), new GetPendingChanges() },
+                { nameof(Publish), new Publish() },
+                { nameof(DeleteNode), new DeleteNode() },
                 //Entity
-                { nameof(NewEntityModel).AsMemory(), new NewEntityModel() },
-                { nameof(GetEntityModel).AsMemory(), new GetEntityModel() },
-                { nameof(LoadEntityData).AsMemory(), new LoadEntityData() },
-                { nameof(NewEntityMember).AsMemory(), new NewEntityMember() },
-                { nameof(DeleteEntityMember).AsMemory(), new DeleteEntityMember() },
-                { nameof(ChangeEntity).AsMemory(), new ChangeEntity() },
-                { nameof(ChangeEntityMember).AsMemory(), new ChangeEntityMember() },
-                { nameof(GetEntityRefModels).AsMemory(), new GetEntityRefModels() },
+                { nameof(NewEntityModel), new NewEntityModel() },
+                { nameof(GetEntityModel), new GetEntityModel() },
+                { nameof(LoadEntityData), new LoadEntityData() },
+                { nameof(NewEntityMember), new NewEntityMember() },
+                { nameof(DeleteEntityMember), new DeleteEntityMember() },
+                { nameof(ChangeEntity), new ChangeEntity() },
+                { nameof(ChangeEntityMember), new ChangeEntityMember() },
+                { nameof(GetEntityRefModels), new GetEntityRefModels() },
                 //Service
-                { nameof(NewServiceModel).AsMemory(), new NewServiceModel() },
-                { nameof(OpenServiceModel).AsMemory(), new OpenServiceModel() },
-                { nameof(GetServiceMethod).AsMemory(), new GetServiceMethod() },
-                { nameof(GenServiceDeclare).AsMemory(), new GenServiceDeclare() },
-                { nameof(GetReferences).AsMemory(), new GetReferences() },
-                { nameof(UpdateReferences).AsMemory(), new UpdateReferences() },
-                { nameof(StartDebugging).AsMemory(), new StartDebugging() },
-                { nameof(ContinueBreakpoint).AsMemory(), new ContinueBreakpoint() },
+                { nameof(NewServiceModel), new NewServiceModel() },
+                { nameof(OpenServiceModel), new OpenServiceModel() },
+                { nameof(GetServiceMethod), new GetServiceMethod() },
+                { nameof(GenServiceDeclare), new GenServiceDeclare() },
+                { nameof(GetReferences), new GetReferences() },
+                { nameof(UpdateReferences), new UpdateReferences() },
+                { nameof(StartDebugging), new StartDebugging() },
+                { nameof(ContinueBreakpoint), new ContinueBreakpoint() },
                 //View
-                { nameof(NewViewModel).AsMemory(), new NewViewModel() },
-                { nameof(OpenViewModel).AsMemory(), new OpenViewModel() },
-                { nameof(LoadView).AsMemory(), new LoadView() },
-                { nameof(ChangeRouteSetting).AsMemory(), new ChangeRouteSetting() },
+                { nameof(NewViewModel), new NewViewModel() },
+                { nameof(OpenViewModel), new OpenViewModel() },
+                { nameof(LoadView), new LoadView() },
+                { nameof(ChangeRouteSetting), new ChangeRouteSetting() },
                 //Permission
-                { nameof(NewPermissionModel).AsMemory(), new NewPermissionModel() },
+                { nameof(NewPermissionModel), new NewPermissionModel() },
                 //C# 代码编辑器相关
-                { nameof(ChangeBuffer).AsMemory(), new ChangeBuffer() },
-                { nameof(GetCompletion).AsMemory(), new GetCompletion() },
-                { nameof(CheckCode).AsMemory(), new CheckCode() },
-                { nameof(FormatDocument).AsMemory(), new FormatDocument() },
-                { nameof(GetHover).AsMemory(), new GetHover() },
+                { nameof(ChangeBuffer), new ChangeBuffer() },
+                { nameof(GetCompletion), new GetCompletion() },
+                { nameof(CheckCode), new CheckCode() },
+                { nameof(FormatDocument), new FormatDocument() },
+                { nameof(GetHover), new GetHover() },
                 //Blob
-                { nameof(GetBlobObjects).AsMemory(), new GetBlobObjects() }
+                { nameof(GetBlobObjects), new GetBlobObjects() }
             };
             //handlers.Add(nameof(FindUsages), new FindUsages());
             //handlers.Add(nameof(Rename), new Rename());
