@@ -28,9 +28,8 @@ namespace appbox.Host
         {
             //暂简单处理，读请求数据至缓存块，然后走与WebSocket相同的流程
             //待实现Utf8JsonReaderStream后再修改
-            //Log.Warn($"Require Stream Position={context.Request.Body.Position}, Size={context.Request.Body.Length}");
             int bytesRead = 0;
-            int totalBytes = (int)context.Request.Body.Length;
+            int totalBytes = (int)context.Request.ContentLength.Value;
             BytesSegment frame = null;
             while (bytesRead < totalBytes) //TODO:读错误归还缓存块
             {
