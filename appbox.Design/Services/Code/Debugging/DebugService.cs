@@ -89,7 +89,7 @@ namespace appbox.Design
                 }
             }
             var req = new InvokeRequire(InvokeSource.Debugger,
-                InvokeContentType.Bin/*注意用二进制格式，主进程反序列化*/, IntPtr.Zero, method, args, 0, _hub.Session);
+                InvokeProtocol.Bin/*注意用二进制格式，主进程反序列化*/, IntPtr.Zero, method, args, 0, _hub.Session);
 
             _breakpoints = JArray.Parse(breakpoints);
 

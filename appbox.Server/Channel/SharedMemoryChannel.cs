@@ -76,7 +76,7 @@ namespace appbox.Server
                 }
                 catch (Exception ex)
                 {
-                    Log.Warn($"接收线程错误: {ex.Message}");
+                    Log.Warn($"接收线程错误: {ex.Message}\n{ex.StackTrace}");
                 }
             }, TaskCreationOptions.LongRunning);
         }

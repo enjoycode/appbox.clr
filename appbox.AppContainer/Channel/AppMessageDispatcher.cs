@@ -2,6 +2,7 @@
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using appbox.Data;
 using appbox.Models;
 using appbox.Server;
 
@@ -65,13 +66,17 @@ namespace appbox.AppContainer
                     try
                     {
                         var res = await Runtime.RuntimeContext.Current.InvokeAsync(req.Service, req.Args);
-                        response = new InvokeResponse(req.Source, req.ContentType, req.WaitHandle, req.SourceMsgId, res);
+                        response = new InvokeResponse(req.Source, req.ContentType, req.WaitHandle, req.SourceMsgId, (AnyValue)res);
                     }
                     catch (Exception ex)
                     {
                         response = new InvokeResponse(req.Source, req.ContentType, req.WaitHandle, req.SourceMsgId,
                                                       InvokeResponseError.ServiceInnerError, ex.Message);
                         Log.Warn($"Service internal error: {ExceptionHelper.GetExceptionDetailInfo(ex)}");
+                    }
+                    finally
+                    {
+                        req.Args.ReturnBuffer(); //注意归还由主进程封送过来的参数缓存块
                     }
 
                     //最后发送回复，注意：序列化失败会标记消息Flag为序列化错误

@@ -122,9 +122,9 @@ namespace appbox.Services
         {
             switch (method)
             {
-                case ReadOnlyMemory<char> s when s.Equals(nameof(LoadPermissionNodes).AsMemory()):
+                case ReadOnlyMemory<char> s when s.Span.SequenceEqual(nameof(LoadPermissionNodes)):
                     return AnyValue.From(await LoadPermissionNodes());
-                case ReadOnlyMemory<char> s when s.Equals( nameof(SavePermission).AsMemory()):
+                case ReadOnlyMemory<char> s when s.Span.SequenceEqual(nameof(SavePermission)):
                     return AnyValue.From(await SavePermission(args.GetString(), args.GetObjectArray()));
                 default:
                     throw new Exception($"Can't find method: {method}");

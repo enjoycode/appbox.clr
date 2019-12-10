@@ -15,7 +15,7 @@ namespace appbox.Design
     {
         public async Task<object> Handle(DesignHub hub, InvokeArgs args)
         {
-            string fileName = (string)args.GetObject();
+            string fileName = args.GetString();
             int line = args.GetInt32();
             int column = args.GetInt32();
 

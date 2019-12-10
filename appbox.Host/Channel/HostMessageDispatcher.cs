@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Prometheus;
 using appbox.Server;
+using appbox.Data;
 
 namespace appbox.Host
 {
@@ -60,39 +61,24 @@ namespace appbox.Host
 
         private unsafe void ProcessInvokeResponse(IMessageChannel channel, MessageChunk* first)
         {
-            //注意:先读取消息头信息确认消息回复的目标
-            var reqSource = InvokeResponse.GetSourceFromMessageChunk(first);
-            switch (reqSource)
+            var response = channel.Deserialize<InvokeResponse>(first); //TODO:处理反序列化异常
+            Log.Warn($"Host反序列化InvokeResponse, Error={response.Error}");
+            if (response.Source == InvokeSource.Client || response.Source == InvokeSource.Host)
             {
-                case InvokeSource.Client:
-                    {
-                        IntPtr waitHandle = InvokeResponse.GetWaitHandleFromMessageChunk(first);
-                        GCHandle tcsHandle = GCHandle.FromIntPtr(waitHandle);
-                        var tcs = (TaskCompletionSource<object>)tcsHandle.Target;
-                        tcs.SetResult(new IntPtr(first)); //TODO:考虑包装Channel及Chunk
-                        tcsHandle.Free();
-                    }
-                    break;
-                case InvokeSource.Host:
-                    {
-                        var response = channel.Deserialize<InvokeResponse>(first); //TODO:处理反序列化异常
-                        GCHandle tcsHandle = GCHandle.FromIntPtr(response.WaitHandle);
-                        var tcs = (TaskCompletionSource<object>)tcsHandle.Target;
-                        if (response.Error == InvokeResponseError.None)
-                            tcs.SetResult(response.Result);
-                        else
-                            tcs.SetException(new Exception(response.Error.ToString()));
-                        tcsHandle.Free();
-                    }
-                    break;
-                case InvokeSource.Debugger:
-                    {
-                        var response = channel.Deserialize<InvokeResponse>(first); //TODO:处理反序列化异常
-                        _debugSessionManager.GotInvokeResponse(channel.RemoteRuntimeId, response); //注意暂直接在当前线程处理
-                    }
-                    break;
-                default:
-                    throw new NotImplementedException();
+                GCHandle tcsHandle = GCHandle.FromIntPtr(response.WaitHandle);
+                var tcs = (PooledTaskSource<AnyValue>)tcsHandle.Target;
+                if (response.Error != InvokeResponseError.None) //仅Host，重新包装为异常
+                    tcs.NotifyCompletionOnThreadPool(AnyValue.From(new Exception((string)response.Result.ObjectValue)));
+                else
+                    tcs.NotifyCompletionOnThreadPool(response.Result);
+            }
+            else if (response.Source == InvokeSource.Debugger)
+            {
+                _debugSessionManager.GotInvokeResponse(channel.RemoteRuntimeId, response); //注意暂直接在当前线程处理
+            }
+            else
+            {
+                throw new NotImplementedException();
             }
         }
 

@@ -2,7 +2,7 @@
 
 namespace appbox.Server
 {
-    public enum InvokeContentType : byte
+    public enum InvokeProtocol : byte
     {
         Bin = 0,
         Json = 1

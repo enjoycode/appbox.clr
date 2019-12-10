@@ -807,7 +807,7 @@ namespace appbox.Serialization
             int len = ReadInt32();
             if (len == -1)
                 return null;
-            else if (len == -2)
+            if (len == -2)
                 return (bool[])_objRefItems[(int)ReadUInt32()];
 
             bool[] res = new bool[len];

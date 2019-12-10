@@ -8,6 +8,7 @@ using appbox.Caching;
 using appbox.Runtime;
 using System.Threading.Tasks;
 using System.Text.Json;
+using System.Buffers;
 
 namespace appbox.Server.Channel
 {
@@ -93,50 +94,56 @@ namespace appbox.Server.Channel
 
         private async Task SendInvokeResponse(int msgId, AnyValue res)
         {
-            //if (res is IntPtr ptr) //返回结果服务域已经序列化
-            //{
-            //    if (ptr != IntPtr.Zero)
-            //    {
-            //        await sendLock.WaitAsync();
-            //        try
-            //        {
-            //            await InvokeHelper.SendInvokeResponse(socket, ptr);
-            //        }
-            //        finally
-            //        {
-            //            sendLock.Release();
-            //        }
-            //    }
-            //    else
-            //        Log.Warn("收到服务域调用结果为空");
-            //}
-            //else
-            //{
-            byte[] data = null;
-            bool serializeError = false;
-            using (var ms = new MemoryStream()) //todo: 暂用MemoryStream，待用WebSocketFrameWriteStream替代
+            if (res.Type == AnyValueType.Object && res.ObjectValue is BytesSegment)
             {
-                using (var sw = new StreamWriter(ms))
-                {
-                    serializeError = InvokeHelper.WriteInvokeResponse(sw, msgId, res.BoxedValue);
-                }
-                data = ms.ToArray();
-            }
-
-            if (!serializeError && socket.State == WebSocketState.Open)
-            {
-                //注意：如果用WebSocketFrameWriteStream实现，待实现发送队列
+                var cur = (ReadOnlySequenceSegment<byte>)res.ObjectValue;
                 await sendLock.WaitAsync();
                 try
                 {
-                    await socket.SendAsync(new ArraySegment<byte>(data), WebSocketMessageType.Text, true, CancellationToken.None);
+                    while (cur != null && socket.State == WebSocketState.Open)
+                    {
+                        await socket.SendAsync(cur.Memory, WebSocketMessageType.Text,
+                            cur.Next == null, CancellationToken.None);
+                        cur = cur.Next;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Warn($"Send InvokeResponse to websocket error: {ex.Message}");
                 }
                 finally
                 {
                     sendLock.Release();
+                    BytesSegment.ReturnAll((BytesSegment)res.ObjectValue); //注意归还缓存块
                 }
             }
-            //}
+            else
+            {
+                byte[] data = null;
+                bool serializeError = false;
+                using (var ms = new MemoryStream()) //todo: 暂用MemoryStream，待用WebSocketFrameWriteStream替代
+                {
+                    using (var sw = new StreamWriter(ms))
+                    {
+                        serializeError = InvokeHelper.WriteInvokeResponse(sw, msgId, res.BoxedValue);
+                    }
+                    data = ms.ToArray();
+                }
+
+                if (!serializeError && socket.State == WebSocketState.Open)
+                {
+                    //注意：如果用WebSocketFrameWriteStream实现，待实现发送队列
+                    await sendLock.WaitAsync();
+                    try
+                    {
+                        await socket.SendAsync(data.AsMemory(), WebSocketMessageType.Text, true, CancellationToken.None);
+                    }
+                    finally
+                    {
+                        sendLock.Release();
+                    }
+                }
+            }
         }
 
         internal void SendEvent(int source, string body)

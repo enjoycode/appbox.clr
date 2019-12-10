@@ -73,6 +73,8 @@ namespace appbox.Server
         #endregion
 
         #region ====Read Methods====
+        internal unsafe bool HasData => _curDataPtr != _maxDataPtr || _curChunk->Next != null;
+
         public override void Close()
         {
             //do noting
@@ -80,13 +82,14 @@ namespace appbox.Server
 
         public unsafe override int ReadByte()
         {
-            CheckNeedMove();
+            bool hasData = CheckNeedMove();
+            if (!hasData) return -1;
             byte value = _curDataPtr[0];
             _curDataPtr++;
             return value;
         }
 
-        public unsafe override int Read(byte[] buffer, int offset, int count)
+        public override int Read(byte[] buffer, int offset, int count)
         {
             if (buffer == null)
                 throw new ArgumentNullException(nameof(buffer));
@@ -103,7 +106,8 @@ namespace appbox.Server
 
         public unsafe override int Read(Span<byte> buffer)
         {
-            CheckNeedMove();
+            bool hasData = CheckNeedMove();
+            if (!hasData) return 0;
             //当前段内剩余的可读字节数
             var curLeft = (int)(_maxDataPtr - _curDataPtr);
             if (curLeft >= buffer.Length)
@@ -113,14 +117,11 @@ namespace appbox.Server
                 _curDataPtr += buffer.Length;
                 return buffer.Length;
             }
-            else
-            {
-                //先读取当前段内剩余的字节数
-                Read(buffer.Slice(0, curLeft));
-                //再读取余下的字节数
-                var res = Read(buffer.Slice(curLeft, buffer.Length - curLeft));
-                return res + curLeft;
-            }
+            //先读取当前段内剩余的字节数
+            Read(buffer.Slice(0, curLeft));
+            //再读取余下的字节数
+            var res = Read(buffer.Slice(curLeft, buffer.Length - curLeft));
+            return res + curLeft;
         }
 
         public override void Flush()
@@ -128,24 +129,22 @@ namespace appbox.Server
             //do nothing
         }
 
-        private unsafe void CheckNeedMove()
+        private unsafe bool CheckNeedMove()
         {
             if (_curDataPtr == _maxDataPtr)
             {
-                do
+                if (_curChunk->Next == null)
                 {
-                    if (_curChunk->Next == null)
-                    {
-                        //_curChunk->DumpAllTcpInfo(true);
-                        throw new IOException("No message chunk to read.");
-                    }
+                    //_curChunk->DumpAllTcpInfo(true);
+                    return false;
+                }
 
-                    //移至下一消息段
-                    _curChunk = _curChunk->Next;
-                    _curDataPtr = MessageChunk.GetDataPtr(_curChunk);
-                    _maxDataPtr = _curDataPtr + _curChunk->DataLength;
-                } while (_curDataPtr == _maxDataPtr); //TODO:移除while，旧实现会出现空数据包
+                //移至下一消息段
+                _curChunk = _curChunk->Next;
+                _curDataPtr = MessageChunk.GetDataPtr(_curChunk);
+                _maxDataPtr = _curDataPtr + _curChunk->DataLength;
             }
+            return true;
         }
         #endregion
 

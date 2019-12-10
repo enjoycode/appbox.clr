@@ -183,15 +183,15 @@ namespace appbox.Services
         {
             switch (method)
             {
-                case ReadOnlyMemory<char> s when s.Equals(nameof(GetGauges).AsMemory()):
+                case ReadOnlyMemory<char> s when s.Span.SequenceEqual(nameof(GetGauges)):
                     return AnyValue.From(await GetGauges());
-                case ReadOnlyMemory<char> s when s.Equals(nameof(GetNodes).AsMemory()):
+                case ReadOnlyMemory<char> s when s.Span.SequenceEqual(nameof(GetNodes)):
                     return AnyValue.From(await GetNodes());
-                case ReadOnlyMemory<char> s when s.Equals(nameof(GetParts).AsMemory()):
+                case ReadOnlyMemory<char> s when s.Span.SequenceEqual(nameof(GetParts)):
                     return AnyValue.From(await GetParts());
-                case ReadOnlyMemory<char> s when s.Equals(nameof(SetAsMeta).AsMemory()):
+                case ReadOnlyMemory<char> s when s.Span.SequenceEqual(nameof(SetAsMeta)):
                     return AnyValue.From(await SetAsMeta(args.GetString(), args.GetString(), args.GetInt32()));
-                case ReadOnlyMemory<char> s when s.Equals(nameof(PromoteReplFactor).AsMemory()):
+                case ReadOnlyMemory<char> s when s.Span.SequenceEqual(nameof(PromoteReplFactor)):
                     return AnyValue.From(await PromoteReplFactor());
                 default:
                     throw new Exception($"Can't find method: {method}");

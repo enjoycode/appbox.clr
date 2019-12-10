@@ -1,6 +1,8 @@
 ﻿using System;
 using System.IO;
 using System.Runtime.CompilerServices;
+using appbox.Caching;
+using appbox.Data;
 using appbox.Serialization;
 using Newtonsoft.Json;
 
@@ -11,7 +13,7 @@ namespace appbox.Server
         public const int CONTENT_OFFSET = 11; //注意第一字节为消息类型
 
         public InvokeSource Source { get; private set; }
-        public InvokeContentType ContentType { get; private set; }
+        public InvokeProtocol Protocol { get; private set; }
         /// <summary>
         /// 异步等待句柄
         /// </summary>
@@ -19,37 +21,40 @@ namespace appbox.Server
         public int SourceMsgId { get; private set; }
 
         public InvokeResponseError Error { get; private set; }
-        public object Result { get; private set; }
+        public AnyValue Result { get; private set; }
 
         public MessageType Type => MessageType.InvokeResponse;
 
         public PayloadType PayloadType => PayloadType.InvokeResponse;
 
-        public InvokeResponse(InvokeSource source, InvokeContentType contentType, IntPtr waitHandle, int srcMsgId, object result)
+        public InvokeResponse(InvokeSource source, InvokeProtocol protocol,
+                              IntPtr waitHandle, int srcMsgId, AnyValue result)
         {
             Source = source;
-            ContentType = contentType;
+            Protocol = protocol;
             WaitHandle = waitHandle;
             SourceMsgId = srcMsgId;
             Error = InvokeResponseError.None;
             Result = result;
         }
 
-        public InvokeResponse(InvokeSource source, InvokeContentType contentType, IntPtr waitHandle, int srcMsgId,
+        public InvokeResponse(InvokeSource source, InvokeProtocol contentType,
+                              IntPtr waitHandle, int srcMsgId,
                               InvokeResponseError error, string errorMsg)
         {
             Source = source;
-            ContentType = contentType;
+            Protocol = contentType;
             WaitHandle = waitHandle;
             SourceMsgId = srcMsgId;
             Error = error;
-            Result = errorMsg;
+            Result = AnyValue.From(errorMsg);
         }
 
+        #region ====Serialization====
         public void WriteObject(BinSerializer bs)
         {
             bs.Write((byte)Source);
-            bs.Write((byte)ContentType);
+            bs.Write((byte)Protocol);
             long hv = WaitHandle.ToInt64();
             unsafe
             {
@@ -57,7 +62,7 @@ namespace appbox.Server
                 bs.Stream.Write(span);
             }
             //注意: 根据类型不同的序列化方式，暂只支持Bin及Json
-            if (ContentType == InvokeContentType.Json)
+            if (Protocol == InvokeProtocol.Json)
             {
                 using (var sw = new StreamWriter(bs.Stream))
                 {
@@ -72,12 +77,12 @@ namespace appbox.Server
                         if (Error != InvokeResponseError.None)
                         {
                             jw.WritePropertyName("E");
-                            jw.WriteValue((string)Result); //TODO: 友好错误信息
+                            jw.WriteValue((string)Result.ObjectValue); //TODO: 友好错误信息
                         }
                         else
                         {
                             jw.WritePropertyName("D");
-                            jw.Serialize(Result);
+                            jw.Serialize(Result.BoxedValue);
                         }
                         jw.WriteEndObject();
                     }
@@ -87,15 +92,14 @@ namespace appbox.Server
             {
                 bs.Write(SourceMsgId);
                 bs.Write((byte)Error);
-                bs.Serialize(Result);
+                Result.WriteObject(bs);
             }
         }
 
         public void ReadObject(BinSerializer bs)
         {
-            //注意: 只支持Bin，Json由Host直接转发，不需要反序列化
             Source = (InvokeSource)bs.ReadByte();
-            ContentType = (InvokeContentType)bs.ReadByte();
+            Protocol = (InvokeProtocol)bs.ReadByte();
             long hv = 0;
             unsafe
             {
@@ -103,27 +107,48 @@ namespace appbox.Server
                 bs.Stream.Read(span);
             }
             WaitHandle = new IntPtr(hv);
-            SourceMsgId = bs.ReadInt32();
-            Error = (InvokeResponseError)bs.ReadByte();
-            if (ContentType == InvokeContentType.Bin)
-                Result = bs.Deserialize();
-            else
-                throw new NotSupportedException("暂不支持非二进制格式");
-        }
-    
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe static InvokeSource GetSourceFromMessageChunk(MessageChunk* first)
-        {
-            var dataPtr = MessageChunk.GetDataPtr(first);
-            return (InvokeSource)dataPtr[1];
-        }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe static IntPtr GetWaitHandleFromMessageChunk(MessageChunk* first)
-        {
-            var dataPtr = MessageChunk.GetDataPtr(first);
-            long* ptr = (long*)(dataPtr + 3);
-            return new IntPtr(*ptr);
+            if (Protocol == InvokeProtocol.Bin)
+            {
+                SourceMsgId = bs.ReadInt32();
+                Error = (InvokeResponseError)bs.ReadByte();
+                var temp = new AnyValue();
+                temp.ReadObject(bs);
+                Result = temp; //Don't use Result.ReadObject(bs)
+            }
+            else
+            {
+                //注意将子进程已序列化的结果读到缓存块内，缓存块由相应的通道处理并归还
+                var stream = (MessageReadStream)bs.Stream;
+                BytesSegment cur = null;
+                int len;
+                while (stream.HasData)
+                {
+                    var temp = BytesSegment.Rent();
+                    len = bs.Stream.Read(temp.Buffer.AsSpan());
+                    temp.Length = len;
+                    if (cur != null)
+                        cur.Append(temp);
+                    cur = temp;
+                }
+                Result = AnyValue.From(cur.First);
+            }
         }
+        #endregion
+
+        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+        //public unsafe static InvokeSource GetSourceFromMessageChunk(MessageChunk* first)
+        //{
+        //    var dataPtr = MessageChunk.GetDataPtr(first);
+        //    return (InvokeSource)dataPtr[1];
+        //}
+
+        //[MethodImpl(MethodImplOptions.AggressiveInlining)]
+        //public unsafe static IntPtr GetWaitHandleFromMessageChunk(MessageChunk* first)
+        //{
+        //    var dataPtr = MessageChunk.GetDataPtr(first);
+        //    long* ptr = (long*)(dataPtr + 3);
+        //    return new IntPtr(*ptr);
+        //}
     }
 }

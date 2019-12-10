@@ -161,7 +161,7 @@ namespace appbox.Server
 
             //非系统服务则包装为InvokeRequire转发至子进程处理
             var tcs = invokeTasksPool.Pop();
-            var require = new InvokeRequire(InvokeSource.Client, InvokeContentType.Json,
+            var require = new InvokeRequire(InvokeSource.Client, InvokeProtocol.Json,
                 tcs.GCHandlePtr, servicePath, InvokeArgs.From(frame, offset), msgId,
                 RuntimeContext.Current.CurrentSession); //注意传播会话信息
             ChildProcess.AppContainer.Channel.SendMessage(ref require);

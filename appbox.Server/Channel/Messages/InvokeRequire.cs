@@ -16,7 +16,7 @@ namespace appbox.Server
     public struct InvokeRequire : IMessage
     {
         public InvokeSource Source { get; private set; }
-        public InvokeContentType ContentType { get; private set; }
+        public InvokeProtocol ContentType { get; private set; }
         /// <summary>
         /// 异步等待句柄
         /// </summary>
@@ -40,7 +40,7 @@ namespace appbox.Server
 
         public PayloadType PayloadType { get { return PayloadType.InvokeRequire; } }
 
-        public InvokeRequire(InvokeSource source, InvokeContentType contentType,
+        public InvokeRequire(InvokeSource source, InvokeProtocol contentType,
                              IntPtr waitHandle, string service, InvokeArgs args, int sourceMsgId,
                              ISessionInfo session = null)
         {
@@ -85,7 +85,7 @@ namespace appbox.Server
         public void ReadObject(BinSerializer bs)
         {
             Source = (InvokeSource)bs.ReadByte();
-            ContentType = (InvokeContentType)bs.ReadByte();
+            ContentType = (InvokeProtocol)bs.ReadByte();
             WaitHandle = new IntPtr(bs.ReadInt64());
             SourceMsgId = bs.ReadInt32();
             Service = bs.ReadString();
@@ -106,7 +106,9 @@ namespace appbox.Server
                 string tag = bs.ReadString();
                 Session = new RoutedSession(id, path, empID, tag);
             }
-            Args.ReadObject(bs);
+            var args = new InvokeArgs();
+            args.ReadObject(bs);
+            Args = args; //Don't use Args.ReadObject(bs)
         }
         #endregion
     }

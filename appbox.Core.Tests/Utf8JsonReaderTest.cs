@@ -47,16 +47,16 @@ namespace appbox.Core.Tests
             var js = "{\"I\":3,\"S\":\"sys.HelloService.Hello\",\"A\":[123, \"中国\"]}";
             var data = System.Text.Encoding.UTF8.GetBytes(js);
 
-            var bs1 = new BytesSegment(15, null);
+            var bs1 = new TestBytesSegment(15, null);
             data.AsSpan(0, 15).CopyTo(bs1.Buffer.AsSpan()); //sys.的.之前
 
             //var temp = MemoryPool<byte>.Shared.Rent(20);
             var temp1 = new byte[100];
-            var bs2 = new BytesSegment(28, bs1);
+            var bs2 = new TestBytesSegment(28, bs1);
             data.AsSpan(15, 28).CopyTo(bs2.Buffer.AsSpan()); //123的3之前
 
             var temp2 = new byte[100];
-            var bs3 = new BytesSegment(data.Length - 15 - 28, bs2);
+            var bs3 = new TestBytesSegment(data.Length - 15 - 28, bs2);
             data.AsSpan(15 + 28).CopyTo(bs3.Buffer.AsSpan());
 
             //var jr = new Utf8JsonReader(data.AsSpan(0, 15), false, default); //sys.的.之前
@@ -96,16 +96,16 @@ namespace appbox.Core.Tests
             var js = "{\"I\":3,\"S\":\"sys.HelloService.Hello\",\"A\":[123, \"中国\"]}";
             var data = System.Text.Encoding.UTF8.GetBytes(js);
 
-            var bs1 = new BytesSegment(15, null);
+            var bs1 = new TestBytesSegment(15, null);
             data.AsSpan(0, 15).CopyTo(bs1.Buffer.AsSpan()); //sys.的.之前
 
             //var temp = MemoryPool<byte>.Shared.Rent(20);
             var temp1 = new byte[100];
-            var bs2 = new BytesSegment(28, bs1);
+            var bs2 = new TestBytesSegment(28, bs1);
             data.AsSpan(15, 28).CopyTo(bs2.Buffer.AsSpan()); //123的3之前
 
             var temp2 = new byte[100];
-            var bs3 = new BytesSegment(data.Length - 15 - 28, bs2);
+            var bs3 = new TestBytesSegment(data.Length - 15 - 28, bs2);
             data.AsSpan(15 + 28).CopyTo(bs3.Buffer.AsSpan());
 
             var jr1 = new Utf8JsonReader(
@@ -138,14 +138,14 @@ namespace appbox.Core.Tests
         }
     }
 
-    sealed class BytesSegment : ReadOnlySequenceSegment<byte>, IDisposable
+    sealed class TestBytesSegment : ReadOnlySequenceSegment<byte>, IDisposable
     {
         //internal IMemoryOwner<byte> Buffer { get; }
         internal byte[] Buffer { get; }
-        internal BytesSegment Previous { get; set; }
+        internal TestBytesSegment Previous { get; set; }
         private bool _disposed;
 
-        public BytesSegment(int size, BytesSegment previous)
+        public TestBytesSegment(int size, TestBytesSegment previous)
         {
             //Buffer = MemoryPool<byte>.Shared.Rent(size);
             Buffer = new byte[size];

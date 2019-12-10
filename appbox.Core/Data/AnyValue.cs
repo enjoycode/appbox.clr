@@ -73,9 +73,16 @@ namespace appbox.Data
         #endregion
 
         #region ====FromXXX Methods, 仅用于生成虚拟服务代码的IService接口====
+        public readonly static AnyValue Empty = new AnyValue { Type = AnyValueType.Empty };
+
         public static AnyValue From(int v)
         {
             return new AnyValue { Int32Value = v, Type = AnyValueType.Int32 };
+        }
+
+        public static AnyValue From(string v)
+        {
+            return new AnyValue { ObjectValue = v, Type = AnyValueType.Object };
         }
 
         public static AnyValue From(object v)
@@ -161,6 +168,7 @@ namespace appbox.Data
 
     enum AnyValueType : byte
     {
+        Empty,
         Object,
         Boolean,
         Byte,

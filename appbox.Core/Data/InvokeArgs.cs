@@ -26,6 +26,9 @@ namespace appbox.Data
         private int Postion;
         private JsonReaderState? JsonState;
 
+        private const byte FromWebSocket = 254;
+        private const byte FromWebStream = 255; //仅存在于Host进程
+
         #region ====From Methods, 仅用于简化服务端编码====
         public static InvokeArgs Empty() { return new InvokeArgs { Count = 0 }; }
 
@@ -37,7 +40,7 @@ namespace appbox.Data
                 throw new ArgumentException(nameof(last));
             return new InvokeArgs
             {
-                Count = 254,
+                Count = FromWebSocket,
                 Arg1 = AnyValue.From(last.First), //当前包，新建是指向第一包
                 Arg2 = AnyValue.From(last), //最后一包
                 Postion = offset
@@ -70,7 +73,7 @@ namespace appbox.Data
         }
         #endregion
 
-        #region ====Set Methods====
+        #region ====Methods====
         internal void Set(int index, AnyValue value)
         {
             if (index < 0 && index > 4) throw new ArgumentOutOfRangeException(nameof(index));
@@ -83,6 +86,24 @@ namespace appbox.Data
                 case 3: Arg4 = value; break;
                 case 4: Arg5 = value; break;
             }
+        }
+
+        /// <summary>
+        /// 目前仅用于主进程封送至子进程在调用完后归还相应的缓存块
+        /// </summary>
+        internal void ReturnBuffer()
+        {
+            if (Count == FromWebSocket)
+            {
+                BytesSegment.ReturnAll((BytesSegment)Arg1.ObjectValue);
+            }
+        }
+
+        internal string DebugString()
+        {
+            if (Count == FromWebSocket)
+                return $"FromWebSocket";
+            return $"{Count}";
         }
         #endregion
 
@@ -103,32 +124,45 @@ namespace appbox.Data
             };
         }
 
-        public bool GetBoolean()
+        private Utf8JsonReader ReadJsonArg()
         {
-            if (Count == 254)
-            {
-                var cur = (BytesSegment)Arg1.ObjectValue;
-                var last = (BytesSegment)Arg2.ObjectValue;
-                Utf8JsonReader jr;
-                if (last == null || cur == last) //一开始就一包或读到只剩一包
-                    jr = new Utf8JsonReader(cur.Buffer.AsSpan(Postion, cur.Length - Postion),
-                                            true, JsonState ?? (default));
-                else
-                    jr = new Utf8JsonReader(new ReadOnlySequence<byte>(cur, Postion, last, last.Length),
-                                            cur.Next == null, JsonState ?? (default));
+            var cur = (BytesSegment)Arg1.ObjectValue;
+            var last = (BytesSegment)Arg2.ObjectValue;
+            Utf8JsonReader jr;
+            if (last == null || cur == last) //一开始就一包或读到只剩一包
+                jr = new Utf8JsonReader(cur.Buffer.AsSpan(Postion, cur.Length - Postion),
+                                        true, JsonState ?? (default));
+            else
+                jr = new Utf8JsonReader(new ReadOnlySequence<byte>(cur, Postion, last, last.Length),
+                                        cur.Next == null, JsonState ?? (default));
 
-                if (!jr.Read() || jr.TokenType == JsonTokenType.EndArray)
-                    throw new Exception("Can't read from utf8 bytes");
-                if (jr.TokenType == JsonTokenType.StartArray)
-                {
-                    if (!jr.Read()) throw new Exception("Can't read from utf8 bytes");
-                }
+            if (!jr.Read() || jr.TokenType == JsonTokenType.EndArray)
+                throw new Exception("Can't read from utf8 bytes");
+            if (jr.TokenType == JsonTokenType.StartArray)
+            {
+                if (!jr.Read()) throw new Exception("Can't read from utf8 bytes");
+            }
+
+            if (last == null || cur == last)
+            {
+                Postion += (int)jr.BytesConsumed;
+            }
+            else
+            {
                 Arg1.ObjectValue = jr.Position.GetObject(); //是否考虑直接归还之前已读完的
                 Postion = jr.Position.GetInteger();
-                JsonState = jr.CurrentState;
-                return jr.GetBoolean();
             }
-            if (Count == 255)
+            JsonState = jr.CurrentState;
+            return jr;
+        }
+
+        public bool GetBoolean()
+        {
+            if (Count == FromWebSocket)
+            {
+                return ReadJsonArg().GetBoolean();
+            }
+            if (Count == FromWebStream)
                 throw new NotImplementedException();
 
             return Current().BooleanValue;
@@ -136,60 +170,22 @@ namespace appbox.Data
 
         public int GetInt32()
         {
-            if (Count == 254)
+            if (Count == FromWebSocket)
             {
-                var cur = (BytesSegment)Arg1.ObjectValue;
-                var last = (BytesSegment)Arg2.ObjectValue;
-                Utf8JsonReader jr;
-                if (last == null || cur == last) //一开始就一包或读到只剩一包
-                    jr = new Utf8JsonReader(cur.Buffer.AsSpan(Postion, cur.Length - Postion),
-                                            true, JsonState ?? (default));
-                else
-                    jr = new Utf8JsonReader(new ReadOnlySequence<byte>(cur, Postion, last, last.Length),
-                                            cur.Next == null, JsonState ?? (default));
-
-                if (!jr.Read() || jr.TokenType == JsonTokenType.EndArray)
-                    throw new Exception("Can't read from utf8 bytes");
-                if (jr.TokenType == JsonTokenType.StartArray)
-                {
-                    if (!jr.Read()) throw new Exception("Can't read from utf8 bytes");
-                }
-                Arg1.ObjectValue = jr.Position.GetObject(); //是否考虑直接归还之前已读完的
-                Postion = jr.Position.GetInteger();
-                JsonState = jr.CurrentState;
-                return jr.GetInt32();
+                return ReadJsonArg().GetInt32();
             }
-            if (Count == 255)
+            if (Count == FromWebStream)
                 throw new NotImplementedException();
             return Current().Int32Value;
         }
 
         public string GetString()
         {
-            if (Count == 254)
+            if (Count == FromWebSocket)
             {
-                var cur = (BytesSegment)Arg1.ObjectValue;
-                var last = (BytesSegment)Arg2.ObjectValue;
-                Utf8JsonReader jr;
-                if (last == null || cur == last) //一开始就一包或读到只剩一包
-                    jr = new Utf8JsonReader(cur.Buffer.AsSpan(Postion, cur.Length - Postion),
-                                            true, JsonState ?? (default));
-                else
-                    jr = new Utf8JsonReader(new ReadOnlySequence<byte>(cur, Postion, last, last.Length),
-                                            cur.Next == null, JsonState ?? (default));
-
-                if (!jr.Read() || jr.TokenType== JsonTokenType.EndArray)
-                    throw new Exception("Can't read from utf8 bytes");
-                if (jr.TokenType == JsonTokenType.StartArray)
-                {
-                    if (!jr.Read()) throw new Exception("Can't read from utf8 bytes");
-                }
-                Arg1.ObjectValue = jr.Position.GetObject(); //是否考虑直接归还之前已读完的
-                Postion = jr.Position.GetInteger();
-                JsonState = jr.CurrentState;
-                return jr.GetString();
+                return ReadJsonArg().GetString();
             }
-            if (Count == 255)
+            if (Count == FromWebStream)
             {
                 throw new NotImplementedException();
             }
@@ -199,14 +195,14 @@ namespace appbox.Data
 
         public object GetObject()
         {
-            if (Count == 254 || Count == 255)
+            if (Count == FromWebSocket || Count == FromWebStream)
                 throw new NotImplementedException();
             return Current().ObjectValue;
         }
 
         public ObjectArray GetObjectArray()
         {
-            if (Count == 254 || Count == 255)
+            if (Count == FromWebSocket || Count == FromWebStream)
                 throw new NotImplementedException();
             return (ObjectArray)Current().ObjectValue;
         }
@@ -221,7 +217,27 @@ namespace appbox.Data
         internal void WriteObject(BinSerializer bs)
         {
             bs.Write(Count);
-            if (Count == byte.MaxValue)
+            if (Count == FromWebSocket)
+            {
+                //不用写入Position,第一包已跳过
+                var temp = (BytesSegment)Arg1.ObjectValue;
+                while (temp != null)
+                {
+                    if (temp == temp.First) //第一包跳过头部数据
+                    {
+                        bs.Write(temp.Length - Postion);
+                        bs.Stream.Write(temp.Memory.Slice(Postion).Span);
+                    }
+                    else
+                    {
+                        bs.Write(temp.Length);
+                        bs.Stream.Write(temp.Memory.Span);
+                    }
+                    temp = (BytesSegment)temp.Next;
+                }
+                bs.Write(0);
+            }
+            else if (Count == FromWebStream)
             {
                 throw new NotImplementedException();
             }
@@ -244,21 +260,42 @@ namespace appbox.Data
         internal void ReadObject(BinSerializer bs)
         {
             Count = bs.ReadByte();
-            if (Count == byte.MaxValue)
+            if (Count == FromWebSocket)
+            {
+                int len;
+                BytesSegment cur = null;
+                while (true)
+                {
+                    len = bs.ReadInt32();
+                    if (len == 0) break;
+
+                    var temp = BytesSegment.Rent();
+                    bs.Stream.Read(temp.Buffer.AsSpan(0, len));
+                    if (cur != null)
+                        cur.Append(temp);
+                    cur = temp;
+                }
+
+                Arg1 = AnyValue.From(cur.First);
+                Arg2 = AnyValue.From(cur);
+            }
+            else if (Count == FromWebStream)
             {
                 throw new NotImplementedException();
             }
             else
             {
+                var temp = new AnyValue();
                 for (int i = 0; i < Count; i++)
                 {
+                    temp.ReadObject(bs);
                     switch (i)
                     {
-                        case 0: Arg1.ReadObject(bs); break;
-                        case 1: Arg2.ReadObject(bs); break;
-                        case 2: Arg3.ReadObject(bs); break;
-                        case 3: Arg4.ReadObject(bs); break;
-                        case 4: Arg5.ReadObject(bs); break;
+                        case 0: Arg1 = temp; break;
+                        case 1: Arg2 = temp; break;
+                        case 2: Arg3 = temp; break;
+                        case 3: Arg4 = temp; break;
+                        case 4: Arg5 = temp; break;
                     }
                 }
             }

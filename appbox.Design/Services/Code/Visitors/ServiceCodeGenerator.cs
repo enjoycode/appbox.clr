@@ -817,10 +817,10 @@ namespace appbox.Design
         /// </summary>
         private string GenerateIServiceImplementsCode()
         {
-            var sb = new StringBuilder("public async System.Threading.Tasks.Task<object> InvokeAsync(string method, appbox.Data.InvokeArgs args) { switch(method) { ");
+            var sb = new StringBuilder("public async System.Threading.Tasks.ValueTask<appbox.Data.AnyValue> InvokeAsync(System.ReadOnlyMemory<char> method, appbox.Data.InvokeArgs args) { switch(method) { ");
             foreach (var method in publicMethods)
             {
-                sb.AppendFormat("case \"{0}\": ", method.Identifier.ValueText);
+                sb.AppendFormat("case System.ReadOnlyMemory<char> s when s.Span.SequenceEqual(\"{0}\"):", method.Identifier.ValueText);
                 //插入验证权限代码
                 if (publicMethodsInvokePermissions.TryGetValue(method.Identifier.ValueText, out string invokePermissionCode))
                 {
@@ -828,12 +828,12 @@ namespace appbox.Design
                                     invokePermissionCode, Environment.NewLine);
                 }
                 //插入调用代码
-                //TODO:暂简单判断有无返回值
+                //TODO:暂简单判断有无返回值，应直接判断是否Awaitable，另处理同步方法调用
                 var returnTypeSpan = method.ReturnType.ToString().AsSpan();
                 bool isReturnTask = returnTypeSpan.Contains("Task<", StringComparison.Ordinal)
                                     || returnTypeSpan.Contains("ValueTask<", StringComparison.Ordinal);
                 if (isReturnTask)
-                    sb.Append("return ");
+                    sb.Append("return appbox.Data.AnyValue.From(");
                 sb.Append("await ");
                 sb.AppendFormat("{0}(", method.Identifier.ValueText);
                 for (int i = 0; i < method.ParameterList.Parameters.Count; i++)
@@ -849,9 +849,10 @@ namespace appbox.Design
                     if (i != method.ParameterList.Parameters.Count - 1)
                         sb.Append(",");
                 }
-                sb.Append(");");
-                if (!isReturnTask)
-                    sb.Append("return null;");
+                if (isReturnTask)
+                    sb.Append("));");
+                else
+                    sb.Append("); return appbox.Data.AnyValue.Empty;");
             }
             sb.Append("default: throw new System.Exception(\"Cannot find method: \" + method); }}");
             return sb.ToString();
