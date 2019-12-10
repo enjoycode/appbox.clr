@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Buffers;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using appbox.Caching;
 using appbox.Data;
 using appbox.Runtime;
 using appbox.Server;
@@ -24,56 +26,85 @@ namespace appbox.Host
 
         public async Task Invoke(HttpContext context)
         {
-            //1. 解析请求Json
-            int msgId = 0;
-            string service = null;
-            InvokeArgs args = new InvokeArgs();
-            object res = null;
+            //暂简单处理，读请求数据至缓存块，然后走与WebSocket相同的流程
+            //待实现Utf8JsonReaderStream后再修改
+            //Log.Warn($"Require Stream Position={context.Request.Body.Position}, Size={context.Request.Body.Length}");
+            int bytesRead = 0;
+            int totalBytes = (int)context.Request.Body.Length;
+            BytesSegment frame = null;
+            while (bytesRead < totalBytes) //TODO:读错误归还缓存块
+            {
+                var temp = BytesSegment.Rent();
+                int len = await context.Request.Body.ReadAsync(temp.Buffer.AsMemory());
+                temp.Length = len;
+                bytesRead += len;
+                if (frame != null)
+                    frame.Append(temp);
+                frame = temp;
+            }
 
+            //1. 解析请求头
+            int msgId = 0;
+            string service = null; //TODO:优化不创建string
+            int offset = 0; //偏移量至参数数组开始，不包含[Token
+            AnyValue res = AnyValue.Empty;
             try
             {
-                using (var sr = new StreamReader(context.Request.Body))
-                {
-                    InvokeHelper.ReadInvokeRequire(sr, ref msgId, ref service, ref args);
-                }
+                offset = InvokeHelper.ReadRequireHead(frame.First, ref msgId, ref service);
+                //offset = -1暂不要在这里归还frame，后面invoke统一归还
             }
             catch (Exception ex)
             {
-                res = ex;
+                res = AnyValue.From(ex);
+                BytesSegment.ReturnAll(frame); //读消息头异常归还缓存块
+                Log.Warn($"收到无效的Api调用请求: {ex.Message}");
             }
 
             //2. 设置当前会话并调用服务
-            if (res == null)
+            if (res.ObjectValue == null)
             {
                 var webSession = context.Session.LoadWebSession();
                 RuntimeContext.Current.CurrentSession = webSession;
 
                 try
                 {
-                    res = await ((HostRuntimeContext)RuntimeContext.Current).InvokeByWebClientAsync(service, args, 0);
+                    var hostCtx = (HostRuntimeContext)RuntimeContext.Current;
+                    res = await hostCtx.InvokeByClient(service, 0, InvokeArgs.From(frame, offset));
                 }
                 catch (Exception ex)
                 {
                     Log.Warn($"调用服务异常: {ex.Message}");
-                    res = ex;
+                    res = AnyValue.From(ex);
                 }
             }
 
             //3. 返回结果，注意：FileResult特殊类型统一由BlobController处理
             context.Response.ContentType = "application/json";
-            if (res is IntPtr ptr)
+            if (res.Type == AnyValueType.Object && res.ObjectValue is BytesSegment)
             {
-                if (ptr != IntPtr.Zero)
-                    InvokeHelper.SendInvokeResponse(context.Response.Body, ptr);
-                else
-                    Log.Warn("收到服务域调用结果为空");
+                var cur = (ReadOnlySequenceSegment<byte>)res.ObjectValue;
+                try
+                {
+                    while (cur != null)
+                    {
+                        await context.Response.Body.WriteAsync(cur.Memory);
+                        cur = cur.Next;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Warn($"Send InvokeResponse to ajax error: {ex.Message}");
+                }
+                finally
+                {
+                    BytesSegment.ReturnAll((BytesSegment)res.ObjectValue); //注意归还缓存块
+                }
             }
             else
             {
-                var exception = res as Exception;
                 using (var sw = new StreamWriter(context.Response.Body))
                 {
-                    InvokeHelper.WriteInvokeResponse(sw, 0, res); //TODO:序列化错误处理
+                    InvokeHelper.WriteInvokeResponse(sw, 0, res.BoxedValue); //TODO:序列化错误处理
                 }
             }
         }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Buffers;
+using System.Diagnostics;
 using System.Text.Json;
 using appbox.Caching;
 using appbox.Serialization;
@@ -89,12 +90,18 @@ namespace appbox.Data
         }
 
         /// <summary>
-        /// 目前仅用于主进程封送至子进程在调用完后归还相应的缓存块
+        /// 归还缓存块
         /// </summary>
+        /// <remarks>
+        /// 1.客户端调用系统服务后;
+        /// 2.客户端转发调用至子进程后;
+        /// 3.子进程调用转发的请求后.
+        /// </remarks>
         internal void ReturnBuffer()
         {
             if (Count == FromWebSocket)
             {
+                Debug.Assert(Arg1.ObjectValue != null);
                 BytesSegment.ReturnAll((BytesSegment)Arg1.ObjectValue);
             }
         }

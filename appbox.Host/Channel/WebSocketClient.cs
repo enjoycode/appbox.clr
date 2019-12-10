@@ -60,7 +60,7 @@ namespace appbox.Server.Channel
                 catch (Exception ex)
                 {
                     requireError = ex;
-                    BytesSegment.ReturnAll(frame); //读消息头异常释放WebSocketFrame
+                    BytesSegment.ReturnAll(frame); //读消息头异常归还缓存块
                 }
 
                 if (requireError != null)
@@ -82,7 +82,7 @@ namespace appbox.Server.Channel
             try
             {
                 var hostCtx = ((HostRuntimeContext)RuntimeContext.Current);
-                var res = await hostCtx.InvokeByClient(service, msgId, frame, offset);
+                var res = await hostCtx.InvokeByClient(service, msgId, InvokeArgs.From(frame, offset));
                 await SendInvokeResponse(msgId, res);
             }
             catch (Exception ex)

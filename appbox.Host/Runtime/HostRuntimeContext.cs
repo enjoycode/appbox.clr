@@ -126,10 +126,9 @@ namespace appbox.Server
         }
 
         /// <summary>
-        /// Only for websocket channel
+        /// Invoke by websocket or ajax client, free buffer after invoke system service or forward to sub process
         /// </summary>
-        internal async ValueTask<AnyValue> InvokeByClient(string servicePath, int msgId,
-            BytesSegment frame, int offset)
+        internal async ValueTask<AnyValue> InvokeByClient(string servicePath, int msgId, InvokeArgs args)
         {
             if (string.IsNullOrEmpty(servicePath))
                 throw new ArgumentNullException(nameof(servicePath));
@@ -149,12 +148,11 @@ namespace appbox.Server
                 {
                     try
                     {
-                        var res = await InvokeSysAsync(serviceInstance, servicePath, method, InvokeArgs.From(frame, offset));
-                        return res;
+                        return await InvokeSysAsync(serviceInstance, servicePath, method, args);
                     }
                     finally
                     {
-                        BytesSegment.ReturnAll(frame); //注意归还
+                        args.ReturnBuffer(); //注意归还缓存块 
                     }
                 }
             }
@@ -162,10 +160,9 @@ namespace appbox.Server
             //非系统服务则包装为InvokeRequire转发至子进程处理
             var tcs = invokeTasksPool.Pop();
             var require = new InvokeRequire(InvokeSource.Client, InvokeProtocol.Json,
-                tcs.GCHandlePtr, servicePath, InvokeArgs.From(frame, offset), msgId,
-                RuntimeContext.Current.CurrentSession); //注意传播会话信息
+                tcs.GCHandlePtr, servicePath, args, msgId, RuntimeContext.Current.CurrentSession); //注意传播会话信息
             ChildProcess.AppContainer.Channel.SendMessage(ref require);
-            BytesSegment.ReturnAll(frame); //注意归还
+            args.ReturnBuffer(); //注意归还缓存块
             return await tcs.WaitAsync();
         }
 
@@ -181,37 +178,7 @@ namespace appbox.Server
             //return InvokeInternalAsync(InvokeSource.Client, InvokeContentType.Json, servicePath, args, msgId);
         }
 
-        //private ValueTask<AnyValue> InvokeInternalAsync(InvokeSource source, InvokeContentType contentType, string servicePath, InvokeArgs args, int msgId)
-        //{
-        //    if (string.IsNullOrEmpty(servicePath))
-        //        throw new ArgumentNullException(nameof(servicePath));
 
-        //    var span = servicePath.AsSpan();
-        //    var firstDot = span.IndexOf('.');
-        //    var lastDot = span.LastIndexOf('.');
-        //    if (firstDot == lastDot)
-        //        throw new ArgumentException(nameof(servicePath));
-        //    var app = span.Slice(0, firstDot);
-        //    var service = servicePath.AsMemory(firstDot + 1, lastDot - firstDot - 1);
-        //    var method = servicePath.AsMemory(lastDot + 1);
-
-        //    if (app.SequenceEqual(appbox.Consts.SYS.AsSpan()))
-        //    {
-        //        if (Runtime.SysServiceContainer.TryGet(service, out IService serviceInstance))
-        //        {
-        //            return InvokeSysAsync(serviceInstance, servicePath, method, args);
-        //        }
-        //    }
-
-        //    throw new NotImplementedException();
-        //    //转发至应用子进程, 另InvokeArgs在序列化时已归还缓存
-        //    //var tcs = new TaskCompletionSource<object>();
-        //    //var tcsHandle = GCHandle.Alloc(tcs);
-        //    //var require = new InvokeRequire(source, contentType, GCHandle.ToIntPtr(tcsHandle),
-        //    //    servicePath, args, msgId, RuntimeContext.Current.CurrentSession); //注意传播会话信息
-        //    //ChildProcess.AppContainer.Channel.SendMessage(ref require);
-        //    //return tcs.Task;
-        //}
 
         /// <summary>
         /// 调用系统服务，埋点监测
