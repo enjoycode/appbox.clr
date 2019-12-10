@@ -42,7 +42,7 @@ namespace appbox.Runtime
         #endregion
 
         #region ====Invoke Methods====
-        Task<object> InvokeAsync(string servicePath, InvokeArgs args);
+        ValueTask<AnyValue> InvokeAsync(string servicePath, InvokeArgs args);
         #endregion
 
         #region ====Event Methods====

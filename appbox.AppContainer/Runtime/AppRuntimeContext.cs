@@ -95,7 +95,7 @@ namespace appbox.Server
         #endregion
 
         #region ====Invoke====
-        public async Task<object> InvokeAsync(string servicePath, InvokeArgs args)
+        public async ValueTask<AnyValue> InvokeAsync(string servicePath, InvokeArgs args)
         {
             var firstDot = servicePath.IndexOf('.');
             var lastDot = servicePath.LastIndexOf('.');

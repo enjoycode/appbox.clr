@@ -62,7 +62,6 @@ namespace appbox.Host
         private unsafe void ProcessInvokeResponse(IMessageChannel channel, MessageChunk* first)
         {
             var response = channel.Deserialize<InvokeResponse>(first); //TODO:处理反序列化异常
-            Log.Warn($"Host反序列化InvokeResponse, Error={response.Error}");
             if (response.Source == InvokeSource.Client || response.Source == InvokeSource.Host)
             {
                 GCHandle tcsHandle = GCHandle.FromIntPtr(response.WaitHandle);

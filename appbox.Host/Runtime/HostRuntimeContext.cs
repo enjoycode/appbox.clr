@@ -119,7 +119,7 @@ namespace appbox.Server
         #endregion
 
         #region ====Invoke Methods====
-        public Task<object> InvokeAsync(string servicePath, InvokeArgs args)
+        public ValueTask<AnyValue> InvokeAsync(string servicePath, InvokeArgs args)
         {
             throw new NotImplementedException();
             //return InvokeInternalAsync(InvokeSource.Host, InvokeContentType.Bin, servicePath, args, 0);

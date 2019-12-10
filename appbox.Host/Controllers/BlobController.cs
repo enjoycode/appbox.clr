@@ -109,11 +109,11 @@ namespace appbox.Controllers
 
             //调用验证服务
             var iargs = Data.InvokeArgs.From(args, formFile.Name);
-            string toPath = null;
+            string toPath;
             try
             {
                 var res = await RuntimeContext.Current.InvokeAsync(validator, iargs);
-                toPath = (string)res;
+                toPath = (string)res.ObjectValue;
             }
             catch (Exception ex)
             {

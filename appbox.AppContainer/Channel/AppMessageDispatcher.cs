@@ -66,7 +66,7 @@ namespace appbox.AppContainer
                     try
                     {
                         var res = await Runtime.RuntimeContext.Current.InvokeAsync(req.Service, req.Args);
-                        response = new InvokeResponse(req.Source, req.ContentType, req.WaitHandle, req.SourceMsgId, (AnyValue)res);
+                        response = new InvokeResponse(req.Source, req.ContentType, req.WaitHandle, req.SourceMsgId, res);
                     }
                     catch (Exception ex)
                     {
