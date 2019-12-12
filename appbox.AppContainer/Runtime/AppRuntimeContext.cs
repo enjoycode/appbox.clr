@@ -109,10 +109,10 @@ namespace appbox.Server
                 throw new Exception($"Cannot find service:{service}");
 
             var stopWatch = System.Diagnostics.Stopwatch.StartNew();
-            var res = await instance.InvokeAsync(method, args); //ConfigureAwait(false)??
+            var res = await instance.InvokeAsync(method, args).ConfigureAwait(false);
             stopWatch.Stop();
             var metricReq = new MetricRequire(servicePath, stopWatch.Elapsed.TotalSeconds);
-            Channel.SendMessage(ref metricReq); //TODO:考虑调试子进程不发送
+            Channel.SendMessage(ref metricReq); //TODO:考虑调试子进程不发送，另考虑合并优化发送Metric
 
             return res;
         }
