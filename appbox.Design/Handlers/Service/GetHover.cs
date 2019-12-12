@@ -6,7 +6,7 @@ using appbox.Serialization;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.FindSymbols;
 using Microsoft.CodeAnalysis.Text;
-using Newtonsoft.Json;
+using System.Text.Json;
 using OmniSharp.Mef;
 
 namespace appbox.Design
@@ -80,7 +80,7 @@ namespace appbox.Design
                         StartColumn = column,
                         EndLine = line,
                         EndColumn = column,
-                        Contents = new object[] { string.Format("**{0}**", type), symbolValue }
+                        Contents = new object[] { $"**{type}**", symbolValue }
                     };
                 }
                 return null;
@@ -108,34 +108,26 @@ namespace appbox.Design
 
             public PayloadType JsonPayloadType => PayloadType.UnknownType;
 
-            public void ReadFromJson(JsonTextReader reader, ReadedObjects objrefs)
-            {
-                throw new NotSupportedException();
-            }
+            public void ReadFromJson(ref Utf8JsonReader reader, ReadedObjects objrefs) => throw new NotSupportedException();
 
-            public void WriteToJson(JsonTextWriter writer, WritedObjects objrefs)
+            public void WriteToJson(Utf8JsonWriter writer, WritedObjects objrefs)
             {
                 writer.WritePropertyName("contents");
                 writer.WriteStartArray();
                 for (int i = 0; i < Contents.Length; i++)
                 {
                     writer.WriteStartObject();
-                    writer.WritePropertyName("value");
-                    writer.WriteValue(Contents[i]);
+                    writer.WriteString("value", (string)Contents[i]);
                     writer.WriteEndObject();
                 }
                 writer.WriteEndArray();
 
                 writer.WritePropertyName("range");
                 writer.WriteStartObject();
-                writer.WritePropertyName("startLineNumber");
-                writer.WriteValue(StartLine);
-                writer.WritePropertyName("startColumn");
-                writer.WriteValue(StartColumn);
-                writer.WritePropertyName("endLineNumber");
-                writer.WriteValue(EndLine);
-                writer.WritePropertyName("endColumn");
-                writer.WriteValue(EndColumn);
+                writer.WriteNumber("startLineNumber", StartLine);
+                writer.WriteNumber("startColumn", StartColumn);
+                writer.WriteNumber("endLineNumber", EndLine);
+                writer.WriteNumber("endColumn", EndColumn);
                 writer.WriteEndObject();
             }
         }

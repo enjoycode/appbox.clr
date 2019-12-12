@@ -1,12 +1,11 @@
 using System;
 using appbox.Serialization;
-using Newtonsoft.Json;
-
+using System.Text.Json;
 
 namespace OmniSharp.Roslyn
 {
 
-    public struct LinePositionSpanTextChange: IJsonSerializable
+    public struct LinePositionSpanTextChange : IJsonSerializable
     {
         public string NewText { get; set; }
 
@@ -19,29 +18,21 @@ namespace OmniSharp.Roslyn
 
         PayloadType IJsonSerializable.JsonPayloadType => PayloadType.UnknownType;
 
-        void IJsonSerializable.ReadFromJson(JsonTextReader reader, ReadedObjects objrefs)
-        {
-            throw new NotSupportedException();
-        }
+        void IJsonSerializable.ReadFromJson(ref Utf8JsonReader reader, ReadedObjects objrefs) => throw new NotSupportedException();
 
-        void IJsonSerializable.WriteToJson(JsonTextWriter writer, WritedObjects objrefs)
+        void IJsonSerializable.WriteToJson(Utf8JsonWriter writer, WritedObjects objrefs)
         {
             //注意: 直接转换为前端monaco-editor需要的格式, 另所有需要+1
             // https://microsoft.github.io/monaco-editor/api/interfaces/monaco.languages.textedit.html
             writer.WritePropertyName("range");
             writer.WriteStartObject();
-            writer.WritePropertyName("startColumn");
-            writer.WriteValue(this.StartColumn + 1);
-            writer.WritePropertyName("startLineNumber");
-            writer.WriteValue(this.StartLine + 1);
-            writer.WritePropertyName("endColumn");
-            writer.WriteValue(this.EndColumn + 1);
-            writer.WritePropertyName("endLineNumber");
-            writer.WriteValue(this.EndLine + 1);
+            writer.WriteNumber("startColumn", StartColumn + 1);
+            writer.WriteNumber("startLineNumber", StartLine + 1);
+            writer.WriteNumber("endColumn", EndColumn + 1);
+            writer.WriteNumber("endLineNumber", EndLine + 1);
             writer.WriteEndObject();
 
-            writer.WritePropertyName("text");
-            writer.WriteValue(this.NewText);
+            writer.WriteString("text", NewText);
         }
     }
 

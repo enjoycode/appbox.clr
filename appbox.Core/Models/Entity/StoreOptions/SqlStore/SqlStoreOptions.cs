@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Collections.Generic;
 using appbox.Serialization;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace appbox.Models
 {
@@ -185,25 +185,24 @@ namespace appbox.Models
 
         public PayloadType JsonPayloadType => PayloadType.UnknownType;
 
-        public void WriteToJson(JsonTextWriter writer, WritedObjects objrefs)
+        public void WriteToJson(Utf8JsonWriter writer, WritedObjects objrefs)
         {
-            writer.WritePropertyName(nameof(StoreName));
-            writer.WriteValue(StoreName);
+            writer.WriteString(nameof(StoreName), StoreName);
 
             writer.WritePropertyName(nameof(PrimaryKeys));
             if (HasPrimaryKeys)
-                writer.Serialize(PrimaryKeys);
+                writer.Serialize(PrimaryKeys, objrefs);
             else //null发送[]方便前端
-                writer.WriteRawValue("[]");
+                writer.WriteEmptyArray();
 
             writer.WritePropertyName(nameof(Indexes));
             if (!HasIndexes)
-                writer.WriteRawValue("[]");
+                writer.WriteEmptyArray();
             else
-                writer.Serialize(Indexes.Where(t => t.PersistentState != Data.PersistentState.Deleted).ToArray());
+                writer.Serialize(Indexes.Where(t => t.PersistentState != Data.PersistentState.Deleted).ToArray(), objrefs);
         }
 
-        public void ReadFromJson(JsonTextReader reader, ReadedObjects objrefs) => throw new NotSupportedException();
+        public void ReadFromJson(ref Utf8JsonReader reader, ReadedObjects objrefs) => throw new NotSupportedException();
         #endregion
     }
 }

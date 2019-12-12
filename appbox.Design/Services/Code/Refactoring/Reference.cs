@@ -2,7 +2,7 @@
 using appbox.Models;
 using appbox.Serialization;
 using Microsoft.CodeAnalysis.Text;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace appbox.Design
 {
@@ -39,25 +39,20 @@ namespace appbox.Design
             return 0;
         }
 
-        public void WriteToJson(JsonTextWriter writer, WritedObjects objrefs)
+        public void WriteToJson(Utf8JsonWriter writer, WritedObjects objrefs)
         {
-            writer.WritePropertyName("Type");
-            writer.WriteValue(ModelType.ToString());
-            writer.WritePropertyName("Model");
-            writer.WriteValue(ModelID);
-            writer.WritePropertyName("Location");
-            writer.WriteValue(Location);
+            writer.WriteString("Type", ModelType.ToString());
+            writer.WriteString("Model", ModelID);
+            writer.WriteString("Location", Location);
 
             WriteMember(writer);
         }
 
-        protected virtual void WriteMember(JsonTextWriter writer)
+        protected virtual void WriteMember(Utf8JsonWriter writer)
         { }
 
-        public void ReadFromJson(JsonTextReader reader, ReadedObjects objrefs)
-        {
-            throw new NotSupportedException();
-        }
+        public void ReadFromJson(ref Utf8JsonReader reader,
+            ReadedObjects objrefs) => throw new NotSupportedException();
     }
 
     sealed class CodeReference : Reference
@@ -89,12 +84,10 @@ namespace appbox.Design
         #endregion
 
         #region ====Methods====
-        protected override void WriteMember(JsonTextWriter writer)
+        protected override void WriteMember(Utf8JsonWriter writer)
         {
-            writer.WritePropertyName("Offset");
-            writer.WriteValue(Offset);
-            writer.WritePropertyName("Length");
-            writer.WriteValue(Length);
+            writer.WriteNumber("Offset", Offset);
+            writer.WriteNumber("Length", Length);
         }
 
         public override int CompareSameModel(Reference other)
@@ -159,16 +152,12 @@ namespace appbox.Design
         #endregion
 
         #region ====Methods====
-        protected override void WriteMember(JsonTextWriter writer)
+        protected override void WriteMember(Utf8JsonWriter writer)
         {
-            writer.WritePropertyName("Target");
-            writer.WriteValue(TargetReference.Target.ToString());
-            writer.WritePropertyName("TargetType");
-            writer.WriteValue(TargetReference.TargetType.ToString());
-            writer.WritePropertyName("Path");
-            writer.WriteValue(TargetReference.Path);
-            writer.WritePropertyName("Expression");
-            writer.WriteValue(TargetReference.Expression);
+            writer.WriteString("Target", TargetReference.Target.ToString());
+            writer.WriteString("TargetType", TargetReference.TargetType.ToString());
+            writer.WriteString("Path", TargetReference.Path);
+            writer.WriteString("Expression", TargetReference.Expression);
         }
         #endregion
     }

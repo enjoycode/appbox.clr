@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Threading.Tasks;
-using appbox.Data;
 using appbox.Models;
 using appbox.Serialization;
 using Microsoft.CodeAnalysis;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace appbox.Design
 {
@@ -42,16 +41,11 @@ namespace appbox.Design
         }
 
         #region ====Serialization====
-        public override void WriteMembers(JsonTextWriter writer, WritedObjects objrefs)
+        public override void WriteMembers(Utf8JsonWriter writer, WritedObjects objrefs)
         {
-            writer.WritePropertyName("Kind");
-            writer.WriteValue((int)Model.Kind);
-
-            writer.WritePropertyName("Provider");
-            writer.WriteValue(Model.Provider);
-
-            writer.WritePropertyName("Settings");
-            writer.WriteValue(Model.Settings);
+            writer.WriteNumber("Kind", (int)Model.Kind);
+            writer.WriteString("Provider", Model.Provider);
+            writer.WriteString("Settings", Model.Settings);
         }
         #endregion
     }

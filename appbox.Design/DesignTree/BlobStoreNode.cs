@@ -1,6 +1,6 @@
 ﻿using System;
 using appbox.Serialization;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace appbox.Design
 {
@@ -18,13 +18,10 @@ namespace appbox.Design
         }
 
         #region ====Serialization====
-        public override void WriteMembers(JsonTextWriter writer, WritedObjects objrefs)
+        public override void WriteMembers(Utf8JsonWriter writer, WritedObjects objrefs)
         {
-            writer.WritePropertyName("App");
-            writer.WriteValue(((ApplicationNode)Parent).Model.Name);
-
-            writer.WritePropertyName("Name");
-            writer.WriteValue(Text);
+            writer.WriteString("App", ((ApplicationNode)Parent).Model.Name);
+            writer.WriteString("Name", Text);
         }
         #endregion
 

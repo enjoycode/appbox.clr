@@ -1,7 +1,7 @@
 ﻿using System;
 using appbox.Data;
 using appbox.Serialization;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace appbox.Models
 {
@@ -118,29 +118,20 @@ namespace appbox.Models
 
         PayloadType IJsonSerializable.JsonPayloadType => PayloadType.UnknownType;
 
-        void IJsonSerializable.WriteToJson(JsonTextWriter writer, WritedObjects objrefs)
+        void IJsonSerializable.WriteToJson(Utf8JsonWriter writer, WritedObjects objrefs)
         {
-            writer.WritePropertyName("ID");
-            writer.WriteValue(MemberId);
-
-            writer.WritePropertyName(nameof(AllowNull));
-            writer.WriteValue(AllowNull);
-
-            writer.WritePropertyName(nameof(Comment));
-            writer.WriteValue(Comment);
-
-            writer.WritePropertyName(nameof(Name));
-            writer.WriteValue(Name);
-
-            writer.WritePropertyName(nameof(Type));
-            writer.WriteValue((int)Type);
+            writer.WriteNumber("ID", MemberId);
+            writer.WriteBoolean(nameof(AllowNull), AllowNull);
+            writer.WriteString(nameof(Comment), Comment);
+            writer.WriteString(nameof(Name), Name);
+            writer.WriteNumber(nameof(Type), (int)Type);
 
             WriteMembers(writer, objrefs);
         }
 
-        protected virtual void WriteMembers(JsonTextWriter writer, WritedObjects objrefs) { }
+        protected virtual void WriteMembers(Utf8JsonWriter writer, WritedObjects objrefs) { }
 
-        void IJsonSerializable.ReadFromJson(JsonTextReader reader, ReadedObjects objrefs) => throw new NotSupportedException();
+        void IJsonSerializable.ReadFromJson(ref Utf8JsonReader reader, ReadedObjects objrefs) => throw new NotSupportedException();
         #endregion
     }
 

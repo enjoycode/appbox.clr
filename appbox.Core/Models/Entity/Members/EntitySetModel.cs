@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using appbox.Data;
 using appbox.Serialization;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace appbox.Models
 {
@@ -72,13 +71,10 @@ namespace appbox.Models
             } while (propIndex != 0);
         }
 
-        protected override void WriteMembers(JsonTextWriter writer, WritedObjects objrefs)
+        protected override void WriteMembers(Utf8JsonWriter writer, WritedObjects objrefs)
         {
-            writer.WritePropertyName(nameof(RefModelId));
-            writer.WriteValue(RefModelId);
-
-            writer.WritePropertyName(nameof(RefMemberId));
-            writer.WriteValue(RefMemberId);
+            writer.WriteString(nameof(RefModelId), RefModelId.ToString());
+            writer.WriteNumber(nameof(RefMemberId), RefMemberId);
         }
         #endregion
     }

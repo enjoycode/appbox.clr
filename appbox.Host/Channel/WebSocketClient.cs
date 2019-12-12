@@ -121,12 +121,9 @@ namespace appbox.Server.Channel
             {
                 byte[] data = null;
                 bool serializeError = false;
-                using (var ms = new MemoryStream()) //todo: 暂用MemoryStream，待用WebSocketFrameWriteStream替代
+                using (var ms = new MemoryStream(512)) //TODO: 暂用MemoryStream，待用BytesSegmentWriteStream替代
                 {
-                    using (var sw = new StreamWriter(ms))
-                    {
-                        serializeError = InvokeHelper.WriteInvokeResponse(sw, msgId, res.BoxedValue);
-                    }
+                    res.SerializeAsInvokeResponse(ms, msgId); //TODO:处理异常
                     data = ms.ToArray();
                 }
 

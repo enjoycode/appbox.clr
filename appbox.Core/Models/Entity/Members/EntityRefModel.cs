@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using appbox.Data;
 using appbox.Serialization;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace appbox.Models
 {
@@ -165,16 +165,11 @@ namespace appbox.Models
             } while (propIndex != 0);
         }
 
-        protected override void WriteMembers(JsonTextWriter writer, WritedObjects objrefs)
+        protected override void WriteMembers(Utf8JsonWriter writer, WritedObjects objrefs)
         {
-            writer.WritePropertyName(nameof(IsReverse));
-            writer.WriteValue(IsReverse);
-
-            writer.WritePropertyName(nameof(IsAggregationRef));
-            writer.WriteValue(IsAggregationRef);
-
-            writer.WritePropertyName(nameof(IsForeignKeyConstraint));
-            writer.WriteValue(IsForeignKeyConstraint);
+            writer.WriteBoolean(nameof(IsReverse), IsReverse);
+            writer.WriteBoolean(nameof(IsAggregationRef), IsAggregationRef);
+            writer.WriteBoolean(nameof(IsForeignKeyConstraint), IsForeignKeyConstraint);
 
             writer.WritePropertyName(nameof(RefModelIds));
             writer.WriteList(RefModelIds, objrefs);

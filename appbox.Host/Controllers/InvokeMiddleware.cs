@@ -101,10 +101,7 @@ namespace appbox.Host
             }
             else
             {
-                using (var sw = new StreamWriter(context.Response.Body))
-                {
-                    InvokeHelper.WriteInvokeResponse(sw, 0, res.BoxedValue); //TODO:序列化错误处理
-                }
+                res.SerializeAsInvokeResponse(context.Response.Body, 0);//TODO:序列化错误处理
             }
         }
     }

@@ -1,11 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 using appbox.Data;
 using appbox.Models;
 using appbox.Serialization;
 using Microsoft.CodeAnalysis;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace appbox.Design
 {
@@ -149,20 +148,12 @@ namespace appbox.Design
         #endregion
 
         #region ====Serialization====
-        public override void WriteMembers(JsonTextWriter writer, WritedObjects objrefs)
+        public override void WriteMembers(Utf8JsonWriter writer, WritedObjects objrefs)
         {
-            writer.WritePropertyName("SortNo");
-            writer.WriteValue(SortNo);
-
-            writer.WritePropertyName("App");
-            writer.WriteValue(AppNode.Model.Name);
-
-            writer.WritePropertyName("Name");
-            writer.WriteValue(Model.Name);
-
-            writer.WritePropertyName("ModelType");
-            writer.WriteValue((int)Model.ModelType);
-
+            writer.WriteNumber("SortNo", SortNo);
+            writer.WriteString("App", AppNode.Model.Name);
+            writer.WriteString("Name", Model.Name);
+            writer.WriteNumber("ModelType", (int)Model.ModelType);
             if (Model.ModelType == ModelType.Entity)
             {
                 var entityModel = (EntityModel)Model;
@@ -172,13 +163,11 @@ namespace appbox.Design
                 //EntityModel输出对应的存储标识，方便前端IDE筛选相同存储的实体
                 if (entityModel.SysStoreOptions != null)
                 {
-                    writer.WritePropertyName("StoreId");
-                    writer.WriteValue(0);
+                    writer.WriteNumber("StoreId", 0);
                 }
                 else if (entityModel.SqlStoreOptions != null)
                 {
-                    writer.WritePropertyName("StoreId");
-                    writer.WriteValue(entityModel.SqlStoreOptions.StoreModelId);
+                    writer.WriteNumber("StoreId", entityModel.SqlStoreOptions.StoreModelId);
                 }
             }
         }

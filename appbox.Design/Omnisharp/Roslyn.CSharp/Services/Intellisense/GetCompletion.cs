@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Composition;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
@@ -11,11 +10,10 @@ using OmniSharp.Extensions;
 using OmniSharp.Mef;
 // using OmniSharp.Options;
 // using OmniSharp.Roslyn.CSharp.Services.Documentation;
-using Newtonsoft.Json;
+using System.Text.Json;
 using appbox.Serialization;
 using appbox.Design;
 using appbox.Data;
-using appbox;
 
 namespace OmniSharp.Roslyn.CSharp.Services
 {
@@ -81,30 +79,18 @@ namespace OmniSharp.Roslyn.CSharp.Services
 
         public PayloadType JsonPayloadType => PayloadType.UnknownType;
 
-        public void WriteToJson(JsonTextWriter writer, WritedObjects objrefs)
+        public void WriteToJson(Utf8JsonWriter writer, WritedObjects objrefs)
         {
             //注意：直接转换为前端需要的格式
-            writer.WritePropertyName("detail");
-            writer.WriteValue(string.IsNullOrEmpty(ReturnType) ?
-                DisplayText : string.Format("{0} {1}", ReturnType, DisplayText));
-
-            writer.WritePropertyName("documentation");
-            writer.WriteValue(Description); //todo: extractSummaryText(response.Description)
-
-            writer.WritePropertyName("kind");
-            writer.WriteValue(KindHelper.Convert(Kind));
-
-            writer.WritePropertyName("insertText");
-            writer.WriteValue(CompletionText.Replace("<", "").Replace(">", ""));
-
-            writer.WritePropertyName("label");
-            writer.WriteValue(DisplayText);
+            writer.WriteString("detail", string.IsNullOrEmpty(ReturnType) ?
+                DisplayText : $"{ReturnType} {DisplayText}");
+            writer.WriteString("documentation", Description); //TODO: extractSummaryText(response.Description)
+            writer.WriteNumber("kind", KindHelper.Convert(Kind));
+            writer.WriteString("insertText", CompletionText.Replace("<", "").Replace(">", ""));
+            writer.WriteString("label", DisplayText);
         }
 
-        public void ReadFromJson(JsonTextReader reader, ReadedObjects objrefs)
-        {
-            throw new NotSupportedException();
-        }
+        public void ReadFromJson(ref Utf8JsonReader reader, ReadedObjects objrefs) => throw new NotSupportedException();
 
     }
 

@@ -6,11 +6,11 @@
 
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <LangVersion>latest</LangVersion>
+    <LangVersion>8.0</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <LangVersion>latest</LangVersion>
+    <LangVersion>8.0</LangVersion>
   </PropertyGroup>
   <ItemGroup>
     <Folder Include="Channel\" />
@@ -21,6 +21,7 @@
     <Folder Include="Properties\" />
     <Folder Include="Caching\" />
     <Folder Include="Design\" />
+    <Folder Include="Serialization\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\appbox.Core\appbox.Core.csproj" />

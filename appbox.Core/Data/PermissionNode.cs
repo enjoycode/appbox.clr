@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using appbox.Models;
 using appbox.Serialization;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace appbox.Data
 {
@@ -50,13 +50,10 @@ namespace appbox.Data
         #region ====Serialization====
         public PayloadType JsonPayloadType => PayloadType.UnknownType; //PayloadType.PermissionNode;
 
-        public void WriteToJson(JsonTextWriter writer, WritedObjects objrefs)
+        public void WriteToJson(Utf8JsonWriter writer, WritedObjects objrefs)
         {
-            writer.WritePropertyName("Id");
-            writer.WriteValue(Model == null ? /*随机*/ Guid.NewGuid().ToString() : Model.Id.ToString());
-
-            writer.WritePropertyName(nameof(Name));
-            writer.WriteValue(Name);
+            writer.WriteString("Id", Model == null ? /*随机*/ Guid.NewGuid().ToString() : Model.Id.ToString());
+            writer.WriteString(nameof(Name), Name);
 
             if (_childs != null && _childs.Count > 0)
             {
@@ -72,17 +69,14 @@ namespace appbox.Data
                 {
                     for (int i = 0; i < Model.OrgUnits.Count; i++)
                     {
-                        writer.WriteValue(Model.OrgUnits[i]);
+                        writer.WriteStringValue(Model.OrgUnits[i]);
                     }
                 }
                 writer.WriteEndArray();
             }
         }
 
-        public void ReadFromJson(JsonTextReader reader, ReadedObjects objrefs)
-        {
-            throw new NotSupportedException();
-        }
+        public void ReadFromJson(ref Utf8JsonReader reader, ReadedObjects objrefs) => throw new NotSupportedException();
         #endregion
 
     }

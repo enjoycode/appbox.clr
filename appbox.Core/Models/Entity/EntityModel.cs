@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using appbox.Runtime;
+using System.Text.Json;
 using appbox.Serialization;
-using Newtonsoft.Json;
 
 namespace appbox.Models
 {
@@ -293,10 +292,10 @@ namespace appbox.Models
 
         public PayloadType JsonPayloadType => PayloadType.UnknownType;
 
-        public void WriteToJson(JsonTextWriter writer, WritedObjects objrefs)
+        public void WriteToJson(Utf8JsonWriter writer, WritedObjects objrefs)
         {
             writer.WritePropertyName("IsNew");
-            writer.WriteValue(PersistentState == Data.PersistentState.Detached);
+            writer.WriteBooleanValue(PersistentState == Data.PersistentState.Detached);
 
             //写入成员列表，注意不向前端发送EntityRef的隐藏成员及已标为删除的成员
             writer.WritePropertyName(nameof(Members));
@@ -304,17 +303,17 @@ namespace appbox.Models
                     where t.PersistentState != Data.PersistentState.Deleted
                         && !(t is DataFieldModel && ((DataFieldModel)t).IsForeignKey)
                     select t;
-            writer.Serialize(q.ToArray());
+            writer.Serialize(q.ToArray(), objrefs);
 
             //写入存储选项
             if (StoreOptions != null)
             {
                 writer.WritePropertyName(nameof(StoreOptions));
-                writer.Serialize(StoreOptions);
+                writer.Serialize(StoreOptions, objrefs);
             }
         }
 
-        public void ReadFromJson(JsonTextReader reader, ReadedObjects objrefs)
+        public void ReadFromJson(ref Utf8JsonReader reader, ReadedObjects objrefs)
         {
             throw new NotSupportedException();
         }

@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using appbox.Data;
 using appbox.Models;
 using appbox.Serialization;
-using Newtonsoft.Json;
+using System.Text.Json;
 using OmniSharp.Mef;
 
 namespace appbox.Design
@@ -59,17 +59,12 @@ namespace appbox.Design
 
         public PayloadType JsonPayloadType => PayloadType.UnknownType;
 
-        public void ReadFromJson(JsonTextReader reader, ReadedObjects objrefs)
-        {
-            throw new NotSupportedException();
-        }
+        public void ReadFromJson(ref Utf8JsonReader reader, ReadedObjects objrefs) => throw new NotSupportedException();
 
-        public void WriteToJson(JsonTextWriter writer, WritedObjects objrefs)
+        public void WriteToJson(Utf8JsonWriter writer, WritedObjects objrefs)
         {
-            writer.WritePropertyName(nameof(Name));
-            writer.WriteValue(Name);
-            writer.WritePropertyName(nameof(Declare));
-            writer.WriteValue(Declare);
+            writer.WriteString(nameof(Name), Name);
+            writer.WriteString(nameof(Declare), Declare);
         }
     }
 }

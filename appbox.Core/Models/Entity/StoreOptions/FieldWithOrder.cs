@@ -1,6 +1,6 @@
 ﻿using System;
 using appbox.Serialization;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace appbox.Models
 {
@@ -44,15 +44,13 @@ namespace appbox.Models
 
         public PayloadType JsonPayloadType => PayloadType.UnknownType;
 
-        public void WriteToJson(JsonTextWriter writer, WritedObjects objrefs)
+        public void WriteToJson(Utf8JsonWriter writer, WritedObjects objrefs)
         {
-            writer.WritePropertyName(nameof(MemberId));
-            writer.WriteValue(MemberId);
-            writer.WritePropertyName(nameof(OrderByDesc));
-            writer.WriteValue(OrderByDesc);
+            writer.WriteNumber(nameof(MemberId), MemberId);
+            writer.WriteBoolean(nameof(OrderByDesc), OrderByDesc);
         }
 
-        public void ReadFromJson(JsonTextReader reader, ReadedObjects objrefs) => throw new NotSupportedException();
+        public void ReadFromJson(ref Utf8JsonReader reader, ReadedObjects objrefs) => throw new NotSupportedException();
         #endregion
     }
 }

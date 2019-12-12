@@ -1,5 +1,5 @@
 ﻿using System;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace appbox.Serialization
 {
@@ -11,9 +11,9 @@ namespace appbox.Serialization
 
         PayloadType JsonPayloadType { get; }
 
-        void WriteToJson(JsonTextWriter writer, WritedObjects objrefs);
+        void WriteToJson(Utf8JsonWriter writer, WritedObjects objrefs);
 
-        void ReadFromJson(JsonTextReader reader, ReadedObjects objrefs);
+        void ReadFromJson(ref Utf8JsonReader reader, ReadedObjects objrefs);
 
     }
 

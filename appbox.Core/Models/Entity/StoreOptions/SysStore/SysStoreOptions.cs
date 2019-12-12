@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using appbox.Serialization;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace appbox.Models
 {
@@ -241,23 +241,22 @@ namespace appbox.Models
                     case 7: _usrIndexIdSeq = bs.ReadByte(); break;
                     case 8: _oldSchemaVersion = bs.ReadUInt32(); break;
                     case 0: break;
-                    default: throw new Exception(string.Format("Deserialize_ObjectUnknownFieldIndex: {0} at {1} ", GetType().Name, propIndex));
+                    default: throw new Exception($"Deserialize_ObjectUnknownFieldIndex: {GetType().Name} at {propIndex} ");
                 }
             } while (propIndex != 0);
         }
 
         public PayloadType JsonPayloadType => PayloadType.UnknownType;
 
-        public void WriteToJson(JsonTextWriter writer, WritedObjects objrefs)
+        public void WriteToJson(Utf8JsonWriter writer, WritedObjects objrefs)
         {
-            writer.WritePropertyName(nameof(OrderByDesc));
-            writer.WriteValue(OrderByDesc);
+            writer.WriteBoolean(nameof(OrderByDesc), OrderByDesc);
 
             writer.WritePropertyName(nameof(Indexes));
             if (!HasIndexes)
-                writer.WriteRawValue("[]");
+                writer.WriteEmptyArray();
             else
-                writer.Serialize(Indexes.Where(t => t.PersistentState != Data.PersistentState.Deleted).ToArray());
+                writer.Serialize(Indexes.Where(t => t.PersistentState != Data.PersistentState.Deleted).ToArray(), objrefs);
 
             //写入分区键集合
             writer.WritePropertyName(nameof(PartitionKeys));
@@ -267,24 +266,17 @@ namespace appbox.Models
                 for (int i = 0; i < PartitionKeys.Length; i++)
                 {
                     writer.WriteStartObject();
-                    writer.WritePropertyName("MemberId");
-                    writer.WriteValue(PartitionKeys[i].MemberId);
-                    writer.WritePropertyName("OrderByDesc");
-                    writer.WriteValue(PartitionKeys[i].OrderByDesc);
-                    writer.WritePropertyName("Rule");
-                    writer.WriteValue(PartitionKeys[i].Rule);
-                    writer.WritePropertyName("RuleArg");
-                    writer.WriteValue(PartitionKeys[i].RuleArgument);
+                    writer.WriteNumber("MemberId", PartitionKeys[i].MemberId);
+                    writer.WriteBoolean("OrderByDesc", PartitionKeys[i].OrderByDesc);
+                    writer.WriteNumber("Rule", (int)PartitionKeys[i].Rule);
+                    writer.WriteNumber("RuleArg", PartitionKeys[i].RuleArgument);
                     writer.WriteEndObject();
                 }
             }
             writer.WriteEndArray();
         }
 
-        public void ReadFromJson(JsonTextReader reader, ReadedObjects objrefs)
-        {
-            throw new NotSupportedException();
-        }
+        public void ReadFromJson(ref Utf8JsonReader reader, ReadedObjects objrefs) => throw new NotSupportedException();
         #endregion
     }
 

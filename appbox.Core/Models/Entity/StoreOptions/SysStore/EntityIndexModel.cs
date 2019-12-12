@@ -1,7 +1,7 @@
 ﻿using System;
 using appbox.Data;
 using appbox.Serialization;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace appbox.Models
 {
@@ -74,15 +74,12 @@ namespace appbox.Models
             } while (propIndex != 0);
         }
 
-        public override void WriteToJson(JsonTextWriter writer, WritedObjects objrefs)
+        public override void WriteToJson(Utf8JsonWriter writer, WritedObjects objrefs)
         {
             base.WriteToJson(writer, objrefs);
 
-            writer.WritePropertyName(nameof(Global));
-            writer.WriteValue(Global);
-
-            writer.WritePropertyName(nameof(State));
-            writer.WriteValue(State.ToString());
+            writer.WriteBoolean(nameof(Global), Global);
+            writer.WriteString(nameof(State), State.ToString());
         }
         #endregion
     }

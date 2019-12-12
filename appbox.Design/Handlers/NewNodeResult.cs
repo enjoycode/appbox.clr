@@ -1,6 +1,6 @@
 ﻿using System;
 using appbox.Serialization;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace appbox.Design
 {
@@ -26,30 +26,17 @@ namespace appbox.Design
 
         public PayloadType JsonPayloadType => PayloadType.UnknownType;
 
-        public void ReadFromJson(JsonTextReader reader, ReadedObjects objrefs)
+        public void ReadFromJson(ref Utf8JsonReader reader, ReadedObjects objrefs) => throw new NotSupportedException();
+
+        public void WriteToJson(Utf8JsonWriter writer, WritedObjects objrefs)
         {
-            throw new NotSupportedException();
-        }
-
-        public void WriteToJson(JsonTextWriter writer, WritedObjects objrefs)
-        {
-            writer.WritePropertyName(nameof(ParentNodeType));
-            writer.WriteValue(ParentNodeType);
-
-            writer.WritePropertyName(nameof(ParentNodeID));
-            writer.WriteValue(ParentNodeID);
-
+            writer.WriteNumber(nameof(ParentNodeType), ParentNodeType);
+            writer.WriteString(nameof(ParentNodeID), ParentNodeID);
             writer.WritePropertyName(nameof(NewNode));
-            writer.Serialize(NewNode);
-
+            writer.Serialize(NewNode, objrefs);
             if (!string.IsNullOrEmpty(RootNodeID))
-            {
-                writer.WritePropertyName(nameof(RootNodeID));
-                writer.WriteValue(RootNodeID);
-            }
-
-            writer.WritePropertyName(nameof(InsertIndex));
-            writer.WriteValue(InsertIndex);
+                writer.WriteString(nameof(RootNodeID), RootNodeID);
+            writer.WriteNumber(nameof(InsertIndex), InsertIndex);
         }
     }
 }

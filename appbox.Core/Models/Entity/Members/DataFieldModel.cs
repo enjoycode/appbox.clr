@@ -1,7 +1,7 @@
 ﻿using System;
 using appbox.Data;
 using appbox.Serialization;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace appbox.Models
 {
@@ -235,27 +235,22 @@ namespace appbox.Models
             } while (propIndex != 0);
         }
 
-        protected override void WriteMembers(JsonTextWriter writer, WritedObjects objrefs)
+        protected override void WriteMembers(Utf8JsonWriter writer, WritedObjects objrefs)
         {
-            writer.WritePropertyName(nameof(DataType));
-            writer.WriteValue((int)DataType);
+            writer.WriteNumber(nameof(DataType), (int)DataType);
 
             if (DataType == EntityFieldType.Enum)
             {
-                writer.WritePropertyName(nameof(EnumModelId));
-                writer.WriteValue(EnumModelId);
+                writer.WriteString(nameof(EnumModelId), EnumModelId.ToString());
             }
             else if (DataType == EntityFieldType.String)
             {
-                writer.WritePropertyName(nameof(Length));
-                writer.WriteValue(Length);
+                writer.WriteNumber(nameof(Length), Length);
             }
             else if (DataType == EntityFieldType.Decimal)
             {
-                writer.WritePropertyName(nameof(Length));
-                writer.WriteValue(Length);
-                writer.WritePropertyName(nameof(Decimals));
-                writer.WriteValue(Decimals);
+                writer.WriteNumber(nameof(Length), Length);
+                writer.WriteNumber(nameof(Decimals), Decimals);
             }
         }
         #endregion

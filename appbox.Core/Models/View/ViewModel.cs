@@ -1,7 +1,6 @@
 ﻿using System;
-using System.ComponentModel;
 using appbox.Serialization;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace appbox.Models
 {
@@ -76,22 +75,13 @@ namespace appbox.Models
 
         PayloadType IJsonSerializable.JsonPayloadType => PayloadType.ViewModel;
 
-        void IJsonSerializable.WriteToJson(JsonTextWriter writer, WritedObjects objrefs)
+        void IJsonSerializable.WriteToJson(Utf8JsonWriter writer, WritedObjects objrefs)
         {
-            writer.WritePropertyName("Route");
-            if ((Flag & ViewModelFlag.ListInRouter) == ViewModelFlag.ListInRouter)
-                writer.WriteValue(true);
-            else
-                writer.WriteValue(false);
-
-            writer.WritePropertyName("RoutePath");
-            writer.WriteValue(RoutePath);
+            writer.WriteBoolean("Route", (Flag & ViewModelFlag.ListInRouter) == ViewModelFlag.ListInRouter);
+            writer.WriteString("RoutePath", RoutePath);
         }
 
-        void IJsonSerializable.ReadFromJson(JsonTextReader reader, ReadedObjects objrefs)
-        {
-            throw new NotSupportedException();
-        }
+        void IJsonSerializable.ReadFromJson(ref Utf8JsonReader reader, ReadedObjects objrefs) => throw new NotSupportedException();
         #endregion
 
         #region ====导入方法====

@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using appbox.Data;
-using appbox.Models;
 using appbox.Runtime;
 using appbox.Serialization;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace appbox.Design
 {
@@ -143,24 +141,18 @@ namespace appbox.Design
 
         PayloadType IJsonSerializable.JsonPayloadType => PayloadType.UnknownType;
 
-        void IJsonSerializable.WriteToJson(JsonTextWriter writer, WritedObjects objrefs)
+        void IJsonSerializable.WriteToJson(Utf8JsonWriter writer, WritedObjects objrefs)
         {
-            writer.WritePropertyName(nameof(ID));
-            writer.WriteValue(ID);
-
-            writer.WritePropertyName("Type");
-            writer.WriteValue((int)NodeType);
-
-            writer.WritePropertyName("Text");
-            writer.WriteValue(Text);
-
+            writer.WriteString(nameof(ID), ID);
+            writer.WriteNumber("Type", (int)NodeType);
+            writer.WriteString("Text", Text);
             if (!(this is ModelNode))
             {
                 writer.WritePropertyName("Nodes");
                 writer.WriteStartArray();
                 for (int i = 0; i < Nodes.Count; i++)
                 {
-                    writer.Serialize(Nodes[i]);
+                    writer.Serialize(Nodes[i], objrefs);
                 }
                 writer.WriteEndArray();
             }
@@ -169,9 +161,9 @@ namespace appbox.Design
             {
                 writer.WritePropertyName("CheckoutBy");
                 if (IsCheckoutByMe)
-                    writer.WriteValue("Me");
+                    writer.WriteStringValue("Me");
                 else
-                    writer.WriteValue(_checkoutInfo.DeveloperName);
+                    writer.WriteStringValue(_checkoutInfo.DeveloperName);
             }
 
             WriteMembers(writer, objrefs);
@@ -182,13 +174,11 @@ namespace appbox.Design
         /// </summary>
         /// <param name="writer"></param>
         /// <param name="objrefs"></param>
-        public virtual void WriteMembers(JsonTextWriter writer, WritedObjects objrefs)
+        public virtual void WriteMembers(Utf8JsonWriter writer, WritedObjects objrefs)
         { }
 
-        void IJsonSerializable.ReadFromJson(JsonTextReader reader, ReadedObjects objrefs)
-        {
-            throw new NotSupportedException();
-        }
+        void IJsonSerializable.ReadFromJson(ref Utf8JsonReader reader,
+            ReadedObjects objrefs) => throw new NotSupportedException();
         #endregion
 
     }

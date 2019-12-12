@@ -1,7 +1,7 @@
 ﻿using System;
 using appbox.Data;
 using appbox.Serialization;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace appbox.Models
 {
@@ -117,33 +117,24 @@ namespace appbox.Models
 
         public PayloadType JsonPayloadType => PayloadType.UnknownType;
 
-        public virtual void WriteToJson(JsonTextWriter writer, WritedObjects objrefs)
+        public virtual void WriteToJson(Utf8JsonWriter writer, WritedObjects objrefs)
         {
-            writer.WritePropertyName("ID");
-            writer.WriteValue(IndexId);
-
-            writer.WritePropertyName(nameof(Name));
-            writer.WriteValue(Name);
-
-            writer.WritePropertyName(nameof(Unique));
-            writer.WriteValue(Unique);
-
+            writer.WriteNumber("ID", IndexId);
+            writer.WriteString(nameof(Name), Name);
+            writer.WriteBoolean(nameof(Unique), Unique);
             writer.WritePropertyName(nameof(Fields));
             writer.WriteStartArray();
             for (int i = 0; i < Fields.Length; i++)
             {
                 writer.WriteStartObject();
-                writer.WritePropertyName("MID"); //TODO: rename
-                writer.WriteValue(Fields[i].MemberId);
-
-                writer.WritePropertyName("OrderByDesc");
-                writer.WriteValue(Fields[i].OrderByDesc);
+                writer.WriteNumber("MID", Fields[i].MemberId); //TODO: rename
+                writer.WriteBoolean("OrderByDesc", Fields[i].OrderByDesc);
                 writer.WriteEndObject();
             }
             writer.WriteEndArray();
         }
 
-        public void ReadFromJson(JsonTextReader reader, ReadedObjects objrefs) => throw new NotSupportedException();
+        public void ReadFromJson(ref Utf8JsonReader reader, ReadedObjects objrefs) => throw new NotSupportedException();
         #endregion
     }
 }

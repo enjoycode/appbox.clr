@@ -1,11 +1,10 @@
 using System;
 using OmniSharp.Mef;
 using System.Collections.Generic;
-using System.Composition;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
-using Newtonsoft.Json;
+using System.Text.Json;
 using appbox.Design;
 using appbox.Data;
 using appbox.Models;
@@ -72,26 +71,17 @@ namespace OmniSharp.Roslyn.CSharp.Services
 
         PayloadType IJsonSerializable.JsonPayloadType => PayloadType.UnknownType;
 
-        void IJsonSerializable.ReadFromJson(JsonTextReader reader, ReadedObjects objrefs)
-        {
-            throw new NotSupportedException();
-        }
+        void IJsonSerializable.ReadFromJson(ref Utf8JsonReader reader, ReadedObjects objrefs) => throw new NotSupportedException();
 
-        void IJsonSerializable.WriteToJson(JsonTextWriter writer, WritedObjects objrefs)
+        void IJsonSerializable.WriteToJson(Utf8JsonWriter writer, WritedObjects objrefs)
         {
             //注意：都+1，以方便前端定位
-            writer.WritePropertyName(nameof(Line));
-            writer.WriteValue(Line + 1);
-            writer.WritePropertyName(nameof(Column));
-            writer.WriteValue(Column + 1);
-            writer.WritePropertyName(nameof(EndLine));
-            writer.WriteValue(EndLine + 1);
-            writer.WritePropertyName(nameof(EndColumn));
-            writer.WriteValue(EndColumn + 1);
-            writer.WritePropertyName(nameof(Level));
-            writer.WriteValue(Level);
-            writer.WritePropertyName(nameof(Text));
-            writer.WriteValue(Text);
+            writer.WriteNumber(nameof(Line), Line + 1);
+            writer.WriteNumber(nameof(Column), Column + 1);
+            writer.WriteNumber(nameof(EndLine), EndLine + 1);
+            writer.WriteNumber(nameof(EndColumn), EndColumn + 1);
+            writer.WriteNumber(nameof(Level), Level);
+            writer.WriteString(nameof(Text), Text);
         }
     }
 

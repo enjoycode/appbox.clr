@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Newtonsoft.Json;
+using System.Text.Json;
 using appbox.Server;
 using appbox.Serialization;
 
@@ -58,21 +58,11 @@ namespace appbox.Design
             }
 
             //把结果转发至前端
-            string eventBody;
-            if (response.Error == InvokeResponseError.None)
-            {
-                var sb = new System.Text.StringBuilder();
-                using (var sw = new System.IO.StringWriter(sb))
-                using (var jw = new JsonTextWriter(sw))
-                {
-                    jw.Serialize(response.Result);
-                }
-                eventBody = string.Format("{{\"Type\":\"Result\",\"Data\":{0}}}", sb);
-            }
-            else
-            {
-                eventBody = string.Format("{{\"Type\":\"Result\",\"Error\":\"{0}\"}}", response.Error);
-            }
+            //TODO: 暂转换一下
+            using var ms = new System.IO.MemoryStream(512);
+            response.Result.SerializeAsInvokeResponse(ms, 0);
+            string resData = System.Text.Encoding.UTF8.GetString(ms.ToArray());
+            var eventBody = string.Format("{{\"Type\":\"Result\",\"Data\":{0}}}", resData);
             ds.ForwardEvent(eventBody);
 
             //终止调试器进程

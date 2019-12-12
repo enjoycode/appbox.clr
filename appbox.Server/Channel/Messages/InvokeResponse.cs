@@ -64,29 +64,8 @@ namespace appbox.Server
             //注意: 根据类型不同的序列化方式，暂只支持Bin及Json
             if (Protocol == InvokeProtocol.Json)
             {
-                using (var sw = new StreamWriter(bs.Stream))
-                {
-                    //TODO:抽象公共部分至InvokeHelper
-                    //注意: 不catch异常，序列化错误由Channel发送处理
-                    using (var jw = new JsonTextWriter(sw))
-                    {
-                        jw.DateTimeZoneHandling = DateTimeZoneHandling.Local;
-                        jw.WriteStartObject();
-                        jw.WritePropertyName("I");
-                        jw.WriteValue(SourceMsgId);
-                        if (Error != InvokeResponseError.None)
-                        {
-                            jw.WritePropertyName("E");
-                            jw.WriteValue((string)Result.ObjectValue); //TODO: 友好错误信息
-                        }
-                        else
-                        {
-                            jw.WritePropertyName("D");
-                            jw.Serialize(Result.BoxedValue);
-                        }
-                        jw.WriteEndObject();
-                    }
-                }
+                //注意: 不catch异常，序列化错误由Channel发送处理
+                Result.SerializeAsInvokeResponse(bs.Stream, SourceMsgId);
             }
             else
             {

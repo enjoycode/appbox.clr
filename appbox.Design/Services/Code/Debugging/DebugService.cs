@@ -6,12 +6,12 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Text.Json;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System.Runtime.InteropServices;
 using appbox.Data;
 using appbox.Serialization;
 using appbox.Server;
+using Newtonsoft.Json.Linq;
 
 namespace appbox.Design
 {
@@ -77,15 +77,16 @@ namespace appbox.Design
             }
 
             //1. 构建请求消息，读取类似InvokeController的递交的json格式的调用请求
+            //TODO:暂转为utf8再反序列化
+            var argsData = Encoding.UTF8.GetBytes(methodArgs);
             var args = new InvokeArgs();
-            using (var jr = new JsonTextReader(new StringReader(methodArgs)))
+
+            var jr = new Utf8JsonReader(argsData);
+            if (jr.Deserialize(new ReadedObjects()) is ObjectArray array && array.Count > 0)
             {
-                if (jr.Deserialize() is ObjectArray array && array.Count > 0)
+                for (int i = 0; i < array.Count; i++)
                 {
-                    for (int i = 0; i < array.Count; i++)
-                    {
-                        args.Set(i, AnyValue.From(array[i]));
-                    }
+                    args.Set(i, AnyValue.From(array[i]));
                 }
             }
             var req = new InvokeRequire(InvokeSource.Debugger,

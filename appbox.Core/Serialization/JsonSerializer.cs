@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text.Json;
 using System.Collections;
 using System.Collections.Generic;
 using Newtonsoft.Json;
@@ -11,23 +12,17 @@ namespace appbox.Serialization
 
     public static class JsonExtensions
     {
-
         private static readonly object EndFlag = new object();
+        private static readonly byte[] RefPropertyName = System.Text.Encoding.UTF8.GetBytes("$R");
+        private static readonly byte[] TypePropertyName = System.Text.Encoding.UTF8.GetBytes("$T");
+        private static readonly byte[] IdPropertyName = System.Text.Encoding.UTF8.GetBytes("Id");
 
-        #region ====序列化====
-        public static void Serialize(this JsonTextWriter writer, object obj, WritedObjects objrefs = null)
-        {
-            if (objrefs == null)
-                objrefs = new WritedObjects();
-
-            WriteCore(writer, obj, objrefs);
-        }
-
-        private static void WriteCore(JsonTextWriter writer, object res, WritedObjects objrefs)
+        #region ====Serialize====
+        public static void Serialize(this Utf8JsonWriter writer, object res, WritedObjects objrefs)
         {
             if (res == null || res == DBNull.Value)
             {
-                writer.WriteNull();
+                writer.WriteNullValue();
                 return;
             }
 
@@ -41,8 +36,8 @@ namespace appbox.Serialization
                     if (!string.IsNullOrEmpty(refID))
                     {
                         writer.WriteStartObject();
-                        writer.WritePropertyName("$R");
-                        writer.WriteValue(refID);
+                        writer.WritePropertyName(RefPropertyName);
+                        writer.WriteStringValue(refID);
                         writer.WriteEndObject();
                         return;
                     }
@@ -62,15 +57,15 @@ namespace appbox.Serialization
                     writer.WriteStartObject();
                 if (serializable.JsonPayloadType != PayloadType.UnknownType && serializable.JsonPayloadType != PayloadType.JsonResult)
                 {
-                    writer.WritePropertyName("$T"); // 写入对象类型
+                    writer.WritePropertyName(TypePropertyName); // 写入对象类型
                     if (serializable.JsonPayloadType == PayloadType.Entity) //实体类写入的是持久化状态及模型标识
                     {
                         var entity = (Entity)res;
-                        writer.WriteValue($"{(byte)entity.PersistentState}{entity.ModelId}");
+                        writer.WriteStringValue($"{(byte)entity.PersistentState}{entity.ModelId}");
                         if (entity.Model.SysStoreOptions != null)
                         {
-                            writer.WritePropertyName("Id"); // 写入对象标识
-                            writer.WriteValue((Guid)entity.Id);
+                            writer.WritePropertyName(IdPropertyName); // 写入对象标识
+                            writer.WriteStringValue((Guid)entity.Id);
                         }
                         else if (entity.Model.SqlStoreOptions != null)
                         {
@@ -79,11 +74,11 @@ namespace appbox.Serialization
                     }
                     else if (serializable.JsonPayloadType == PayloadType.ExtKnownType) //扩展类型写入反射信息
                     {
-                        writer.WriteValue(type.FullName);
+                        writer.WriteStringValue(type.FullName);
                     }
                     else
                     {
-                        writer.WriteValue((int)serializable.JsonPayloadType);
+                        writer.WriteNumberValue((int)serializable.JsonPayloadType);
                     }
                 }
 
@@ -95,9 +90,10 @@ namespace appbox.Serialization
             }
             else //----非实现了IJsonSerializable的对象---
             {
-                if (type.IsPrimitive || type == typeof(string) || type == typeof(DateTime) || type == typeof(Guid) || type == typeof(decimal))
+                if (type.IsPrimitive || type == typeof(string) || type == typeof(DateTime)
+                    || type == typeof(Guid) || type == typeof(decimal))
                 {
-                    writer.WriteValue(res);
+                    System.Text.Json.JsonSerializer.Serialize(writer, res, type);
                 }
                 else if (res is IList) // 优先转换IList集合
                 {
@@ -115,96 +111,100 @@ namespace appbox.Serialization
                     for (int i = 0; i < properties.Length; i++)
                     {
                         writer.WritePropertyName(properties[i].Name);
-                        writer.Serialize(properties[i].GetValue(res));
+                        writer.Serialize(properties[i].GetValue(res), objrefs);
                     }
                     writer.WriteEndObject();
                 }
             }
         }
 
-        public static void WriteList(this JsonTextWriter writer, IList list, WritedObjects objrefs)
+        public static void WriteList(this Utf8JsonWriter writer, IList list, WritedObjects objrefs)
         {
             writer.WriteStartArray();
             for (int i = 0; i < list.Count; i++)
             {
-                WriteCore(writer, list[i], objrefs);
+                writer.Serialize(list[i], objrefs);
             }
             writer.WriteEndArray();
         }
 
-        public static void WriteEnumerable(this JsonTextWriter writer, IEnumerable list, WritedObjects objrefs)
+        public static void WriteEnumerable(this Utf8JsonWriter writer, IEnumerable list, WritedObjects objrefs)
         {
             writer.WriteStartArray();
             foreach (var item in list)
             {
-                WriteCore(writer, item, objrefs);
+                writer.Serialize(item, objrefs);
             }
+            writer.WriteEndArray();
+        }
+
+        public static void WriteEmptyArray(this Utf8JsonWriter writer)
+        {
+            writer.WriteStartArray();
             writer.WriteEndArray();
         }
         #endregion
 
-        #region ====反序列化====
-        public static object Deserialize(this JsonTextReader reader, ReadedObjects objrefs = null)
-        {
-            if (objrefs == null)
-                objrefs = new ReadedObjects();
-
-            return ReadCore(reader, objrefs);
-        }
-
-        private static object ReadCore(JsonTextReader reader, ReadedObjects objrefs)
+        #region ====Deserialize====
+        public static object Deserialize(this Utf8JsonReader reader, ReadedObjects objrefs)
         {
             object res = null;
             if (reader.Read())
             {
                 switch (reader.TokenType)
                 {
-                    case JsonToken.StartArray:
+                    case JsonTokenType.StartArray:
                         var array = new ObjectArray();
-                        ReadList(reader, array, objrefs);
+                        reader.ReadList(array, objrefs);
                         if (array.Count > 0)
                             res = array;
                         break;
-                    case JsonToken.StartObject:
-                        res = ReadObject(reader, objrefs);
+                    case JsonTokenType.StartObject:
+                        res = ReadObject(ref reader, objrefs);
                         break;
-                    case JsonToken.EndObject:
-                    case JsonToken.EndArray:
+                    case JsonTokenType.EndObject:
+                    case JsonTokenType.EndArray:
                         res = EndFlag;
                         break;
-                    default:
-                        res = reader.Value;
-                        break;
+                    case JsonTokenType.String: res = reader.GetString(); break;
+                    case JsonTokenType.True: res = true; break;
+                    case JsonTokenType.False: res = false; break;
+                    case JsonTokenType.Null: break;
+                    case JsonTokenType.Number: res = reader.GetDecimal(); break;
+                    default: throw new NotImplementedException();
                 }
             }
             return res;
         }
 
-        private static object ReadObject(JsonTextReader reader, ReadedObjects objrefs)
+        private static object ReadObject(ref Utf8JsonReader reader, ReadedObjects objrefs)
         {
             //注意: 已读取StartObject标记
             if (!reader.Read())
                 throw new Exception("ReadObject format error"); //只有{开始标记，没有后续内容
-            if (reader.TokenType == JsonToken.EndObject) //空对象
+            if (reader.TokenType == JsonTokenType.EndObject) //空对象
                 return null;
 
             //read property name
-            if (reader.TokenType != JsonToken.PropertyName)
+            if (reader.TokenType != JsonTokenType.PropertyName)
                 throw new Exception("ReadObject property name error.");
-            string propName = (string)reader.Value;
+            string propName = reader.GetString(); //TODO:优化比较
             if (propName == "$R") //引用对象
             {
-                var refID = reader.ReadAsString();
-                if (!reader.Read() && reader.TokenType != JsonToken.EndObject) //注意：必须读取EndObject标记
+                if (!reader.Read())
+                    throw new Exception("ReadObject refid error");
+                var refID = reader.GetString();
+                if (!reader.Read() && reader.TokenType != JsonTokenType.EndObject) //注意：必须读取EndObject标记
                     throw new Exception("ReadObject object ref format error");
                 return objrefs[refID];
             }
-            else if (propName == "$T")
+            if (propName == "$T")
             {
                 //先读取类型信息
                 if (!reader.Read())
                     throw new Exception("ReadObject payload type error");
-                var typeInfo = reader.Value;
+                object typeInfo = reader.TokenType == JsonTokenType.String ?
+                    reader.GetString() : (object)reader.GetInt32();
 
                 //根据类型信息创建对象
                 IJsonSerializable res = null;
@@ -231,9 +231,10 @@ namespace appbox.Serialization
                         if (model.SysStoreOptions != null)
                         {
                             //再读取对象ID
-                            if (!reader.Read() && reader.TokenType != JsonToken.PropertyName)
+                            if (!reader.Read() && reader.TokenType != JsonTokenType.PropertyName)
                                 throw new Exception("ReadObject id error");
-                            var idString = reader.ReadAsString();
+                            reader.Read();
+                            var idString = reader.GetString();
                             var refID = $"{modelAndState}{idString}";
                             //注意：先判断objrefs已读字典表是否存在，因为EntitySet可能已加载
                             if (objrefs.TryGetValue(refID, out object existed))
@@ -265,7 +266,7 @@ namespace appbox.Serialization
                 }
 
                 //开始填充对象内容
-                res.ReadFromJson(reader, objrefs);
+                res.ReadFromJson(ref reader, objrefs);
                 return res;
             }
             else
@@ -275,12 +276,12 @@ namespace appbox.Serialization
             }
         }
 
-        public static void ReadList(this JsonTextReader reader, IList list, ReadedObjects objrefs)
+        public static void ReadList(this Utf8JsonReader reader, IList list, ReadedObjects objrefs)
         {
             //注意: 已读取StartArray标记
             do
             {
-                object res = ReadCore(reader, objrefs);
+                object res = reader.Deserialize(objrefs);
                 if (res == EndFlag)
                     return;
                 list.Add(res);
@@ -292,19 +293,19 @@ namespace appbox.Serialization
         /// </summary>
         /// <param name="reader"></param>
         /// <param name="expectPropertyName"></param>
-        public static void ExpectPropertyName(this JsonTextReader reader, string expectPropertyName)
+        public static void ExpectPropertyName(this Utf8JsonReader reader, string expectPropertyName)
         {
             if (!reader.Read())
                 throw new Exception("Nothing to read");
-            if (reader.TokenType != JsonToken.PropertyName)
+            if (reader.TokenType != JsonTokenType.PropertyName)
                 throw new Exception("JsonToken is not property name");
 
-            var name = reader.Value as string;
+            var name = reader.GetString();
             if (name != expectPropertyName)
                 throw new Exception("Not expect property name");
         }
 
-        public static void ExpectToken(this JsonTextReader reader, JsonToken expectToken)
+        public static void ExpectToken(this Utf8JsonReader reader, JsonTokenType expectToken)
         {
             if (!reader.Read())
                 throw new Exception("Nothing to read");
@@ -312,7 +313,6 @@ namespace appbox.Serialization
                 throw new Exception("JsonToken is not expected");
         }
         #endregion
-
     }
 
     public sealed class WritedObjects : Dictionary<object, string> { }

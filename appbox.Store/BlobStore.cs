@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using appbox.Serialization;
 using appbox.Server;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace appbox.Store
 {
@@ -475,27 +475,15 @@ namespace appbox.Store
         #region ----Json----
         public PayloadType JsonPayloadType => PayloadType.UnknownType;
 
-        public void ReadFromJson(JsonTextReader reader, ReadedObjects objrefs)
+        public void ReadFromJson(ref Utf8JsonReader reader, ReadedObjects objrefs) => throw new NotSupportedException();
+
+        public void WriteToJson(Utf8JsonWriter writer, WritedObjects objrefs)
         {
-            throw new NotSupportedException();
-        }
-
-        public void WriteToJson(JsonTextWriter writer, WritedObjects objrefs)
-        {
-            writer.WritePropertyName(nameof(Name));
-            writer.WriteValue(Name);
-
-            writer.WritePropertyName(nameof(Size));
-            writer.WriteValue(Size);
-
-            writer.WritePropertyName(nameof(CreateTime));
-            writer.WriteValue(CreateTime);
-
-            writer.WritePropertyName(nameof(ModifiedTime));
-            writer.WriteValue(ModifiedTime);
-
-            writer.WritePropertyName(nameof(IsFile));
-            writer.WriteValue(IsFile);
+            writer.WriteString(nameof(Name), Name);
+            writer.WriteNumber(nameof(Size), Size);
+            writer.WriteString(nameof(CreateTime), CreateTime);
+            writer.WriteString(nameof(ModifiedTime), ModifiedTime);
+            writer.WriteBoolean(nameof(IsFile), IsFile);
         }
         #endregion
 
