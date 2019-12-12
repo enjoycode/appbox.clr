@@ -239,8 +239,8 @@ namespace appbox.Design
                                                                    SyntaxFactory.Literal(entityModelNode.Model.Id));
                         }
 
-                        //判断成员是否属于实体成员
-                        if (expSymbol.ContainingType.ToString() != TypeHelper.Type_EntityBase)
+                        //判断成员是否属于实体成员, 仅映射至系统存储的需要
+                        if (expSymbol.ContainingType.ToString() != TypeHelper.Type_SysEntityBase)
                         {
                             //TODO:判断是否AggregationRefField，返回的object类型，应使用BoxedValue处理
                             ITypeSymbol valueTypeSymbol = TypeHelper.GetSymbolType(expSymbol);

@@ -163,6 +163,8 @@ namespace appbox.Data
             return jr;
         }
 
+        //TODO: *****other types
+
         public bool GetBoolean()
         {
             if (Count == FromWebSocket)
@@ -178,9 +180,7 @@ namespace appbox.Data
         public int GetInt32()
         {
             if (Count == FromWebSocket)
-            {
                 return ReadJsonArg().GetInt32();
-            }
             if (Count == FromWebStream)
                 throw new NotImplementedException();
             return Current().Int32Value;
@@ -200,9 +200,29 @@ namespace appbox.Data
             return (string)Current().ObjectValue;
         }
 
+        public DateTime GetDateTime()
+        {
+            if (Count == FromWebSocket)
+                return ReadJsonArg().GetDateTime();
+            if (Count == FromWebStream)
+                throw new NotImplementedException();
+            return Current().DateTimeValue;
+        }
+
+        public Guid GetGuid()
+        {
+            if (Count == FromWebSocket)
+                return ReadJsonArg().GetGuid();
+            if (Count == FromWebStream)
+                throw new NotImplementedException();
+            return Current().GuidValue;
+        }
+
         public object GetObject()
         {
-            if (Count == FromWebSocket || Count == FromWebStream)
+            if (Count == FromWebSocket)
+                return ReadJsonArg().Deserialize(new ReadedObjects());
+            if (Count == FromWebStream)
                 throw new NotImplementedException();
             return Current().ObjectValue;
         }

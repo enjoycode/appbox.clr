@@ -29,6 +29,7 @@ namespace appbox.Design
         internal const string InvokePermissionAttribute = "sys.InvokePermissionAttribute";
 
         internal const string Type_EntityBase = "sys.EntityBase";
+        internal const string Type_SysEntityBase = "sys.SysEntityBase";
         internal const string Type_EntityList = "sys.EntityList";
         internal const string Type_FieldSet = "sys.Data.FieldSet";
         //internal const string Type_IImageSource = "sys.IImageSource";

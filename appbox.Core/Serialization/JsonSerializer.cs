@@ -171,7 +171,7 @@ namespace appbox.Serialization
                     case JsonTokenType.False: res = false; break;
                     case JsonTokenType.Null: break;
                     case JsonTokenType.Number: res = reader.GetDecimal(); break;
-                    default: throw new NotImplementedException();
+                    default: throw new NotImplementedException(reader.TokenType.ToString());
                 }
             }
             return res;
