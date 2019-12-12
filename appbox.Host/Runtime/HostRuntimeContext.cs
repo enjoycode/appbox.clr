@@ -20,7 +20,7 @@ namespace appbox.Server
         private readonly List<ApplicationModel> apps = new List<ApplicationModel>(); //TODO:use RWLock
         private readonly LRUCache<ulong, ModelBase> models = new LRUCache<ulong, ModelBase>(128); //TODO:fix limit
         private readonly ObjectPool<PooledTaskSource<AnyValue>> invokeTasksPool =
-            PooledTaskSource<AnyValue>.Create(1024); //TODO: check count
+            PooledTaskSource<AnyValue>.Create(256); //TODO: check count
 
         private static readonly AsyncLocal<ISessionInfo> _session = new AsyncLocal<ISessionInfo>();
 

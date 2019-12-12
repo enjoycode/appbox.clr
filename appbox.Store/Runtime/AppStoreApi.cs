@@ -12,7 +12,8 @@ namespace appbox.Store
     sealed class AppStoreApi : IStoreApi
     {
         private readonly IMessageChannel channel;
-        private readonly ObjectPool<PooledTaskSource<NativeMessage>> taskPool = PooledTaskSource<NativeMessage>.Create(1024); //TODO: check count
+        private readonly ObjectPool<PooledTaskSource<NativeMessage>> taskPool
+            = PooledTaskSource<NativeMessage>.Create(256); //TODO: check count
 
         internal AppStoreApi(IMessageChannel channel)
         {
