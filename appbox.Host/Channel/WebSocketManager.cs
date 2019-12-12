@@ -36,6 +36,11 @@ namespace appbox.Server.Channel
                 try
                 {
                     result = await webSocket.ReceiveAsync(frame.Buffer.AsMemory(), CancellationToken.None);
+                    if (result.MessageType == WebSocketMessageType.Close)
+                    {
+                        BytesSegment.ReturnOne(frame);
+                        break;
+                    }
                 }
                 catch (Exception ex)
                 {
