@@ -7,11 +7,14 @@ using System.Runtime.CompilerServices;
 namespace appbox.Caching
 {
 
+    /// <summary>
+    /// 托管的字节缓存块
+    /// </summary>
     public sealed class BytesSegment : ReadOnlySequenceSegment<byte>
     {
         #region ====Static Pool====
         private static readonly ObjectPool<BytesSegment> buffers =
-                new ObjectPool<BytesSegment>(p => new BytesSegment(), null, 128);
+                new ObjectPool<BytesSegment>(() => new BytesSegment(), 256); //TODO: check count
 
         private const int FrameSize = 216; //MessageChunk.PayloadDataSize; //注意: 等于MessageChunk的数据部分大小
 
@@ -20,7 +23,7 @@ namespace appbox.Caching
         /// </summary>
         internal static BytesSegment Rent()
         {
-            var f = buffers.Pop();
+            var f = buffers.Allocate();
             f.First = f;
             f.Next = null;
             return f;
@@ -34,7 +37,7 @@ namespace appbox.Caching
         {
             item.First = null;
             item.Next = null;
-            buffers.Push(item);
+            buffers.Free(item);
         }
 
         /// <summary>

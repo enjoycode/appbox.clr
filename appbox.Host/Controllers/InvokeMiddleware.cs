@@ -72,7 +72,7 @@ namespace appbox.Host
                 }
                 catch (Exception ex)
                 {
-                    Log.Warn($"调用服务异常: {ex.Message}");
+                    Log.Warn($"调用服务异常: {ex.Message}\n{ex.StackTrace}");
                     res = AnyValue.From(ex);
                 }
             }

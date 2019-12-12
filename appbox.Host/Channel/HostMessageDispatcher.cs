@@ -67,9 +67,9 @@ namespace appbox.Host
                 GCHandle tcsHandle = GCHandle.FromIntPtr(response.WaitHandle);
                 var tcs = (PooledTaskSource<AnyValue>)tcsHandle.Target;
                 if (response.Error != InvokeResponseError.None) //仅Host，重新包装为异常
-                    tcs.NotifyCompletionOnThreadPool(AnyValue.From(new Exception((string)response.Result.ObjectValue)));
+                    tcs.SetResultOnOtherThread(AnyValue.From(new Exception((string)response.Result.ObjectValue)));
                 else
-                    tcs.NotifyCompletionOnThreadPool(response.Result);
+                    tcs.SetResultOnOtherThread(response.Result);
             }
             else if (response.Source == InvokeSource.Debugger)
             {

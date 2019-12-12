@@ -158,27 +158,15 @@ namespace appbox.Server
             }
 
             //非系统服务则包装为InvokeRequire转发至子进程处理
-            var tcs = invokeTasksPool.Pop();
+            var tcs = invokeTasksPool.Allocate();
             var require = new InvokeRequire(InvokeSource.Client, InvokeProtocol.Json,
                 tcs.GCHandlePtr, servicePath, args, msgId, RuntimeContext.Current.CurrentSession); //注意传播会话信息
             ChildProcess.AppContainer.Channel.SendMessage(ref require);
             args.ReturnBuffer(); //注意归还缓存块
-            return await tcs.WaitAsync();
+            var res = await tcs.WaitAsync();
+            invokeTasksPool.Free(tcs);
+            return res;
         }
-
-        /// <summary>
-        /// Invokes the by web client async.
-        /// </summary>
-        /// <remarks>
-        /// Caller已经设置当前会话
-        /// </remarks>
-        internal Task<object> InvokeByWebClientAsync(string servicePath, InvokeArgs args, int msgId)
-        {
-            throw new NotImplementedException();
-            //return InvokeInternalAsync(InvokeSource.Client, InvokeContentType.Json, servicePath, args, msgId);
-        }
-
-
 
         /// <summary>
         /// 调用系统服务，埋点监测

@@ -22,10 +22,11 @@ namespace appbox.Store
         #region ====Meta====
         public async ValueTask<ulong> MetaGenPartitionAsync(IntPtr txnPtr, IntPtr partionInfoPtr)
         {
-            var ts = taskPool.Pop();
+            var ts = taskPool.Allocate();
             var req = new GenPartitionRequire(txnPtr, ts.GCHandlePtr, partionInfoPtr);
             channel.SendMessage(ref req);
             var msg = await ts.WaitAsync();
+            taskPool.Free(ts);
             //TODO:异常处理
             return (ulong)msg.Data1.ToInt64();
         }
@@ -34,20 +35,22 @@ namespace appbox.Store
         #region ====Transaction====
         public async ValueTask<IntPtr> BeginTransactionAsync(bool readCommitted)
         {
-            var ts = taskPool.Pop();
+            var ts = taskPool.Allocate();
             var req = new BeginTranRequire(readCommitted, ts.GCHandlePtr);
             channel.SendMessage(ref req);
             var msg = await ts.WaitAsync();
+            taskPool.Free(ts);
             //TODO:异常处理
             return msg.Data1;
         }
 
         public async ValueTask CommitTransactionAsync(IntPtr txnPtr)
         {
-            var ts = taskPool.Pop();
+            var ts = taskPool.Allocate();
             var req = new CommitTranRequire(txnPtr, ts.GCHandlePtr);
             channel.SendMessage(ref req);
             var msg = await ts.WaitAsync();
+            taskPool.Free(ts);
             if (msg.Data1 == IntPtr.Zero)
                 return;
             throw new Exception($"Commit error: {msg.Data1.ToInt32()}");
@@ -63,10 +66,11 @@ namespace appbox.Store
         #region ====KV====
         public async ValueTask ExecKVInsertAsync(IntPtr txnPtr, IntPtr reqPtr)
         {
-            var ts = taskPool.Pop();
+            var ts = taskPool.Allocate();
             var req = new KVInsertRequire(ts.GCHandlePtr, txnPtr, reqPtr);
             channel.SendMessage(ref req);
             var msg = await ts.WaitAsync();
+            taskPool.Free(ts);
             var errorCode = (KVCommandError)msg.Data1.ToInt32();
             if (errorCode == KVCommandError.None)
                 return;
@@ -76,10 +80,11 @@ namespace appbox.Store
 
         public async ValueTask<INativeData> ExecKVUpdateAsync(IntPtr txnPtr, IntPtr reqPtr)
         {
-            var ts = taskPool.Pop();
+            var ts = taskPool.Allocate();
             var req = new KVUpdateRequire(ts.GCHandlePtr, txnPtr, reqPtr);
             channel.SendMessage(ref req);
             var msg = await ts.WaitAsync();
+            taskPool.Free(ts);
             var errorCode = (KVCommandError)msg.Data1.ToInt32();
             if (errorCode == KVCommandError.None)
             {
@@ -91,10 +96,11 @@ namespace appbox.Store
 
         public async ValueTask<INativeData> ExecKVDeleteAsync(IntPtr txnPtr, IntPtr reqPtr)
         {
-            var ts = taskPool.Pop();
+            var ts = taskPool.Allocate();
             var req = new KVDeleteRequire(ts.GCHandlePtr, txnPtr, reqPtr);
             channel.SendMessage(ref req);
             var msg = await ts.WaitAsync();
+            taskPool.Free(ts);
             var errorCode = (KVCommandError)msg.Data1.ToInt32();
             if (errorCode == KVCommandError.None)
             {
@@ -106,10 +112,11 @@ namespace appbox.Store
 
         public async ValueTask ExecKVAddRefAsync(IntPtr txnPtr, IntPtr reqPtr)
         {
-            var ts = taskPool.Pop();
+            var ts = taskPool.Allocate();
             var req = new KVAddRefRequire(ts.GCHandlePtr, txnPtr, reqPtr);
             channel.SendMessage(ref req);
             var msg = await ts.WaitAsync();
+            taskPool.Free(ts);
             var errorCode = (KVCommandError)msg.Data1.ToInt32();
             if (errorCode == KVCommandError.None)
                 return;
@@ -121,10 +128,11 @@ namespace appbox.Store
         #region ====Read====
         public async ValueTask<INativeData> ReadIndexByGetAsync(ulong raftGroupId, IntPtr keyPtr, uint keySize, int dataCF = -1)
         {
-            var ts = taskPool.Pop();
+            var ts = taskPool.Allocate();
             var req = new KVGetRequire(ts.GCHandlePtr, raftGroupId, dataCF, keyPtr, keySize);
             channel.SendMessage(ref req);
             var msg = await ts.WaitAsync();
+            taskPool.Free(ts);
             var errorCode = msg.Data1.ToInt32();
             if (errorCode == 0)
             {
@@ -140,11 +148,12 @@ namespace appbox.Store
 
         public async ValueTask<IScanResponse> ReadIndexByScanAsync(IntPtr reqPtr)
         {
-            var ts = taskPool.Pop();
+            var ts = taskPool.Allocate();
             var req = new KVScanRequire(ts.GCHandlePtr, reqPtr);
             channel.SendMessage(ref req);
             req.FreeFilterData(); //注意释放
             var msg = await ts.WaitAsync();
+            taskPool.Free(ts);
             var errorCode = (KVCommandError)msg.Data1.ToInt32();
             if (errorCode == KVCommandError.None)
             {

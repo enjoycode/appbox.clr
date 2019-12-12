@@ -27,18 +27,20 @@ namespace appbox.Store
         /// <param name="dataPtr">Caller不需要释放分配的内存</param>
         internal async ValueTask<byte> CreateApplicationAsync(IntPtr keyPtr, uint keySize, IntPtr dataPtr)
         {
-            var ts = taskPool.Pop();
+            var ts = taskPool.Allocate();
             NativeApi.CreateApplication(ts.GCHandlePtr, keyPtr, keySize, dataPtr);
             var msg = await ts.WaitAsync();
+            taskPool.Free(ts);
             //TODO:异常处理
             return (byte)msg.Data1.ToInt32();
         }
 
         public async ValueTask<ulong> MetaGenPartitionAsync(IntPtr txnPtr, IntPtr partionInfoPtr)
         {
-            var ts = taskPool.Pop();
+            var ts = taskPool.Allocate();
             NativeApi.MetaGenPartition(txnPtr, ts.GCHandlePtr, RuntimeContext.Current.RuntimeId, partionInfoPtr);
             var msg = await ts.WaitAsync();
+            taskPool.Free(ts);
             //TODO:异常处理
             return (ulong)msg.Data1.ToInt64();
         }
@@ -48,9 +50,10 @@ namespace appbox.Store
         /// </summary>
         internal async ValueTask<bool> ProposeConfChangeAsync(byte type, ulong nodeId, uint ip, ushort port)
         {
-            var ts = taskPool.Pop();
+            var ts = taskPool.Allocate();
             NativeApi.ProposeConfChange(ts.GCHandlePtr, type, nodeId, ip, port);
             var msg = await ts.WaitAsync();
+            taskPool.Free(ts);
             return msg.Data1 == new IntPtr(1);
         }
 
@@ -60,9 +63,10 @@ namespace appbox.Store
         /// <param name="factor">3 or 5 or 7</param>
         internal async ValueTask PromoteReplFactorAsync(byte factor)
         {
-            var ts = taskPool.Pop();
+            var ts = taskPool.Allocate();
             NativeApi.PromoteReplFactor(ts.GCHandlePtr, factor);
             var msg = await ts.WaitAsync();
+            taskPool.Free(ts);
             if (msg.Data1 != IntPtr.Zero)
                 throw new Exception($"ErrorCode: {(KVCommandError)msg.Data1.ToInt32()}");
         }
@@ -72,9 +76,10 @@ namespace appbox.Store
         /// </summary>
         internal async ValueTask<uint> MetaGenModelIdAsync(uint appId, bool devLayer)
         {
-            var ts = taskPool.Pop();
+            var ts = taskPool.Allocate();
             NativeApi.GenModelId(ts.GCHandlePtr, appId, devLayer);
             var msg = await ts.WaitAsync();
+            taskPool.Free(ts);
             if (msg.Data1 == IntPtr.Zero)
                 return (uint)msg.Data2.ToInt32();
 
@@ -83,9 +88,10 @@ namespace appbox.Store
 
         internal async ValueTask ExecMetaAlterTableAsync(IntPtr txnPtr, IntPtr cmdPtr)
         {
-            var ts = taskPool.Pop();
+            var ts = taskPool.Allocate();
             NativeApi.ExecMetaAlterTable(txnPtr, cmdPtr, ts.GCHandlePtr);
             var msg = await ts.WaitAsync();
+            taskPool.Free(ts);
             var errorCode = (KVCommandError)msg.Data1.ToInt32();
             if (errorCode == KVCommandError.None)
                 return;
@@ -96,9 +102,10 @@ namespace appbox.Store
         internal async ValueTask ExecMetaDropTableAsync(IntPtr txnPtr, uint tableId, ulong modelId,
             IntPtr partsPtr, IntPtr partsSize, bool truncate)
         {
-            var ts = taskPool.Pop();
+            var ts = taskPool.Allocate();
             NativeApi.ExecMetaDropTable(txnPtr, ts.GCHandlePtr, tableId, modelId, partsPtr, partsSize, truncate);
             var msg = await ts.WaitAsync();
+            taskPool.Free(ts);
             var errorCode = (KVCommandError)msg.Data1.ToInt32();
             if (errorCode == KVCommandError.None)
                 return;
@@ -110,18 +117,20 @@ namespace appbox.Store
         #region ====Transaction====
         public async ValueTask<IntPtr> BeginTransactionAsync(bool readCommitted)
         {
-            var ts = taskPool.Pop();
+            var ts = taskPool.Allocate();
             NativeApi.BeginTransaction(readCommitted, ts.GCHandlePtr, RuntimeContext.Current.RuntimeId);
             var msg = await ts.WaitAsync();
+            taskPool.Free(ts);
             //TODO:异常处理
             return msg.Data1;
         }
 
         public async ValueTask CommitTransactionAsync(IntPtr txnPtr)
         {
-            var ts = taskPool.Pop();
+            var ts = taskPool.Allocate();
             NativeApi.CommitTransaction(txnPtr, ts.GCHandlePtr, RuntimeContext.Current.RuntimeId);
             var msg = await ts.WaitAsync();
+            taskPool.Free(ts);
             if (msg.Data1 == IntPtr.Zero)
                 return;
             throw new Exception($"Commit error: {msg.Data1.ToInt32()}");
@@ -136,9 +145,10 @@ namespace appbox.Store
         #region ====KV====
         public async ValueTask ExecKVInsertAsync(IntPtr txnPtr, IntPtr reqPtr)
         {
-            var ts = taskPool.Pop();
+            var ts = taskPool.Allocate();
             NativeApi.ExecKVInsert(txnPtr, ts.GCHandlePtr, RuntimeContext.Current.RuntimeId, reqPtr);
             var msg = await ts.WaitAsync();
+            taskPool.Free(ts);
             var errorCode = (KVCommandError)msg.Data1.ToInt32();
             if (errorCode == KVCommandError.None)
                 return;
@@ -148,9 +158,10 @@ namespace appbox.Store
 
         public async ValueTask<INativeData> ExecKVUpdateAsync(IntPtr txnPtr, IntPtr reqPtr)
         {
-            var ts = taskPool.Pop();
+            var ts = taskPool.Allocate();
             NativeApi.ExecKVUpdate(txnPtr, ts.GCHandlePtr, RuntimeContext.Current.RuntimeId, reqPtr);
             var msg = await ts.WaitAsync();
+            taskPool.Free(ts);
             var errorCode = (KVCommandError)msg.Data1.ToInt32();
             if (errorCode == KVCommandError.None)
             {
@@ -162,9 +173,10 @@ namespace appbox.Store
 
         public async ValueTask<INativeData> ExecKVDeleteAsync(IntPtr txnPtr, IntPtr reqPtr)
         {
-            var ts = taskPool.Pop();
+            var ts = taskPool.Allocate();
             NativeApi.ExecKVDelete(txnPtr, ts.GCHandlePtr, RuntimeContext.Current.RuntimeId, reqPtr);
             var msg = await ts.WaitAsync();
+            taskPool.Free(ts);
             var errorCode = (KVCommandError)msg.Data1.ToInt32();
             if (errorCode == KVCommandError.None)
             {
@@ -175,9 +187,10 @@ namespace appbox.Store
 
         public async ValueTask ExecKVAddRefAsync(IntPtr txnPtr, IntPtr reqPtr)
         {
-            var ts = taskPool.Pop();
+            var ts = taskPool.Allocate();
             NativeApi.ExecKVAddRef(txnPtr, ts.GCHandlePtr, RuntimeContext.Current.RuntimeId, reqPtr);
             var msg = await ts.WaitAsync();
+            taskPool.Free(ts);
             var errorCode = (KVCommandError)msg.Data1.ToInt32();
             if (errorCode == KVCommandError.None)
                 return;
@@ -189,9 +202,10 @@ namespace appbox.Store
         #region ====Read====
         public async ValueTask<INativeData> ReadIndexByGetAsync(ulong raftGroupId, IntPtr keyPtr, uint keySize, int dataCF = -1)
         {
-            var ts = taskPool.Pop();
+            var ts = taskPool.Allocate();
             NativeApi.ReadIndexByGet(ts.GCHandlePtr, RuntimeContext.Current.RuntimeId, raftGroupId, keyPtr, keySize, dataCF);
             var msg = await ts.WaitAsync();
+            taskPool.Free(ts);
             var errorCode = msg.Data1.ToInt32();
             if (errorCode == 0)
             {
@@ -207,9 +221,10 @@ namespace appbox.Store
 
         public async ValueTask<IScanResponse> ReadIndexByScanAsync(IntPtr reqPtr)
         {
-            var ts = taskPool.Pop();
+            var ts = taskPool.Allocate();
             NativeApi.ReadIndexByScan(ts.GCHandlePtr, RuntimeContext.Current.RuntimeId, reqPtr);
             var msg = await ts.WaitAsync();
+            taskPool.Free(ts);
             var errorCode = (KVCommandError)msg.Data1.ToInt32();
             if (errorCode == KVCommandError.None)
             {
@@ -351,9 +366,10 @@ namespace appbox.Store
         public async ValueTask<INativeData> ExecBlobPrepareWriteAsync(byte appId, IntPtr cmdIdPtr,
                                            IntPtr pathPtr, uint pathSize, uint size, uint option)
         {
-            var ts = taskPool.Pop();
+            var ts = taskPool.Allocate();
             NativeApi.ExecBlobPrepareWrite(ts.GCHandlePtr, RuntimeContext.Current.RuntimeId, appId, cmdIdPtr, pathPtr, pathSize, size, option);
             var msg = await ts.WaitAsync();
+            taskPool.Free(ts);
             var errorCode = msg.Data1.ToInt32();
             if (errorCode == 0)
                 return msg.Data2 == IntPtr.Zero ? null : new NativeString(msg.Data2);
@@ -364,9 +380,10 @@ namespace appbox.Store
 
         public async ValueTask<INativeData> BlobCreateChunkAsync(byte appId, IntPtr pathPtr, uint pathSize, uint needSize)
         {
-            var ts = taskPool.Pop();
+            var ts = taskPool.Allocate();
             NativeApi.BlobCreateChunk(ts.GCHandlePtr, RuntimeContext.Current.RuntimeId, appId, pathPtr, pathSize, needSize);
             var msg = await ts.WaitAsync();
+            taskPool.Free(ts);
             var errorCode = msg.Data1.ToInt32();
             if (errorCode == 0)
                 return msg.Data2 == IntPtr.Zero ? null : new NativeString(msg.Data2);
@@ -376,9 +393,10 @@ namespace appbox.Store
 
         public async ValueTask BlobWriteChunkAsync(ulong raftGroupId, IntPtr pathPtr, uint pathSize, uint option, IntPtr dataPtr)
         {
-            var ts = taskPool.Pop();
+            var ts = taskPool.Allocate();
             NativeApi.BlobWriteChunk(ts.GCHandlePtr, RuntimeContext.Current.RuntimeId, raftGroupId, pathPtr, pathSize, option, dataPtr);
             var msg = await ts.WaitAsync();
+            taskPool.Free(ts);
             var errorCode = msg.Data1.ToInt32();
             if (errorCode != 0)
                 throw new Exception($"BlobWriteChunk error: {errorCode}");

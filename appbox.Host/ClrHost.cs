@@ -61,7 +61,7 @@ namespace appbox
                 GCHandle tsHandle = GCHandle.FromIntPtr(msg->Handle);
                 var ts = (PooledTaskSource<NativeMessage>)tsHandle.Target;
                 //注意：必须启用线程池，否则ValueTask.Continue时如果存在异步转同步调用(ValueTask.Result)会阻塞Native->Clr消息循环
-                bool ok = ts.NotifyCompletionOnThreadPool(*msg);
+                bool ok = ts.SetResultOnOtherThread(*msg);
                 if (!ok)
                 {
                     Log.Warn("无法加入线程池");
