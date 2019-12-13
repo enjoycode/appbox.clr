@@ -118,11 +118,12 @@ namespace appbox.Data
                 if (memberModel == null) //表示附加成员或EntitySet已删除集合
                 {
                     //TODO: impl it
+                    Log.Warn($"Entity json反序化读取附加成员暂未实现: {propName}");
                     reader.Skip();
-                    Log.Warn("Entity json反序化读取附加成员暂未实现");
                 }
+                if (!reader.Read())//read property value
+                    throw new Exception($"Read property[{propName}] value error");
 
-                reader.Read(); //read property value
                 switch (memberModel.Type)
                 {
                     case EntityMemberType.EntityRef:
@@ -180,7 +181,10 @@ namespace appbox.Data
                             switch (((DataFieldModel)memberModel).DataType)
                             {
                                 case EntityFieldType.Binary:
-                                    SetBytes(memberModel.MemberId, reader.GetBytesFromBase64(), true); break;
+                                    if (reader.TokenType == JsonTokenType.Null)
+                                        SetBytes(memberModel.MemberId, null, true);
+                                    else
+                                        SetBytes(memberModel.MemberId, reader.GetBytesFromBase64(), true); break;
                                 case EntityFieldType.Boolean:
                                     if (reader.TokenType == JsonTokenType.Null)
                                         SetBooleanNullable(memberModel.MemberId, null, true);
@@ -234,7 +238,10 @@ namespace appbox.Data
                                         SetGuidNullable(memberModel.MemberId, reader.GetGuid(), true);
                                     break;
                                 case EntityFieldType.String:
-                                    SetString(memberModel.MemberId, reader.GetString(), true); break;
+                                    if (reader.TokenType == JsonTokenType.Null)
+                                        SetString(memberModel.MemberId, null, true);
+                                    else
+                                        SetString(memberModel.MemberId, reader.GetString(), true); break;
                                 default: throw new NotSupportedException($"不支持Json读取实体DataField成员: {memberModel.Type}");
                             }
                         }

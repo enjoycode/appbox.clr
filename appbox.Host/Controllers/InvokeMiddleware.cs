@@ -50,7 +50,8 @@ namespace appbox.Host
             try
             {
                 offset = InvokeHelper.ReadRequireHead(frame.First, ref msgId, ref service);
-                //offset = -1暂不要在这里归还frame，后面invoke统一归还
+                if (offset == -1) //没有参数
+                    BytesSegment.ReturnOne(frame);
             }
             catch (Exception ex)
             {
