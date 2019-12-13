@@ -20,7 +20,9 @@ namespace appbox.Server
         /// <summary>
         /// 将调用服务的结果AnyValue序列化Json
         /// </summary>
-        public static bool SerializeAsInvokeResponse(this AnyValue obj, Stream stream, int msgId)
+        /// <param name="isResponseError">仅适用于子进程</param>
+        public static bool SerializeAsInvokeResponse(this AnyValue obj, Stream stream,
+            int msgId, bool isResponseError = false)
         {
             try
             {
@@ -28,15 +30,17 @@ namespace appbox.Server
                 jw.WriteStartObject();
                 jw.WriteNumber(ResponseIdPropertyName.AsSpan(), msgId);
 
-                if (obj.Type == AnyValueType.Object && obj.ObjectValue is Exception)
+                if (isResponseError || (obj.Type == AnyValueType.Object && obj.ObjectValue is Exception))
                 {
-                    jw.WriteString(ResponseErrorPropertyName.AsSpan(), ((Exception)obj.ObjectValue).Message);
+                    jw.WriteString(ResponseErrorPropertyName.AsSpan(),
+                        isResponseError ? (string)obj.ObjectValue : ((Exception)obj.ObjectValue).Message);
                 }
                 else
                 {
                     jw.WritePropertyName(ResponseDataPropertyName.AsSpan());
                     switch (obj.Type)
                     {
+                        case AnyValueType.Empty: jw.WriteNullValue(); break;
                         case AnyValueType.Boolean: jw.WriteBooleanValue(obj.BooleanValue); break;
                         case AnyValueType.Byte: jw.WriteNumberValue(obj.ByteValue); break;
                         case AnyValueType.Int16: jw.WriteNumberValue(obj.Int16Value); break;

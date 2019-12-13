@@ -36,7 +36,7 @@ namespace appbox.Design.Tests
             throw new NotImplementedException();
         }
 
-        public Task<object> InvokeAsync(string servicePath, InvokeArgs args)
+        public ValueTask<AnyValue> InvokeAsync(string servicePath, InvokeArgs args)
         {
             throw new NotImplementedException();
         }

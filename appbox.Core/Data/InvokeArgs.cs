@@ -145,22 +145,36 @@ namespace appbox.Data
 
             if (!jr.Read() || jr.TokenType == JsonTokenType.EndArray)
                 throw new Exception("Can't read from utf8 bytes");
-            if (jr.TokenType == JsonTokenType.StartArray)
+
+            //首次读到参数数组开始，再读一次
+            if (jr.TokenType == JsonTokenType.StartArray && !JsonState.HasValue) 
             {
                 if (!jr.Read()) throw new Exception("Can't read from utf8 bytes");
             }
 
+            //非Object及数组开始直接移动位置及状态
+            if (jr.TokenType != JsonTokenType.StartArray && jr.TokenType != JsonTokenType.StartObject)
+            {
+                AdvancePosition(ref jr);
+            }
+            
+            return jr;
+        }
+
+        private void AdvancePosition(ref Utf8JsonReader reader)
+        {
+            var cur = (BytesSegment)Arg1.ObjectValue;
+            var last = (BytesSegment)Arg2.ObjectValue;
             if (last == null || cur == last)
             {
-                Postion += (int)jr.BytesConsumed;
+                Postion += (int)reader.BytesConsumed;
             }
             else
             {
-                Arg1.ObjectValue = jr.Position.GetObject(); //是否考虑直接归还之前已读完的
-                Postion = jr.Position.GetInteger();
+                Arg1.ObjectValue = reader.Position.GetObject(); //是否考虑直接归还之前已读完的
+                Postion = reader.Position.GetInteger();
             }
-            JsonState = jr.CurrentState;
-            return jr;
+            JsonState = reader.CurrentState;
         }
 
         //TODO: *****other types
@@ -221,7 +235,12 @@ namespace appbox.Data
         public object GetObject()
         {
             if (Count == FromWebSocket)
-                return ReadJsonArg().Deserialize(new ReadedObjects());
+            {
+                var jr = ReadJsonArg();
+                var res = jr.ReadObject(new ReadedObjects()); //Don't use Deserialize,因已读取StartObject
+                AdvancePosition(ref jr); //注意移到位置及状态
+                return res;
+            }
             if (Count == FromWebStream)
                 throw new NotImplementedException();
             return Current().ObjectValue;
@@ -298,6 +317,7 @@ namespace appbox.Data
 
                     var temp = BytesSegment.Rent();
                     bs.Stream.Read(temp.Buffer.AsSpan(0, len));
+                    temp.Length = len;
                     if (cur != null)
                         cur.Append(temp);
                     cur = temp;

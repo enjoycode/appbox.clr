@@ -52,7 +52,7 @@ namespace appbox.Store.Tests
             var model = MakeTestSqlModel();
 
             var store = new PgSqlStore(StoreSettings);
-            var cmds = store.MakeCreateTable(model);
+            var cmds = store.MakeCreateTable(model, null);
             Assert.True(cmds != null);
             output.WriteLine(cmds[0].CommandText);
         }

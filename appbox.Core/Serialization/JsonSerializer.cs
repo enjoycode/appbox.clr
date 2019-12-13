@@ -146,7 +146,7 @@ namespace appbox.Serialization
         #endregion
 
         #region ====Deserialize====
-        public static object Deserialize(this Utf8JsonReader reader, ReadedObjects objrefs)
+        public static object Deserialize(this ref Utf8JsonReader reader, ReadedObjects objrefs)
         {
             object res = null;
             if (reader.Read())
@@ -160,7 +160,7 @@ namespace appbox.Serialization
                             res = array;
                         break;
                     case JsonTokenType.StartObject:
-                        res = ReadObject(ref reader, objrefs);
+                        res = reader.ReadObject(objrefs);
                         break;
                     case JsonTokenType.EndObject:
                     case JsonTokenType.EndArray:
@@ -177,9 +177,11 @@ namespace appbox.Serialization
             return res;
         }
 
-        private static object ReadObject(ref Utf8JsonReader reader, ReadedObjects objrefs)
+        /// <summary>
+        /// 注意仅适用于已读取StartObject标记后
+        /// </summary>
+        internal static object ReadObject(this ref Utf8JsonReader reader, ReadedObjects objrefs)
         {
-            //注意: 已读取StartObject标记
             if (!reader.Read())
                 throw new Exception("ReadObject format error"); //只有{开始标记，没有后续内容
             if (reader.TokenType == JsonTokenType.EndObject) //空对象
@@ -215,32 +217,31 @@ namespace appbox.Serialization
 
                     if (char.IsDigit(modelAndState[0])) //是实体类型
                     {
-                        PersistentState persistentState;
-                        switch (modelAndState[0])
+                        var persistentState = (modelAndState[0]) switch
                         {
-                            case '0': persistentState = PersistentState.Detached; break;
-                            case '1': persistentState = PersistentState.Unchanged; break;
-                            case '2': persistentState = PersistentState.Modified; break;
-                            case '3': persistentState = PersistentState.Deleted; break;
-                            default:
-                                throw new Exception("ReadObject entity persistent state error.");
-                        }
+                            '0' => PersistentState.Detached,
+                            '1' => PersistentState.Unchanged,
+                            '2' => PersistentState.Modified,
+                            '3' => PersistentState.Deleted,
+                            _ => throw new Exception("ReadObject entity persistent state error."),
+                        };
                         //先检查实体是否已经读取
-                        var modelID = ulong.Parse(modelAndState.Substring(1));
+                        var modelID = ulong.Parse(modelAndState.AsSpan(1));
                         var model = Runtime.RuntimeContext.Current.GetModelAsync<EntityModel>(modelID).Result;
                         if (model.SysStoreOptions != null)
                         {
                             //再读取对象ID
                             if (!reader.Read() && reader.TokenType != JsonTokenType.PropertyName)
-                                throw new Exception("ReadObject id error");
-                            reader.Read();
-                            var idString = reader.GetString();
-                            var refID = $"{modelAndState}{idString}";
+                                throw new Exception("ReadObject id property error");
+                            if (!reader.Read())
+                                throw new Exception("ReadObject id value error");
+                            var objId = reader.GetGuid();
+                            var refID = $"{modelAndState}{objId}";
                             //注意：先判断objrefs已读字典表是否存在，因为EntitySet可能已加载
                             if (objrefs.TryGetValue(refID, out object existed))
                                 res = (Entity)existed;
                             else
-                                res = new Entity(model, Guid.Parse(idString)) { PersistentState = persistentState };
+                                res = new Entity(model, objId) { PersistentState = persistentState };
                             //加入已读字典表
                             objrefs[refID] = res; //注意：不能用Add,原因同上
                         }
@@ -276,7 +277,7 @@ namespace appbox.Serialization
             }
         }
 
-        public static void ReadList(this Utf8JsonReader reader, IList list, ReadedObjects objrefs)
+        public static void ReadList(this ref Utf8JsonReader reader, IList list, ReadedObjects objrefs)
         {
             //注意: 已读取StartArray标记
             do
@@ -293,7 +294,7 @@ namespace appbox.Serialization
         /// </summary>
         /// <param name="reader"></param>
         /// <param name="expectPropertyName"></param>
-        public static void ExpectPropertyName(this Utf8JsonReader reader, string expectPropertyName)
+        public static void ExpectPropertyName(this ref Utf8JsonReader reader, string expectPropertyName)
         {
             if (!reader.Read())
                 throw new Exception("Nothing to read");
@@ -305,7 +306,7 @@ namespace appbox.Serialization
                 throw new Exception("Not expect property name");
         }
 
-        public static void ExpectToken(this Utf8JsonReader reader, JsonTokenType expectToken)
+        public static void ExpectToken(this ref Utf8JsonReader reader, JsonTokenType expectToken)
         {
             if (!reader.Read())
                 throw new Exception("Nothing to read");

@@ -47,7 +47,7 @@ namespace appbox.Server
             WaitHandle = waitHandle;
             SourceMsgId = srcMsgId;
             Error = error;
-            Result = AnyValue.From(errorMsg);
+            Result = AnyValue.From(errorMsg); //TODO:考虑AnyValue设置异常类型
         }
 
         #region ====Serialization====
@@ -65,7 +65,7 @@ namespace appbox.Server
             if (Protocol == InvokeProtocol.Json)
             {
                 //注意: 不catch异常，序列化错误由Channel发送处理
-                Result.SerializeAsInvokeResponse(bs.Stream, SourceMsgId);
+                Result.SerializeAsInvokeResponse(bs.Stream, SourceMsgId, Error != InvokeResponseError.None);
             }
             else
             {

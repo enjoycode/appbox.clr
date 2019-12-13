@@ -1,11 +1,11 @@
 ﻿using System;
-using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using appbox.Data;
 using appbox.Models;
 using appbox.Runtime;
 
-namespace appbox.Store.Tests
+namespace appbox.Core.Tests
 {
     sealed class MockRuntimContext : IRuntimeContext
     {

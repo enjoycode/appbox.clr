@@ -60,7 +60,7 @@ namespace appbox.Design
             //把结果转发至前端
             //TODO: 暂转换一下
             using var ms = new System.IO.MemoryStream(512);
-            response.Result.SerializeAsInvokeResponse(ms, 0);
+            response.Result.SerializeAsInvokeResponse(ms, 0, response.Error != InvokeResponseError.None);
             string resData = System.Text.Encoding.UTF8.GetString(ms.ToArray());
             var eventBody = string.Format("{{\"Type\":\"Result\",\"Data\":{0}}}", resData);
             ds.ForwardEvent(eventBody);
