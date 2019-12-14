@@ -116,7 +116,7 @@ namespace appbox.Store
         /// <summary>
         /// 用于Include EntityRef or EntitySet
         /// </summary>
-        public Includer Includer(EntityMemberType memberType, ushort memberId)
+        public Includer Include(EntityMemberType memberType, ushort memberId)
         {
             if (rootIncluder == null) rootIncluder = new Includer(modelId);
             return rootIncluder.Include(memberType, memberId);
