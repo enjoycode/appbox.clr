@@ -435,14 +435,14 @@ namespace appbox.Design
             if (methodSymbol != null)
             {
                 var ownerType = methodSymbol.ContainingType;
-                bool isSystemQuery = false; //是否系统存储的查询，否则是Sql查询
-                if (TypeHelper.IsQuerialbeClass(ownerType, out isSystemQuery) && TypeHelper.IsQueryMethod(methodSymbol)) //注意:只处理相关QueryMethods
+                if (TypeHelper.IsQuerialbeClass(ownerType, out bool isSystemQuery)
+                    && TypeHelper.IsQueryMethod(methodSymbol)) //注意:只处理相关QueryMethods
                 {
                     //注意：目前只支持所有的非Lambda参数为IdentifierNameSyntax
                     var lambdaArgsCount = node.ArgumentList.Arguments.Count;
                     var identifiers = new IdentifierNameSyntax[lambdaArgsCount];
                     var lambdaParameters = new string[lambdaArgsCount];
-                    identifiers[0] = (IdentifierNameSyntax)(((MemberAccessExpressionSyntax)node.Expression).Expression); //指向自己
+                    identifiers[0] = (IdentifierNameSyntax)((MemberAccessExpressionSyntax)node.Expression).Expression; //指向自己
                     if (lambdaArgsCount > 1)
                     {
                         //注意：这里不移除无效的参数节点，由VisitArgumentList()处理
@@ -453,7 +453,7 @@ namespace appbox.Design
                     }
                     queryMethodCtx = new QueryMethodContext()
                     {
-                        IsSystemQuery = isSystemQuery,
+                        IsSystemQuery = isSystemQuery, //是否系统存储的查询，否则是Sql查询
                         MethodName = methodSymbol.Name,
                         ArgsCount = node.ArgumentList.Arguments.Count,
                         Identifiers = identifiers,

@@ -9,6 +9,8 @@ namespace appbox.Data
     public sealed partial class Entity : IEntityParent, IBinSerializable
     {
         #region ====Fields & Properties====
+        private static EntityMember NotFound;
+
         /// <summary>
         /// 对应的实体模型标识
         /// </summary>
@@ -152,6 +154,18 @@ namespace appbox.Data
                     return ref _members[i];
             }
             throw new Exception($"Member not exists with id: {memberId}");
+        }
+
+        internal ref EntityMember TryGetMember(ReadOnlySpan<char> name, out bool found)
+        {
+            var memberModel = Model.GetMember(name, false);
+            if (memberModel == null)
+            {
+                found = false;
+                return ref NotFound;
+            }
+            found = true;
+            return ref GetMember(memberModel.MemberId);
         }
 
         internal ref EntityMember GetMember(string name)

@@ -72,27 +72,21 @@ public static class IIncluderExts
 		this IIncludable<TEntity, TPreviousProperty> source,
 		Func<TPreviousProperty, TProperty> navigationPropertyPath)
 		where TEntity : class
-	{
-		return null;
-	}
+	{ return null; }
 
 	[InvocationInterceptor("Include")]
 	public static IIncludable<TEntity, TProperty> ThenInclude<TEntity, TPreviousProperty, TProperty>(
 		this IIncludable<TEntity, IEnumerable<TPreviousProperty>> source,
 		Func<TPreviousProperty, TProperty> navigationPropertyPath)
 		where TEntity : class
-	{
-		return null;
-	}
+	{ return null; }
 
 	[InvocationInterceptor("Include")]
 	public static IIncludable<TEntity, TProperty> Include<TEntity, TProperty>(
 		this IIncluder<TEntity> source,
 		Func<TEntity, TProperty> navigationPropertyPath)
 		where TEntity : class
-	{
-		return null;
-	}
+	{ return null; }
 }
 #endregion
 
@@ -178,10 +172,39 @@ public sealed class IndexScan<TEntity, TIndex> where TEntity : sys.SysEntityBase
 public interface ISqlQueryJoin<TSource> //where TSource : class
 { }
 
+public interface ISqlIncluder<out T> { }
+
+public interface ISqlIncludable<out TEntity, out TProperty> : ISqlIncluder<TEntity> { }
+
+[QueriableClass(false)]
+public static class ISqlIncluderExts
+{
+	[QueryMethod()]
+	public static ISqlIncludable<TEntity, TProperty> ThenInclude<TEntity, TPreviousProperty, TProperty>(
+		this ISqlIncludable<TEntity, TPreviousProperty> source,
+		Func<TPreviousProperty, TProperty> navigationPropertyPath)
+		where TEntity : class
+	{ return null; }
+
+	[QueryMethod()]
+	public static ISqlIncludable<TEntity, TProperty> ThenInclude<TEntity, TPreviousProperty, TProperty>(
+		this ISqlIncludable<TEntity, IEnumerable<TPreviousProperty>> source,
+		Func<TPreviousProperty, TProperty> navigationPropertyPath)
+		where TEntity : class
+	{ return null; }
+
+	[QueryMethod()]
+	public static ISqlIncludable<TEntity, TProperty> Include<TEntity, TProperty>(
+		this ISqlIncluder<TEntity> source,
+		Func<TEntity, TProperty> navigationPropertyPath)
+		where TEntity : class
+	{ return null; }
+}
+
 [RealType("appbox.Store.SqlQuery")]
 [GenericCreate()]
 [QueriableClass(false)]
-public class SqlQuery<TSource> : ISqlQueryJoin<TSource> where TSource : SqlEntityBase
+public class SqlQuery<TSource> : ISqlQueryJoin<TSource>, ISqlIncluder<TSource> where TSource : SqlEntityBase
 {
 	#region ----Properties----
 	/// <summary>
@@ -257,12 +280,6 @@ public class SqlQuery<TSource> : ISqlQueryJoin<TSource> where TSource : SqlEntit
 	public SqlQuery<TSource> Top(int topSize) { return this; }
 
 	public SqlQuery<TSource> Page(int pageSize, int pageIndex) { return this; }
-	#endregion
-
-	#region ----Include Methods----
-	[QueryMethod()]
-	public SqlQuery<TSource> IncludeRefDisplayText<TResult>(Func<TSource, TResult> selector) where TResult : SqlEntityBase
-	{ return this; }
 	#endregion
 
 	#region ----Join Methods-----

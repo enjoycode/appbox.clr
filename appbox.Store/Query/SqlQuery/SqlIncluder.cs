@@ -49,103 +49,67 @@ namespace appbox.Store
         }
 
         /// <summary>
-        /// 新建指向EntityRef的子级
+        /// 新建子级
         /// </summary>
-        private SqlIncluder(SqlIncluder parent, EntityExpression entityRef)
+        private SqlIncluder(SqlIncluder parent, Expression exp)
         {
             Parent = parent ?? throw new ArgumentNullException(nameof(parent));
-            Expression = entityRef;
-        }
-
-        /// <summary>
-        /// 新建指向EntitySet的子级
-        /// </summary>
-        private SqlIncluder(SqlIncluder parent, EntitySetExpression entitySet)
-        {
-            Parent = parent ?? throw new ArgumentNullException(nameof(parent));
-            Expression = entitySet;
-        }
-
-        /// <summary>
-        /// 新建DataField子级
-        /// </summary>
-        /// <param name="field">可以包含多个层级如t.Customer.Region.Name</param>
-        /// <param name="aliasName">自动或手工指定的别名如CustomerRegionName</param>
-        private SqlIncluder(SqlIncluder parent, FieldExpression field, string aliasName)
-        {
-            Parent = parent ?? throw new ArgumentNullException(nameof(parent));
-            Expression = new SqlSelectItemExpression(field, aliasName);
+            Expression = exp;
         }
         #endregion
 
         #region ====Include Methods====
-        /// <summary>
-        /// Include EntityRef
-        /// </summary>
-        public SqlIncluder Include(EntityExpression entityRef)
+        public SqlIncluder Include(MemberExpression member, string alias = null)
         {
-            if (MemberExpression.Type == ExpressionType.FieldExpression)
-                throw new NotSupportedException();
-            if (!ReferenceEquals(entityRef.Owner, MemberExpression.Owner))
-                throw new ArgumentException();
-
-            if (Childs == null)
-            {
-                var res1 = new SqlIncluder(this, entityRef);
-                Childs = new List<SqlIncluder> { res1 };
-                return res1;
-            }
-
-            var found = Childs.FindIndex(t => t.Expression.Type == ExpressionType.EntityExpression
-                                         && t.MemberExpression.Name == entityRef.Name);
-            if (found >= 0)
-                return Childs[found];
-
-            var res = new SqlIncluder(this, entityRef);
-            Childs.Add(res);
-            return res;
+            return GetRoot().IncludeInternal(member, alias);
         }
 
-        /// <summary>
-        /// Include EntitySet
-        /// </summary>
-        public SqlIncluder Include(EntitySetExpression entitySet)
+        public SqlIncluder ThenInclude(MemberExpression member, string alias = null)
         {
-            if (MemberExpression.Type == ExpressionType.FieldExpression)
-                throw new NotSupportedException();
-            if (!ReferenceEquals(entitySet.Owner, MemberExpression.Owner))
-                throw new ArgumentException();
-
-            if (Childs == null)
-            {
-                var res1 = new SqlIncluder(this, entitySet);
-                Childs = new List<SqlIncluder> { res1 };
-                return res1;
-            }
-
-            var found = Childs.FindIndex(t => t.Expression.Type == ExpressionType.EntitySetExpression
-                                         && t.MemberExpression.Name == entitySet.Name);
-            if (found >= 0)
-                return Childs[found];
-
-            var res = new SqlIncluder(this, entitySet);
-            Childs.Add(res);
-            return res;
+            return IncludeInternal(member, alias);
         }
 
-        public SqlIncluder Include(string alias, FieldExpression field)
+        private SqlIncluder IncludeInternal(MemberExpression member, string alias = null)
         {
+            //检查当前是否Field，是则不再允许Include其他
             if (MemberExpression.Type == ExpressionType.FieldExpression)
                 throw new NotSupportedException();
-            if (!ReferenceEquals(GetTopOnwer(field), MemberExpression.Owner))
-                throw new ArgumentException();
+            if (member.Type == ExpressionType.FieldExpression)
+            {
+                //可以包含多个层级如t.Customer.Region.Name
+                if (!ReferenceEquals(GetTopOnwer(member), MemberExpression))
+                    throw new ArgumentException("Owner not same");
+                if (ReferenceEquals(member.Owner, MemberExpression))
+                    throw new ArgumentException("Can't include field");
+                //TODO:判断alias空，是则自动生成eg:t.Customer.Region.Name => CustomerRegionName
+                //TODO:判断重复
+                if (Childs == null) Childs = new List<SqlIncluder>();
+                var res = new SqlIncluder(this, new SqlSelectItemExpression(member, alias));
+                Childs.Add(res);
+                return res;
+            }
+            else //EntityRef or EntitySet
+            {
+                Debug.Assert(member.Type == ExpressionType.EntityExpression
+                    || member.Type == ExpressionType.EntitySetExpression);
+                //判断Include的Owner是否相同
+                if (!ReferenceEquals(member.Owner, MemberExpression))
+                    throw new ArgumentException("Owner not same");
+                if (Childs == null)
+                {
+                    var child = new SqlIncluder(this, member);
+                    Childs = new List<SqlIncluder> { child };
+                    return child;
+                }
 
-            if (Childs == null)
-                Childs = new List<SqlIncluder>();
-            //TODO:判断重复
-            var res = new SqlIncluder(this, field, alias);
-            Childs.Add(res);
-            return res;
+                var found = Childs.FindIndex(t => t.Expression.Type == member.Type
+                                             && t.MemberExpression.Name == member.Name);
+                if (found >= 0)
+                    return Childs[found];
+                var res = new SqlIncluder(this, member);
+                Childs.Add(res);
+                return res;
+            }
         }
 
         private EntityExpression GetTopOnwer(MemberExpression member)
@@ -153,6 +117,11 @@ namespace appbox.Store
             if (Expression.IsNull(member.Owner.Owner))
                 return member.Owner;
             return GetTopOnwer(member.Owner);
+        }
+
+        private SqlIncluder GetRoot()
+        {
+            return Parent == null ? this : Parent.GetRoot();
         }
         #endregion
 

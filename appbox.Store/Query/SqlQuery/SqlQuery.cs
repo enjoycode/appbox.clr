@@ -100,34 +100,10 @@ namespace appbox.Store
         #endregion
 
         #region ====Include Methods====
-        /// <summary>
-        /// Eager load EntityRef, eg: t.Customer
-        /// </summary>
-        public SqlIncluder Include(EntityExpression entityRef)
+        public SqlIncluder Include(MemberExpression member, string alias = null)
         {
             if (_rootIncluder == null) _rootIncluder = new SqlIncluder(T);
-            return _rootIncluder.Include(entityRef);
-        }
-
-        /// <summary>
-        /// Eager load EntitySet, eg.t.OrderDetails
-        /// </summary>
-        /// <remarks>不同于EntityRef分两次查询加载</remarks>
-        public SqlIncluder Include(EntitySetExpression entitySet)
-        {
-            if (_rootIncluder == null) _rootIncluder = new SqlIncluder(T);
-            return _rootIncluder.Include(entitySet);
-        }
-
-        /// <summary>
-        /// Eager load EntityRef's field as attached member
-        /// 支持多级: t.Customer.Region.Name
-        /// </summary>
-        /// <param name="alias">eg: CustomerRegionName</param>
-        public SqlIncluder Include(FieldExpression field, string alias)
-        {
-            if (_rootIncluder == null) _rootIncluder = new SqlIncluder(T);
-            return _rootIncluder.Include(alias, field);
+            return _rootIncluder.Include(member, alias);
         }
         #endregion
 
@@ -425,55 +401,60 @@ namespace appbox.Store
         /// </summary>
         /// <param name="target">Target.</param>
         /// <param name="path">eg: Order.Customer.ID or Name</param>
-        private static void FillMemberValue(Entity target, string path, DbDataReader reader, int clIndex)
+        private static void FillMemberValue(Entity target, ReadOnlySpan<char> path, DbDataReader reader, int clIndex)
         {
-            if (path.IndexOf('.') < 0)
-            {
-                if (reader.IsDBNull(clIndex))
-                    return;
+            if (reader.IsDBNull(clIndex)) //null直接跳过
+                return;
 
-                ref EntityMember m = ref target.GetMember(path); //TODO:不存在的作为附加成员
-                m.Flag.HasLoad = true;
-                m.Flag.HasValue = !reader.IsDBNull(clIndex);
-                switch (m.ValueType)
+            var indexOfDot = path.IndexOf('.');
+            if (indexOfDot < 0)
+            {
+                ref EntityMember m = ref target.TryGetMember(path, out bool found);
+                if (!found)
                 {
-                    case EntityFieldType.String: m.ObjectValue = reader.GetString(clIndex); break;
-                    case EntityFieldType.Binary: m.ObjectValue = (byte[])reader.GetValue(clIndex); break;
-                    case EntityFieldType.Guid: m.GuidValue = reader.GetGuid(clIndex); break;
-                    case EntityFieldType.Decimal: m.DecimalValue = reader.GetDecimal(clIndex); break;
-                    case EntityFieldType.DateTime: m.DateTimeValue = reader.GetDateTime(clIndex); break;
-                    case EntityFieldType.Double: m.DoubleValue = reader.GetDouble(clIndex); break;
-                    case EntityFieldType.Float: m.FloatValue = reader.GetFloat(clIndex); break;
-                    case EntityFieldType.Enum: m.Int32Value = reader.GetInt32(clIndex); break;
-                    case EntityFieldType.Int64: m.Int64Value = reader.GetInt64(clIndex); break;
-                    case EntityFieldType.Int32: m.Int32Value = reader.GetInt32(clIndex); break;
-                    case EntityFieldType.Int16: m.Int16Value = reader.GetInt16(clIndex); break;
-                    case EntityFieldType.Byte: m.ByteValue = reader.GetByte(clIndex); break;
-                    case EntityFieldType.Boolean: m.BooleanValue = reader.GetBoolean(clIndex); break;
-                    default: throw new NotSupportedException();
+                    //TODO:不存在的作为附加成员
+                    throw new NotImplementedException("Attached");
+                }
+                else
+                {
+                    //Log.Warn($"Fill {target.Model.Name}.{path.ToString()} value={reader.GetValue(clIndex).ToString()}");
+                    m.Flag.HasLoad = m.Flag.HasValue = true;
+                    switch (m.ValueType)
+                    {
+                        case EntityFieldType.String: m.ObjectValue = reader.GetString(clIndex); break;
+                        case EntityFieldType.Binary: m.ObjectValue = (byte[])reader.GetValue(clIndex); break;
+                        case EntityFieldType.Guid: m.GuidValue = reader.GetGuid(clIndex); break;
+                        case EntityFieldType.Decimal: m.DecimalValue = reader.GetDecimal(clIndex); break;
+                        case EntityFieldType.DateTime: m.DateTimeValue = reader.GetDateTime(clIndex); break;
+                        case EntityFieldType.Double: m.DoubleValue = reader.GetDouble(clIndex); break;
+                        case EntityFieldType.Float: m.FloatValue = reader.GetFloat(clIndex); break;
+                        case EntityFieldType.Enum: m.Int32Value = reader.GetInt32(clIndex); break;
+                        case EntityFieldType.Int64: m.Int64Value = reader.GetInt64(clIndex); break;
+                        case EntityFieldType.Int32: m.Int32Value = reader.GetInt32(clIndex); break;
+                        case EntityFieldType.Int16: m.Int16Value = reader.GetInt16(clIndex); break;
+                        case EntityFieldType.Byte: m.ByteValue = reader.GetByte(clIndex); break;
+                        case EntityFieldType.Boolean: m.BooleanValue = reader.GetBoolean(clIndex); break;
+                        default: throw new NotSupportedException();
+                    }
                 }
             }
             else
             {
-                throw new NotImplementedException();
-                //string[] sr = path.Split('.');
-                //Entity cur = target;
-                //for (int i = 0; i < sr.Length; i++)
-                //{
-                //    if (i == sr.Length - 1)
-                //    {
-                //        FillMemberValue(cur, sr[i], reader, clIndex);
-                //    }
-                //    else
-                //    {
-                //        //在这里调用引用实体的初始化，防止从数据库加载
-                //        var entityRef = cur.InitEntityRefLoad(sr[i]);
-                //        if (entityRef == null)
-                //            break;
-                //        else
-                //            cur = entityRef;
-                //    }
-                //}
+                var name = path.Slice(0, indexOfDot);
+                var mm = (EntityRefModel)target.Model.GetMember(name, true);
+                if (mm.IsAggregationRef)
+                    throw new NotImplementedException();
+                ref EntityMember m = ref target.GetMember(mm.MemberId);
+                if (m.ObjectValue == null) //没有初始化
+                {
+                    var model = Runtime.RuntimeContext.Current.GetModelAsync<EntityModel>(mm.RefModelIds[0]).Result;
+                    var entityRef = new Entity(model);
+                    entityRef.Parent = target;
+                    m.Flag.HasLoad = m.Flag.HasValue = true;
+                    m.ObjectValue = entityRef;
+                    //TODO: 反向引用初始化
+                }
+                FillMemberValue((Entity)m.ObjectValue, path.Slice(indexOfDot + 1), reader, clIndex);
             }
         }
 

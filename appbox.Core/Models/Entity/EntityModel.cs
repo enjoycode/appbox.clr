@@ -88,6 +88,20 @@ namespace appbox.Models
             return null;
         }
 
+        public EntityMemberModel GetMember(ReadOnlySpan<char> name, bool throwOnNotExists = true)
+        {
+            for (int i = 0; i < Members.Count; i++)
+            {
+                if (Members[i].Name.AsSpan().SequenceEqual(name))
+                {
+                    return Members[i];
+                }
+            }
+            if (throwOnNotExists)
+                throw new Exception($"Member not exists with name:{name.ToString()}");
+            return null;
+        }
+
         internal EntityMemberModel GetMember(ushort id, bool throwOnNotExists)
         {
             for (int i = 0; i < Members.Count; i++)
