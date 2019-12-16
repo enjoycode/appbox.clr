@@ -182,13 +182,19 @@ namespace appbox.Data
         public bool GetBoolean()
         {
             if (Count == FromWebSocket)
-            {
                 return ReadJsonArg().GetBoolean();
-            }
             if (Count == FromWebStream)
                 throw new NotImplementedException();
-
             return Current().BooleanValue;
+        }
+
+        public byte GetByte()
+        {
+            if (Count == FromWebSocket)
+                return ReadJsonArg().GetByte();
+            if (Count == FromWebStream)
+                throw new NotImplementedException();
+            return Current().ByteValue;
         }
 
         public int GetInt32()

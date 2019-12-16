@@ -25,6 +25,11 @@ namespace appbox.Store
         /// </summary>
         public Expression Filter { get; set; }
 
+        /// <summary>
+        /// 用于EagerLoad导航属性 
+        /// </summary>
+        private SqlIncluder _rootIncluder;
+
         public Dictionary<string, SqlSelectItemExpression> Selects
         {
             get
@@ -96,49 +101,33 @@ namespace appbox.Store
 
         #region ====Include Methods====
         /// <summary>
-        /// 查询时包含EntityRef的显示文本，注意：只支持一级如t.Order，但不支持t.Order.Customer
+        /// Eager load EntityRef, eg: t.Customer
         /// </summary>
-        public SqlQuery IncludeRefDisplayText(MemberExpression entityRef)
+        public SqlIncluder Include(EntityExpression entityRef)
         {
-            throw new NotImplementedException();
-            //var refMember = entityRef as EntityExpression;
-            //if (Expression.IsNull(refMember))
-            //{
-            //    throw new ArgumentException("Must be EntityRef", nameof(entityRef));
-            //}
-            //if (!ReferenceEquals(refMember.Owner, this.T))
-            //{
-            //    throw new ArgumentException("Must be current entity's ref", nameof(entityRef));
-            //}
-
-            ////todo:考虑防止重复加入
-            //var ownerModel = RuntimeContext.Default.EntityModelContainer.GetModel(T.ModelID);
-            //var refModel = ownerModel[refMember.Name] as EntityRefModel;
-            //return IncludeRefDisplayText(refModel);
+            if (_rootIncluder == null) _rootIncluder = new SqlIncluder(T);
+            return _rootIncluder.Include(entityRef);
         }
 
         /// <summary>
-        /// 仅内部使用
+        /// Eager load EntitySet, eg.t.OrderDetails
         /// </summary>
-        internal SqlQuery IncludeRefDisplayText(EntityRefModel refModel)
+        /// <remarks>不同于EntityRef分两次查询加载</remarks>
+        public SqlIncluder Include(EntitySetExpression entitySet)
         {
-            throw new NotImplementedException();
-            //if (!refModel.IsAggregationRef)
-            //{
-            //    //todo: 暂只使用ToStringExpression，待实现EntityRefModel.DisplayText属性后优先使用
-            //    var toStringExp = refModel.GetRefModel(0).ToStringExpression;
-            //    if (Expression.IsNull(toStringExp))
-            //    {
-            //        this.AddSelectItem(new SelectItemExpression(this.T[refModel.IDMemberName], refModel.Name + "DisplayText"));
-            //    }
-            //    else
-            //    {
-            //        var newExp = ToStringExpressionHelper.ReplaceEntityExpression(toStringExp, (EntityExpression)this.T[refModel.Name]);
-            //        this.AddSelectItem(new SelectItemExpression(newExp, refModel.Name + "DisplayText"));
-            //    }
-            //}
+            if (_rootIncluder == null) _rootIncluder = new SqlIncluder(T);
+            return _rootIncluder.Include(entitySet);
+        }
 
-            //return this;
+        /// <summary>
+        /// Eager load EntityRef's field as attached member
+        /// 支持多级: t.Customer.Region.Name
+        /// </summary>
+        /// <param name="alias">eg: CustomerRegionName</param>
+        public SqlIncluder Include(FieldExpression field, string alias)
+        {
+            if (_rootIncluder == null) _rootIncluder = new SqlIncluder(T);
+            return _rootIncluder.Include(alias, field);
         }
         #endregion
 
@@ -146,7 +135,7 @@ namespace appbox.Store
         public void AddSelectItem(SqlSelectItemExpression item)
         {
             item.Owner = this;
-            this.Selects.Add(item.AliasName, item);
+            Selects.Add(item.AliasName, item);
         }
 
         public SqlSubQuery AsSubQuery(params SqlSelectItem[] selectItem)
@@ -179,9 +168,11 @@ namespace appbox.Store
         {
             Purpose = QueryPurpose.ToSingleEntity;
 
-            //根据模型添加所有选择项
+            //添加选择项
             var model = await Runtime.RuntimeContext.Current.GetModelAsync<EntityModel>(T.ModelID);
             AddAllSelects(this, model, T, null);
+            if (_rootIncluder != null)
+                await _rootIncluder.AddSelects(this, model);
 
             //递交查询
             var db = SqlStore.Get(model.SqlStoreOptions.StoreModelId);
@@ -264,8 +255,14 @@ namespace appbox.Store
 
             Purpose = QueryPurpose.ToEntityList;
 
+            //添加选择项
+            var model = await Runtime.RuntimeContext.Current.GetModelAsync<EntityModel>(T.ModelID);
+            AddAllSelects(this, model, T, null);
+            if (_rootIncluder != null)
+                await _rootIncluder.AddSelects(this, model);
+
             var list = new EntityList(T.ModelID);
-            await ExecToListInternal(list);
+            await ExecToListInternal(list, model);
             return list;
         }
 
@@ -355,12 +352,8 @@ namespace appbox.Store
             //return new TreeNodePath(list);
         }
 
-        private async Task ExecToListInternal(IList<Entity> list)
+        private async Task ExecToListInternal(IList<Entity> list, EntityModel model)
         {
-            //根据模型添加所有选择项
-            var model = await Runtime.RuntimeContext.Current.GetModelAsync<EntityModel>(T.ModelID);
-            AddAllSelects(this, model, T, null);
-
             //Dictionary<Guid, Entity> dic = null;
             //if (this.Purpose == QueryPurpose.ToEntityTreeList)
             //    dic = new Dictionary<Guid, Entity>();
@@ -484,7 +477,6 @@ namespace appbox.Store
             }
         }
 
-        // internal for test
         internal static void AddAllSelects(SqlQuery query, EntityModel model, EntityExpression T, string fullPath)
         {
             //TODO:考虑特殊SqlSelectItemExpression with *

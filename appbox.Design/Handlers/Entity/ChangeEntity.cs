@@ -16,7 +16,6 @@ namespace appbox.Design
         {
             var modelId = args.GetString();
             var changeType = args.GetString();
-            var value = args.GetObject();
 
             var node = hub.DesignTree.FindNode(DesignNodeType.EntityModelNode, modelId);
             if (node == null)
@@ -37,20 +36,20 @@ namespace appbox.Design
                         //2. Entities.XXX.LoadAsync(pks)同上
                         throw new NotImplementedException("改变主键尚未实现");
                     }
-                    ChangePrimaryKeys(model, value);
+                    ChangePrimaryKeys(model, args.GetString());
                     await hub.TypeSystem.UpdateModelDocumentAsync(modelNode);
                     //TODO:同时返回签出列表
                     break;
                 case "PartitionKeys":
-                    ChangePartitionKeys(model, value);
+                    ChangePartitionKeys(model, args.GetString());
                     await hub.TypeSystem.UpdateModelDocumentAsync(modelNode);
                     break;
                 case "AddIndex":
-                    var res = AddIndex(model, value);
+                    var res = AddIndex(model, args.GetString());
                     await hub.TypeSystem.UpdateModelDocumentAsync(modelNode);
                     return res;
                 case "RemoveIndex":
-                    await RemoveIndex(hub, modelNode.AppNode.Model.Name, model, value);
+                    await RemoveIndex(hub, modelNode.AppNode.Model.Name, model, args.GetByte());
                     await hub.TypeSystem.UpdateModelDocumentAsync(modelNode);
                     break;
                 default:
@@ -63,12 +62,12 @@ namespace appbox.Design
         /// <summary>
         /// 仅SqlStore
         /// </summary>
-        private static void ChangePrimaryKeys(EntityModel entityModel, object value)
+        private static void ChangePrimaryKeys(EntityModel entityModel, string value)
         {
             if (entityModel.SqlStoreOptions == null)
                 throw new NotSupportedException("Change PrimaryKeys for none sqlstore entity.");
 
-            var array = JArray.Parse((string)value);
+            var array = JArray.Parse(value);
             if (array.Count == 0)
             {
                 entityModel.SqlStoreOptions.SetPrimaryKeys(entityModel, null);
@@ -92,12 +91,12 @@ namespace appbox.Design
         /// <summary>
         /// 仅SysStore
         /// </summary>
-        private static void ChangePartitionKeys(EntityModel entityModel, object value)
+        private static void ChangePartitionKeys(EntityModel entityModel, string value)
         {
             if (entityModel.SysStoreOptions == null)
                 throw new NotSupportedException("Change PartitionKeys for none sysstore entity.");
 
-            var array = JArray.Parse((string)value);
+            var array = JArray.Parse(value);
             if (array.Count == 0)
             {
                 entityModel.SysStoreOptions.SetPartitionKeys(entityModel, null);
@@ -122,12 +121,12 @@ namespace appbox.Design
         /// <summary>
         /// SysStore及SqlStore通用
         /// </summary>
-        private static IndexModelBase AddIndex(EntityModel entityModel, object value)
+        private static IndexModelBase AddIndex(EntityModel entityModel, string value)
         {
             if (entityModel.StoreOptions == null)
                 throw new InvalidOperationException("Can't add index for DTO");
 
-            var indexInfo = JsonConvert.DeserializeObject<IndexInfo>((string)value);
+            var indexInfo = JsonConvert.DeserializeObject<IndexInfo>(value);
             //Validate
             if (string.IsNullOrEmpty(indexInfo.Name)) throw new Exception("Index has no name");
             if (!CodeHelper.IsValidIdentifier(indexInfo.Name)) throw new Exception("Index name not valid");
@@ -160,13 +159,12 @@ namespace appbox.Design
         /// <summary>
         /// SysStore及SqlStore通用
         /// </summary>
-        private static async Task RemoveIndex(DesignHub hub, string appName, EntityModel entityModel, object value)
+        private static async Task RemoveIndex(DesignHub hub, string appName, EntityModel entityModel, byte indexId)
         {
             if (entityModel.StoreOptions == null)
                 throw new InvalidOperationException("Can't remove index for DTO");
             if (!entityModel.StoreOptions.HasIndexes) throw new Exception($"EntityModel[{entityModel.Name}] not has any indexes.");
 
-            byte indexId = Convert.ToByte(value);
             var index = entityModel.StoreOptions.Indexes.SingleOrDefault(t => t.IndexId == indexId);
             if (index == null) throw new Exception($"EntityModel[{entityModel.Name}] has no index: {indexId}");
 
