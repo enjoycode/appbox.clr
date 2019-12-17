@@ -115,13 +115,15 @@ namespace appbox.Data
             }
         }
 
-        internal Entity(EntityModel model)
+        internal Entity(EntityModel model, bool forFetch = false)
         {
             _model = model;
             ModelId = model.Id;
             if (model.SysStoreOptions != null) //系统存储才需要
                 Id = new EntityId();
             InitMembers(model);
+            if (forFetch)
+                _persistentState = PersistentState.Unchanged;
         }
 
         /// <summary>
