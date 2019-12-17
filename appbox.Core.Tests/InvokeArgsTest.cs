@@ -34,7 +34,7 @@ namespace appbox.Core.Tests
         [Fact]
         public void ReadArgsTest2()
         {
-            var mockRunntimeContext = new MockRuntimContext();
+            var mockRunntimeContext = new MockRuntimeContext();
             Runtime.RuntimeContext.Init(mockRunntimeContext, 10410);
             mockRunntimeContext.AddModel(TestHelper.EmploeeModel);
 

@@ -15,7 +15,7 @@ namespace appbox.Design.Tests
         [Fact]
         public async Task GetSymbolTest()
         {
-            RuntimeContext.Init(new MockRuntimContext(), 10410);
+            RuntimeContext.Init(new Core.Tests.MockRuntimeContext(), 10410);
 
             var session = new MockDeveloperSession();
             var ctx = new DesignHub(session);

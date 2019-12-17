@@ -73,21 +73,21 @@ namespace sys.ServiceLogic
 		//    return await q.ToListAsync();
 		//}
 
-  //      public async Task Test()
+		//      public async Task Test()
 		//{
 		//	var obj = new Entities.City(214000);
 		//	obj.Name = "Wuxi";
 		//	await DataStore.DemoDB.SaveAsync(obj);
 		//}
 
-  //      public async Task<object> Test()
+		//      public async Task<object> Test()
 		//{
 		//	var q = new SqlQuery<Entities.City>();
 		//	q.Where(t => t.Code > 1 && t.Code < 10);
 		//	return await q.ToListAsync();
 		//}
 
-  //      public async Task Test()
+		//      public async Task Test()
 		//{
 		//	var cmd = new SqlUpdateCommand<Entities.City>();
 		//	cmd.Update(t => t.Code = t.Code + 1);
@@ -96,9 +96,17 @@ namespace sys.ServiceLogic
 		//	await DataStore.DemoDB.ExecCommandAsync(cmd);
 		//}
 
-        public async Task<object> Test()
+		//      public async Task<object> Test()
+		//{
+		//	return await Entities.City.LoadAsync(214000);
+		//}
+
+		public async Task<object> SayHello()
 		{
-			return await Entities.City.LoadAsync(214000);
+			var q = new SqlQuery<Entities.Order>();
+			q.Include(order => order.Customer)
+				.ThenInclude(customer => customer.City);
+			return await q.ToListAsync();
 		}
 
 	}

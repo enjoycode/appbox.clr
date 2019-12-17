@@ -6,7 +6,7 @@ namespace appbox.Design.Tests
     static class Resources
     {
 
-        static readonly Assembly resAssembly = typeof(MockRuntimContext).Assembly;
+        static readonly Assembly resAssembly = typeof(Core.Tests.MockRuntimeContext).Assembly;
 
         internal static string LoadStringResource(string res)
         {

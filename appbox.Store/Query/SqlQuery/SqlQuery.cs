@@ -100,10 +100,10 @@ namespace appbox.Store
         #endregion
 
         #region ====Include Methods====
-        public SqlIncluder Include(MemberExpression member, string alias = null)
+        public SqlIncluder Include(Func<EntityExpression, MemberExpression> selector, string alias = null)
         {
             if (_rootIncluder == null) _rootIncluder = new SqlIncluder(T);
-            return _rootIncluder.Include(member, alias);
+            return _rootIncluder.ThenInclude(selector, alias);
         }
         #endregion
 
@@ -380,7 +380,7 @@ namespace appbox.Store
         /// </summary>
         internal static Entity FillEntity(EntityModel model, DbDataReader reader)
         {
-            Entity obj = new Entity(model);
+            Entity obj = new Entity(model, true);
             //填充实体成员
             for (int i = 0; i < reader.FieldCount; i++)
             {
@@ -392,7 +392,7 @@ namespace appbox.Store
                 }
             }
 
-            //不需要obj.AcceptChanges();
+            //不需要obj.AcceptChanges()，新建时已处理持久状态
             return obj;
         }
 
@@ -448,7 +448,7 @@ namespace appbox.Store
                 if (m.ObjectValue == null) //没有初始化
                 {
                     var model = Runtime.RuntimeContext.Current.GetModelAsync<EntityModel>(mm.RefModelIds[0]).Result;
-                    var entityRef = new Entity(model);
+                    var entityRef = new Entity(model, true);
                     entityRef.Parent = target;
                     m.Flag.HasLoad = m.Flag.HasValue = true;
                     m.ObjectValue = entityRef;
@@ -460,7 +460,7 @@ namespace appbox.Store
 
         internal static void AddAllSelects(SqlQuery query, EntityModel model, EntityExpression T, string fullPath)
         {
-            //TODO:考虑特殊SqlSelectItemExpression with *
+            //TODO:考虑特殊SqlSelectItemExpression with *，但只能在fullpath==null时使用
             var members = model.Members;
             for (int i = 0; i < members.Count; i++)
             {

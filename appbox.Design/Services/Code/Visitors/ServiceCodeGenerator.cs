@@ -111,6 +111,7 @@ namespace appbox.Design
             AppName = appName;
             SemanticModel = semanticModel;
             ServiceModel = serviceModel;
+            queryMethodCtx = new QueryMethodContext();
         }
         #endregion
 
@@ -179,20 +180,19 @@ namespace appbox.Design
         public override SyntaxNode VisitMemberAccessExpression(MemberAccessExpressionSyntax node)
         {
             //1. 先处理查询类方法的lambda表达式内的实体成员访问
-            if (queryMethodCtx != null && queryMethodCtx.InLambdaExpression) //t.Customer.Name
+            if (queryMethodCtx.HasAny && queryMethodCtx.Current.InLambdaExpression) //t.Customer.Name
             {
                 var identifier = FindIndentifierForMemberAccessExpression(node);
                 if (identifier != null)
                 {
-                    var index = Array.IndexOf(queryMethodCtx.LambdaParameters, identifier.Identifier.ValueText);
-                    if (index >= 0)
+                    var replacedIdentifier = queryMethodCtx.Current.ReplaceLambdaParameter(identifier);
+                    if (replacedIdentifier != null)
                     {
-                        var targetIdentifier = queryMethodCtx.Identifiers[index]; //替换的目标
                         var sb = StringBuilderCache.Acquire();
-                        BuildQueryMethodMemberAccess(node, targetIdentifier, sb);
-                        //todo:判断是否由上级处理换行
+                        BuildQueryMethodMemberAccess(node, replacedIdentifier, sb);
+                        //TODO:判断是否由上级处理换行
                         //return SyntaxFactory.ParseExpression(sb.ToString()).WithTrailingTrivia(GetEndOfLineTrivia(node, false));
-                        return SyntaxFactory.ParseExpression(StringBuilderCache.GetStringAndRelease(sb));
+                        return SyntaxFactory.ParseExpression(StringBuilderCache.GetStringAndRelease(sb)).WithTriviaFrom(node);
                     }
                 }
             }
@@ -298,7 +298,7 @@ namespace appbox.Design
         private void BuildQueryMethodMemberAccess(MemberAccessExpressionSyntax node, IdentifierNameSyntax targetIdentifier, StringBuilder sb)
         {
             //根据是否在Sql查询内使用不同的处理方式
-            if (queryMethodCtx.IsSystemQuery)
+            if (queryMethodCtx.Current.IsSystemQuery)
             {
                 if (node.Expression is IdentifierNameSyntax)
                 {
@@ -317,9 +317,10 @@ namespace appbox.Design
             }
             else
             {
+                string sep = queryMethodCtx.Current.IsIncludeMethod ? "" : ".T"; //Include类方法不需要.T
                 if (node.Expression is IdentifierNameSyntax)
                 {
-                    sb.Insert(0, $"{targetIdentifier.Identifier.ValueText}.T[\"{node.Name.Identifier.ValueText}\"]");
+                    sb.Insert(0, $"{targetIdentifier.Identifier.ValueText}{sep}[\"{node.Name.Identifier.ValueText}\"]");
                 }
                 else if (node.Expression is MemberAccessExpressionSyntax)
                 {
@@ -337,7 +338,7 @@ namespace appbox.Design
 
         public override SyntaxNode VisitBinaryExpression(BinaryExpressionSyntax node)
         {
-            if (queryMethodCtx != null && queryMethodCtx.InLambdaExpression)
+            if (queryMethodCtx.HasAny && queryMethodCtx.Current.InLambdaExpression)
             {
                 //如果在条件表达式内将&&转为&, ||转为|
                 if (node.OperatorToken.Kind() == SyntaxKind.AmpersandAmpersandToken) //&& -> &
@@ -365,7 +366,7 @@ namespace appbox.Design
         public override SyntaxNode VisitAssignmentExpression(AssignmentExpressionSyntax node)
         {
             //先处理查询类方法内的LambdaExpression，目前主要是UpdateCommand.Update
-            if (queryMethodCtx != null && queryMethodCtx.InLambdaExpression)
+            if (queryMethodCtx.HasAny && queryMethodCtx.Current.InLambdaExpression)
             {
                 //cmd.Update(t => t.Value = t.Value + 1) 转换为 cmd.Update(cmd.T["Value"].Assign(cmd.T["Value"] + 1))
                 var left = (ExpressionSyntax)node.Left.Accept(this);
@@ -426,44 +427,50 @@ namespace appbox.Design
             if (interceptor != null)
                 return interceptor.VisitInvocation(node, methodSymbol, this);
 
-            //再判断是否在QueryMethod内, TODO:实现嵌套
-            if (queryMethodCtx != null && queryMethodCtx.InLambdaExpression)
+            //再判断是否在QueryMethod的Lambda内
+            if (queryMethodCtx.HasAny && queryMethodCtx.Current.InLambdaExpression)
             {
                 return base.VisitInvocationExpression(node);
             }
 
+            bool needPopQueryMethod = false;
             if (methodSymbol != null)
             {
                 var ownerType = methodSymbol.ContainingType;
                 if (TypeHelper.IsQuerialbeClass(ownerType, out bool isSystemQuery)
                     && TypeHelper.IsQueryMethod(methodSymbol)) //注意:只处理相关QueryMethods
                 {
-                    //注意：目前只支持所有的非Lambda参数为IdentifierNameSyntax
-                    var lambdaArgsCount = node.ArgumentList.Arguments.Count;
-                    var identifiers = new IdentifierNameSyntax[lambdaArgsCount];
-                    var lambdaParameters = new string[lambdaArgsCount];
-                    identifiers[0] = (IdentifierNameSyntax)((MemberAccessExpressionSyntax)node.Expression).Expression; //指向自己
-                    if (lambdaArgsCount > 1)
-                    {
-                        //注意：这里不移除无效的参数节点，由VisitArgumentList()处理
-                        for (int i = 0; i < lambdaArgsCount - 1; i++)
-                        {
-                            identifiers[i + 1] = (IdentifierNameSyntax)node.ArgumentList.Arguments[i].Expression;
-                        }
-                    }
-                    queryMethodCtx = new QueryMethodContext()
+                    //设置当前查询方法上下文
+                    var queryMethod = new QueryMethod()
                     {
                         IsSystemQuery = isSystemQuery, //是否系统存储的查询，否则是Sql查询
                         MethodName = methodSymbol.Name,
                         ArgsCount = node.ArgumentList.Arguments.Count,
-                        Identifiers = identifiers,
-                        LambdaParameters = lambdaParameters
+                        Identifiers = null,
+                        LambdaParameters = null
                     };
+                    queryMethodCtx.Push(queryMethod); //支持嵌套
+                    needPopQueryMethod = true;
+
+                    if (!queryMethod.IsIncludeMethod) //排除Include类方法
+                    {
+                        //注意：目前只支持所有的非Lambda参数为IdentifierNameSyntax
+                        queryMethod.Identifiers = new IdentifierNameSyntax[queryMethod.ArgsCount];
+                        queryMethod.LambdaParameters = new string[queryMethod.ArgsCount];
+                        queryMethod.Identifiers[0] = GetIdentifier(node.Expression); //指向自己
+                        if (queryMethod.ArgsCount > 1)
+                        {
+                            //注意：这里不移除无效的参数节点，由VisitArgumentList()处理
+                            for (int i = 0; i < queryMethod.ArgsCount - 1; i++)
+                            {
+                                queryMethod.Identifiers[i + 1] = (IdentifierNameSyntax)node.ArgumentList.Arguments[i].Expression;
+                            }
+                        }
+                    }
                 }
                 else if (methodSymbol.Name == "ToString" && ownerType.ToString() == "System.Enum") //处理虚拟枚举值的ToString
                 {
-                    var memberAccess = node.Expression as MemberAccessExpressionSyntax;
-                    if (memberAccess != null)
+                    if (node.Expression is MemberAccessExpressionSyntax memberAccess)
                     {
                         var ownerSymbol = SemanticModel.GetSymbolInfo(memberAccess.Expression).Symbol;
                         if (ownerSymbol is IFieldSymbol) //eg: sys.Enums.Gender.Male.ToString() => "Male"
@@ -473,14 +480,15 @@ namespace appbox.Design
                         }
                         else
                         {
-                            var enumType = TypeHelper.GetSymbolType(ownerSymbol);
-                            if (TypeHelper.IsEnumModel(enumType as INamedTypeSymbol))
-                            {
-                                var updateExp = memberAccess.Expression.Accept(this);
-                                var sr = enumType.ToString().Split('.');
-                                var newexp = $"AppBox.Core.EnumModel.ToString(AppBox.Core.RuntimeContext.Default,\"{sr[0]}.{sr[2]}\",{updateExp.ToString()})";
-                                return SyntaxFactory.ParseExpression(newexp).WithTriviaFrom(node);
-                            }
+                            throw new NotImplementedException();
+                            //var enumType = TypeHelper.GetSymbolType(ownerSymbol);
+                            //if (TypeHelper.IsEnumModel(enumType as INamedTypeSymbol))
+                            //{
+                            //    var updateExp = memberAccess.Expression.Accept(this);
+                            //    var sr = enumType.ToString().Split('.');
+                            //    var newexp = $"AppBox.Core.EnumModel.ToString(AppBox.Core.RuntimeContext.Default,\"{sr[0]}.{sr[2]}\",{updateExp.ToString()})";
+                            //    return SyntaxFactory.ParseExpression(newexp).WithTriviaFrom(node);
+                            //}
                         }
                     }
                 }
@@ -488,17 +496,17 @@ namespace appbox.Design
             }
 
             var res = (InvocationExpressionSyntax)base.VisitInvocationExpression(node);
-
-            if (queryMethodCtx != null)
+            if (needPopQueryMethod)
             {
-                if (queryMethodCtx.MethodName == TypeHelper.SqlQueryToScalarMethod) //注意：将ToScalar转换为ToScalar<T>
+                //注意：将ToScalar转换为ToScalar<T>
+                if (queryMethodCtx.Current.MethodName == TypeHelper.SqlQueryToScalarMethod) 
                 {
                     var memberAccess = (MemberAccessExpressionSyntax)node.Expression;
                     var newGenericName = (SimpleNameSyntax)SyntaxFactory.ParseName($"ToScalar<{methodSymbol.TypeArguments[0]}>");
                     memberAccess = memberAccess.WithName(newGenericName);
                     res = res.WithExpression(memberAccess);
                 }
-                queryMethodCtx = null;
+                queryMethodCtx.Pop();
             }
 
             return res;
@@ -507,7 +515,7 @@ namespace appbox.Design
         public override SyntaxNode VisitArgumentList(ArgumentListSyntax node)
         {
             //注意：相关Query.XXXJoin(join, (u, j1) => u.ID == j1.OtherID)不处理，因本身需要之前的参数
-            if (queryMethodCtx != null && !queryMethodCtx.IsJoinMethod() && !queryMethodCtx.InLambdaExpression)
+            if (queryMethodCtx.HasAny && !queryMethodCtx.Current.HoldLambdaArgs && !queryMethodCtx.Current.InLambdaExpression)
             {
                 var args = new SeparatedSyntaxList<ArgumentSyntax>();
                 //eg: q.Where(join1, (u, j1) => u.ID == j1.OtherID)
@@ -516,9 +524,9 @@ namespace appbox.Design
 
                 //eg: q.ToDataTable(join1, (t, j1) => new {t.ID, t.Name, j1.Address})
                 //如果是ToDataTable或ToList方法，需要处理 new {XX,XX,XX}为参数列表
-                if ((queryMethodCtx.MethodName == TypeHelper.SqlQueryToDataTableMethod
-                    || queryMethodCtx.MethodName == TypeHelper.SqlQueryToScalarMethod
-                    || queryMethodCtx.MethodName == TypeHelper.SqlQueryToListMethod)
+                if ((queryMethodCtx.Current.MethodName == TypeHelper.SqlQueryToDataTableMethod
+                    || queryMethodCtx.Current.MethodName == TypeHelper.SqlQueryToScalarMethod
+                    || queryMethodCtx.Current.MethodName == TypeHelper.SqlQueryToListMethod)
                     && newArgNode is ArgumentListSyntax)
                 {
                     //已被VisitQueryMethodLambdaExpresssion转换为ArgumentListSyntax
@@ -544,7 +552,7 @@ namespace appbox.Design
                 var updateNode = (CastExpressionSyntax)base.VisitCastExpression(node);
                 return updateNode.WithType(TypeHelper.EntityTypeSyntax);
             }
-            else if (TypeHelper.IsEnumModel(typeSymbol as INamedTypeSymbol))
+            if (TypeHelper.IsEnumModel(typeSymbol as INamedTypeSymbol))
             {
                 //todo:暂转换为int类型
                 return node.WithType(SyntaxFactory.ParseTypeName("int"));
@@ -600,11 +608,21 @@ namespace appbox.Design
         #region ====LambdaExpression====
         public override SyntaxNode VisitSimpleLambdaExpression(SimpleLambdaExpressionSyntax node)
         {
-            if (queryMethodCtx != null)
+            if (queryMethodCtx.HasAny)
             {
-                queryMethodCtx.LambdaParameters[0] = node.Parameter.Identifier.ValueText;
-                //todo:考虑预先处理 t=> 行差
-                return VisitQueryMethodLambdaExpresssion(node.Body);
+                if (queryMethodCtx.Current.IsIncludeMethod) //暂Include类特殊处理
+                {
+                    queryMethodCtx.Current.InLambdaExpression = true;
+                    var res = base.VisitSimpleLambdaExpression(node);
+                    queryMethodCtx.Current.InLambdaExpression = false;
+                    return res;
+                }
+                else
+                {
+                    queryMethodCtx.Current.LambdaParameters[0] = node.Parameter.Identifier.ValueText;
+                    //TODO:考虑预先处理 t=> 行差
+                    return VisitQueryMethodLambdaExpresssion(node);
+                }
             }
 
             return base.VisitSimpleLambdaExpression(node);
@@ -612,34 +630,45 @@ namespace appbox.Design
 
         public override SyntaxNode VisitParenthesizedLambdaExpression(ParenthesizedLambdaExpressionSyntax node)
         {
-            if (queryMethodCtx != null)
+            if (queryMethodCtx.HasAny)
             {
-                for (int i = 0; i < node.ParameterList.Parameters.Count; i++)
+                if (queryMethodCtx.Current.IsIncludeMethod) //暂Include类特殊处理
                 {
-                    queryMethodCtx.LambdaParameters[i] = node.ParameterList.Parameters[i].Identifier.ValueText;
+                    queryMethodCtx.Current.InLambdaExpression = true;
+                    var res = base.VisitParenthesizedLambdaExpression(node);
+                    queryMethodCtx.Current.InLambdaExpression = false;
+                    return res;
                 }
-                //todo:考虑预先处理 (t)=> 行差
-                return VisitQueryMethodLambdaExpresssion(node.Body);
+                else
+                {
+                    for (int i = 0; i < node.ParameterList.Parameters.Count; i++)
+                    {
+                        queryMethodCtx.Current.LambdaParameters[i] = node.ParameterList.Parameters[i].Identifier.ValueText;
+                    }
+                    //TODO:考虑预先处理 (t)=> 行差
+                    return VisitQueryMethodLambdaExpresssion(node);
+                }
             }
 
             return base.VisitParenthesizedLambdaExpression(node);
         }
 
-        private SyntaxNode VisitQueryMethodLambdaExpresssion(CSharpSyntaxNode body)
+        private SyntaxNode VisitQueryMethodLambdaExpresssion(LambdaExpressionSyntax lambda)
         {
-            queryMethodCtx.InLambdaExpression = true;
+            queryMethodCtx.Current.InLambdaExpression = true;
             SyntaxNode res;
-            if (queryMethodCtx.MethodName == TypeHelper.SqlQueryToDataTableMethod ||
-                (queryMethodCtx.MethodName == TypeHelper.SqlQueryToListMethod && queryMethodCtx.ArgsCount > 0))
+            if (queryMethodCtx.Current.MethodName == TypeHelper.SqlQueryToDataTableMethod ||
+                (queryMethodCtx.Current.MethodName == TypeHelper.SqlQueryToListMethod
+                && queryMethodCtx.Current.ArgsCount > 0))
             {
                 //注意处理行差
-                var aoc = body as AnonymousObjectCreationExpressionSyntax;
+                var aoc = lambda.Body as AnonymousObjectCreationExpressionSyntax;
                 if (aoc == null)
                     throw new Exception("Query.ToDataTable or Query.ToList<T>的第一个参数暂只支持匿名类");
                 var args = new SeparatedSyntaxList<ArgumentSyntax>();
 
                 //如果是ToList，转换Lambda表达式为运行时Lambda表达式
-                if (queryMethodCtx.MethodName == TypeHelper.SqlQueryToListMethod)
+                if (queryMethodCtx.Current.MethodName == TypeHelper.SqlQueryToListMethod)
                 {
                     var sb = StringBuilderCache.Acquire();
                     sb.Append("r => new {");
@@ -684,7 +713,7 @@ namespace appbox.Design
                     //最后一个参数补body所有行差
                     if (i == aoc.Initializers.Count - 1)
                     {
-                        var lineSpan = body.GetLocation().GetLineSpan();
+                        var lineSpan = lambda.Body.GetLocation().GetLineSpan();
                         var lineDiff = lineSpan.EndLinePosition.Line - lineSpan.StartLinePosition.Line;
                         if (lineDiff > 0)
                             arg = arg.WithTrailingTrivia(SyntaxFactory.Whitespace(new string('\n', lineDiff)));
@@ -694,20 +723,20 @@ namespace appbox.Design
 
                 res = SyntaxFactory.ArgumentList(args);
             }
-            else if (queryMethodCtx.MethodName == TypeHelper.SqlQueryToScalarMethod)
+            else if (queryMethodCtx.Current.MethodName == TypeHelper.SqlQueryToScalarMethod)
             {
                 var args = new SeparatedSyntaxList<ArgumentSyntax>();
-                var argExpression = (ExpressionSyntax)body.Accept(this);
+                var argExpression = (ExpressionSyntax)lambda.Body.Accept(this);
                 var arg = SyntaxFactory.Argument(argExpression);
                 args = args.Add(arg);
                 res = SyntaxFactory.ArgumentList(args);
             }
             else
             {
-                res = Visit(body);
+                res = Visit(lambda.Body);
             }
 
-            queryMethodCtx.InLambdaExpression = false;
+            queryMethodCtx.Current.InLambdaExpression = false;
             return res;
         }
         #endregion
@@ -881,37 +910,18 @@ namespace appbox.Design
                     return $"({argType})args.GetObject()";
             }
         }
-        #endregion
 
-        #region ====class QueryMethodContext====
-        /// <summary>
-        /// 用于映射Lambda表达式的参数至相应的QueryMethod的变量名
-        /// </summary>
-        sealed class QueryMethodContext
+        // 从q.OrderBy(t => t.Name).OrderBy(o => o.Code)获取q
+        private static IdentifierNameSyntax GetIdentifier(ExpressionSyntax expression)
         {
-
-            public string MethodName;
-
-            public bool IsSystemQuery; //标明是否系统存储查询，否则表示其他如Sql查询
-
-            public int ArgsCount; //参数数量，用于确定是ToEntityList还是ToDynamicList
-
-            public IdentifierNameSyntax[] Identifiers; //实际指向的参数目标
-
-            public string[] LambdaParameters; // (t, j1, j2) => {}
-
-            public bool InLambdaExpression;
-
-            public bool IsJoinMethod()
-            {
-                return MethodName == "LeftJoin"
-                    || MethodName == "RightJoin"
-                    || MethodName == "InnerJoin"
-                    || MethodName == "FullJoin";
-            }
-
+            if (expression is InvocationExpressionSyntax invoke)
+                return GetIdentifier(invoke.Expression);
+            if (expression is MemberAccessExpressionSyntax memberAccess)
+                return GetIdentifier(memberAccess.Expression);
+            if (expression is IdentifierNameSyntax identifier)
+                return identifier;
+            throw new NotSupportedException($"expression type: {expression.GetType().Name}");
         }
-
         #endregion
     }
 

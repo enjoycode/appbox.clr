@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using System.Threading.Tasks;
 using appbox.Data;
 using appbox.Models;
+using appbox.Runtime;
 
 namespace appbox.Core.Tests
 {
@@ -16,10 +18,10 @@ namespace appbox.Core.Tests
         public static EntityModel OrgUnitModel { get; private set; }
 
         public static DataStoreModel SqlStoreModel { get; private set; }
-        /// <summary>
-        /// 映射至SqlStore
-        /// </summary>
+
         public static EntityModel CityModel { get; private set; }
+        public static EntityModel CustomerModel { get; private set; }
+        public static EntityModel OrderModel { get; private set; }
 
         public static PermissionModel AdminPermissionModel { get; private set; }
         public static PermissionModel DeveloperPermissionModel { get; private set; }
@@ -73,22 +75,96 @@ namespace appbox.Core.Tests
             var childs = new EntitySetModel(OrgUnitModel, "Childs", orgUnitModelId, parent.MemberId);
             OrgUnitModel.AddSysMember(childs, 4 << IdUtil.MEMBERID_SEQ_OFFSET);
 
+            //----以下测试映射至SqlStore的实体---
             SqlStoreModel = new DataStoreModel(DataStoreKind.Sql, "appbox.Store.PostgreSQL;appbox.Store.PgSqlStore", "DemoDB");
-            //测试映射至SqlStore的实体
-            ulong sqlModelId = ((ulong)Consts.SYS_APP_ID << 32) | 25;
-            CityModel = new EntityModel(sqlModelId, "City", SqlStoreModel.Id);
+
+            ulong cityModelId = ((ulong)Consts.SYS_APP_ID << 32) | 25;
+            CityModel = new EntityModel(cityModelId, "City", SqlStoreModel.Id);
             var cityCode = new DataFieldModel(CityModel, "Code", EntityFieldType.Int32);
             CityModel.AddMember(cityCode);
             var cityName = new DataFieldModel(CityModel, "Name", EntityFieldType.String);
             CityModel.AddMember(cityName);
             var cityPk = new List<FieldWithOrder>();
-            cityPk.Add(new FieldWithOrder() { MemberId = cityCode.MemberId, OrderByDesc = false });
+            cityPk.Add(new FieldWithOrder { MemberId = cityCode.MemberId, OrderByDesc = false });
             CityModel.SqlStoreOptions.SetPrimaryKeys(CityModel, cityPk);
+
+            ulong customerModelId = ((ulong)Consts.SYS_APP_ID << 32) | 26;
+            CustomerModel = new EntityModel(customerModelId, "Customer", SqlStoreModel.Id);
+            var customerId = new DataFieldModel(CustomerModel, "Id", EntityFieldType.Int32);
+            CustomerModel.AddMember(customerId);
+            var customerName = new DataFieldModel(CustomerModel, "Name", EntityFieldType.String);
+            CustomerModel.AddMember(customerName);
+            var customerCityId = new DataFieldModel(CustomerModel, "CityId", EntityFieldType.Int32, true);
+            CustomerModel.AddMember(customerCityId);
+            var customerCity = new EntityRefModel(CustomerModel, "City", cityModelId, new ushort[] { customerCityId.MemberId });
+            CustomerModel.AddMember(customerCity);
+            var customerPk = new List<FieldWithOrder>();
+            customerPk.Add(new FieldWithOrder { MemberId = customerId.MemberId, OrderByDesc = false });
+            CustomerModel.SqlStoreOptions.SetPrimaryKeys(CustomerModel, customerPk);
+
+            ulong orderModelId = ((ulong)Consts.SYS_APP_ID << 32) | 27;
+            OrderModel = new EntityModel(orderModelId, "Order", SqlStoreModel.Id);
+            var orderId = new DataFieldModel(OrderModel, "Id", EntityFieldType.Int32);
+            OrderModel.AddMember(orderId);
+            var orderCustomerId = new DataFieldModel(OrderModel, "CustomerId", EntityFieldType.Int32, true);
+            OrderModel.AddMember(orderCustomerId);
+            var orderCustomer = new EntityRefModel(OrderModel, "Customer", customerModelId, new ushort[] { orderCustomerId.MemberId });
+            OrderModel.AddMember(orderCustomer);
+            var orderPk = new List<FieldWithOrder>();
+            orderPk.Add(new FieldWithOrder { MemberId = orderId.MemberId, OrderByDesc = false });
+            OrderModel.SqlStoreOptions.SetPrimaryKeys(OrderModel, orderPk);
         }
 
         public static Expressions.IExpressionContext GetMockExpressionContext()
         {
             return new MockExpressionContext();
+        }
+    }
+
+    public sealed class MockRuntimeContext : IRuntimeContext
+    {
+        private readonly Dictionary<ulong, ModelBase> _entityModels = new Dictionary<ulong, ModelBase>();
+
+        public void AddModel(ModelBase model)
+        {
+            _entityModels.Add(model.Id, model);
+        }
+
+        public string AppPath => "/Users/lushuaijun/Projects/AppBoxFuture/appbox/cmake-build-debug";
+
+        public bool IsMainDomain => throw new NotImplementedException();
+
+        public ISessionInfo CurrentSession { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
+        public ulong RuntimeId => throw new NotImplementedException();
+
+        public ValueTask<ApplicationModel> GetApplicationModelAsync(uint appId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public ValueTask<ApplicationModel> GetApplicationModelAsync(string appName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public ValueTask<T> GetModelAsync<T>(ulong modelId) where T : ModelBase
+        {
+            if (_entityModels.TryGetValue(modelId, out ModelBase found))
+            {
+                return new ValueTask<T>((T)found);
+            }
+            return new ValueTask<T>(default(T));
+        }
+
+        public void InvalidModelsCache(string[] services, ulong[] others, bool byPublish)
+        {
+            throw new NotImplementedException();
+        }
+
+        public ValueTask<AnyValue> InvokeAsync(string servicePath, InvokeArgs args)
+        {
+            throw new NotImplementedException();
         }
     }
 

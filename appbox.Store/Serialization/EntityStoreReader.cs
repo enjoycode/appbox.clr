@@ -66,6 +66,7 @@ namespace appbox.Store
                 }
             }
 
+            //TODO:待修改上述赋值后不再需要，参考SqlQuery填充实体
             obj.ChangeToUnChanged();//obj.AcceptChanges();
         }
 

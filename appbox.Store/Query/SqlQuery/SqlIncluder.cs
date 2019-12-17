@@ -59,15 +59,25 @@ namespace appbox.Store
         #endregion
 
         #region ====Include Methods====
-        public SqlIncluder Include(MemberExpression member, string alias = null)
+        public SqlIncluder Include(Func<EntityExpression, MemberExpression> selector, string alias = null)
         {
-            return GetRoot().IncludeInternal(member, alias);
+            return GetRoot().IncludeInternal(selector((EntityExpression)Expression), alias);
         }
 
-        public SqlIncluder ThenInclude(MemberExpression member, string alias = null)
+        //public SqlIncluder Include(MemberExpression member, string alias = null)
+        //{
+        //    return GetRoot().IncludeInternal(member, alias);
+        //}
+
+        public SqlIncluder ThenInclude(Func<EntityExpression, MemberExpression> selector, string alias = null)
         {
-            return IncludeInternal(member, alias);
+            return IncludeInternal(selector((EntityExpression)Expression), alias);
         }
+
+        //public SqlIncluder ThenInclude(MemberExpression member, string alias = null)
+        //{
+        //    return IncludeInternal(member, alias);
+        //}
 
         private SqlIncluder IncludeInternal(MemberExpression member, string alias = null)
         {
@@ -126,7 +136,7 @@ namespace appbox.Store
         #endregion
 
         #region ====Runtime Methods====
-        internal async ValueTask AddSelects(SqlQuery query, EntityModel model)
+        internal async ValueTask AddSelects(SqlQuery query, EntityModel model, string path = null)
         {
             if (Parent != null) //排除根级
             {
@@ -137,8 +147,10 @@ namespace appbox.Store
                     if (mm.IsAggregationRef) //TODO:聚合引用转换为Case表达式
                         throw new NotImplementedException();
 
-                    var refModel = await Runtime.RuntimeContext.Current.GetModelAsync<EntityModel>(mm.RefModelIds[0]);
-                    SqlQuery.AddAllSelects(query, refModel, exp, exp.Name);
+                    //注意替换入参支持多级
+                    model = await Runtime.RuntimeContext.Current.GetModelAsync<EntityModel>(mm.RefModelIds[0]);
+                    path = path == null ? exp.Name : $"{path}.{exp.Name}";
+                    SqlQuery.AddAllSelects(query, model, exp, path);
                 }
                 else if (Expression.Type == ExpressionType.SelectItemExpression)
                 {
@@ -149,7 +161,7 @@ namespace appbox.Store
             if (Childs == null) return;
             for (int i = 0; i < Childs.Count; i++)
             {
-                await Childs[i].AddSelects(query, model);
+                await Childs[i].AddSelects(query, model, path);
             }
         }
 

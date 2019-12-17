@@ -38,7 +38,11 @@ namespace appbox.Design.Tests
         [Fact]
         public async Task GenServiceCodeTest()
         {
-            RuntimeContext.Init(new MockRuntimContext(), 10410);
+            var mockRuntimeCtx = new Core.Tests.MockRuntimeContext();
+            mockRuntimeCtx.AddModel(Core.Tests.TestHelper.CityModel);
+            mockRuntimeCtx.AddModel(Core.Tests.TestHelper.CustomerModel);
+            mockRuntimeCtx.AddModel(Core.Tests.TestHelper.OrderModel);
+            RuntimeContext.Init(mockRuntimeCtx, 10410);
 
             var session = new MockDeveloperSession();
             var ctx = new DesignHub(session);
@@ -49,6 +53,8 @@ namespace appbox.Design.Tests
                 Core.Tests.TestHelper.VehicleStateModel,
                 Core.Tests.TestHelper.OrgUnitModel,
                 Core.Tests.TestHelper.CityModel,
+                Core.Tests.TestHelper.CustomerModel,
+                Core.Tests.TestHelper.OrderModel,
                 Core.Tests.TestHelper.AdminPermissionModel,
                 Core.Tests.TestHelper.DeveloperPermissionModel
             };
@@ -87,7 +93,7 @@ namespace appbox.Design.Tests
         [Fact]
         public async Task GenServiceDeclareTest()
         {
-            RuntimeContext.Init(new MockRuntimContext(), 10410);
+            RuntimeContext.Init(new Core.Tests.MockRuntimeContext(), 10410);
 
             var session = new MockDeveloperSession();
             var ctx = new DesignHub(session);
