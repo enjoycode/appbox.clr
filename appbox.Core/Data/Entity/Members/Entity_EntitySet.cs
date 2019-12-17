@@ -18,10 +18,14 @@ namespace appbox.Data
 
             if (_persistentState == PersistentState.Detached) //是新建的实体实例，注意判断this.PersistentState会引起死循环
             {
-                throw ExceptionHelper.NotImplemented();
+                m.Flag.HasLoad = true;
+                var list = new EntityList(this, (EntitySetModel)Model.GetMember(mid, true));
+                m.ObjectValue = list;
+                return list;
             }
 
-            throw ExceptionHelper.NotImplemented();
+            //暂不支持Lazy loading
+            throw new NotSupportedException("Lazy loading EntitySet not supported");
         }
 
         /// <summary>

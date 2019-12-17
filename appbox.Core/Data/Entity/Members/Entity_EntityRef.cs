@@ -43,6 +43,20 @@ namespace appbox.Data
             }
         }
 
+        public Entity GetEntityRef(ushort mid)
+        {
+            ref EntityMember m = ref GetMember(mid);
+            if (m.MemberType != EntityMemberType.EntityRef)
+                throw new InvalidOperationException("Member type invalid");
+
+            if (m.Flag.HasLoad)
+                return (Entity)m.ObjectValue;
+            if (_persistentState == PersistentState.Detached)
+                return null;
+            //暂不支持Lazy loading TODO:考虑判断外键是否有值，无值直接返回null
+            throw new NotSupportedException("Lazy loading EntityRef not supported");
+        }
+
         /// <summary>
         /// 用于外键改变值时清空已加载的EntityRef的实例
         /// </summary>
