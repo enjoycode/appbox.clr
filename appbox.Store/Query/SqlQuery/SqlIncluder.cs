@@ -61,7 +61,8 @@ namespace appbox.Store
         #region ====Include Methods====
         public SqlIncluder Include(Func<EntityExpression, MemberExpression> selector, string alias = null)
         {
-            return GetRoot().IncludeInternal(selector((EntityExpression)Expression), alias);
+            var root = GetRoot();
+            return root.IncludeInternal(selector((EntityExpression)root.Expression), alias);
         }
 
         //public SqlIncluder Include(MemberExpression member, string alias = null)
@@ -71,6 +72,8 @@ namespace appbox.Store
 
         public SqlIncluder ThenInclude(Func<EntityExpression, MemberExpression> selector, string alias = null)
         {
+            if (Expression.Type == ExpressionType.EntitySetExpression)
+                return IncludeInternal(selector(((EntitySetExpression)Expression).RootEntityExpression), alias);
             return IncludeInternal(selector((EntityExpression)Expression), alias);
         }
 
@@ -87,8 +90,8 @@ namespace appbox.Store
             if (member.Type == ExpressionType.FieldExpression)
             {
                 //可以包含多个层级如t.Customer.Region.Name
-                if (!ReferenceEquals(GetTopOnwer(member), MemberExpression))
-                    throw new ArgumentException("Owner not same");
+                //if (!ReferenceEquals(GetTopOnwer(member), MemberExpression))
+                //    throw new ArgumentException("Owner not same");
                 if (ReferenceEquals(member.Owner, MemberExpression))
                     throw new ArgumentException("Can't include field");
                 //TODO:判断alias空，是则自动生成eg:t.Customer.Region.Name => CustomerRegionName
@@ -103,8 +106,8 @@ namespace appbox.Store
                 Debug.Assert(member.Type == ExpressionType.EntityExpression
                     || member.Type == ExpressionType.EntitySetExpression);
                 //判断Include的Owner是否相同
-                if (!ReferenceEquals(member.Owner, MemberExpression))
-                    throw new ArgumentException("Owner not same");
+                //if (!ReferenceEquals(member.Owner, MemberExpression))
+                //    throw new ArgumentException("Owner not same");
                 if (Childs == null)
                 {
                     var child = new SqlIncluder(this, member);
@@ -138,44 +141,69 @@ namespace appbox.Store
         #region ====Runtime Methods====
         internal async ValueTask AddSelects(SqlQuery query, EntityModel model, string path = null)
         {
-            if (Parent != null) //排除根级
-            {
-                if (Expression.Type == ExpressionType.EntityExpression)
-                {
-                    var exp = (EntityExpression)Expression;
-                    var mm = (EntityRefModel)model.GetMember(exp.Name, true);
-                    if (mm.IsAggregationRef) //TODO:聚合引用转换为Case表达式
-                        throw new NotImplementedException();
-
-                    //注意替换入参支持多级
-                    model = await Runtime.RuntimeContext.Current.GetModelAsync<EntityModel>(mm.RefModelIds[0]);
-                    path = path == null ? exp.Name : $"{path}.{exp.Name}";
-                    SqlQuery.AddAllSelects(query, model, exp, path);
-                }
-                else if (Expression.Type == ExpressionType.SelectItemExpression)
-                {
-                    query.AddSelectItem((SqlSelectItemExpression)Expression);
-                }
-            }
-
             if (Childs == null) return;
             for (int i = 0; i < Childs.Count; i++)
             {
-                await Childs[i].AddSelects(query, model, path);
+                await Childs[i].LoopAddSelects(query, model, path);
             }
         }
 
-        internal async ValueTask LoadEntitySets(Entity owner)
+        private async ValueTask LoopAddSelects(SqlQuery query, EntityModel model, string path)
         {
-            if (Parent != null && Expression.Type == ExpressionType.EntitySetExpression)
+            if (Expression.Type == ExpressionType.EntityExpression)
             {
-                //TODO:
+                var exp = (EntityExpression)Expression;
+                var mm = (EntityRefModel)model.GetMember(exp.Name, true);
+                if (mm.IsAggregationRef) //TODO:聚合引用转换为Case表达式
+                    throw new NotImplementedException();
+
+                //注意替换入参支持多级
+                model = await Runtime.RuntimeContext.Current.GetModelAsync<EntityModel>(mm.RefModelIds[0]);
+                path = path == null ? exp.Name : $"{path}.{exp.Name}";
+                SqlQuery.AddAllSelects(query, model, exp, path);
+            }
+            else if (Expression.Type == ExpressionType.SelectItemExpression)
+            {
+                query.AddSelectItem((SqlSelectItemExpression)Expression);
+            }
+            else
+            {
+                return;
             }
 
             if (Childs == null) return;
             for (int i = 0; i < Childs.Count; i++)
             {
-                await Childs[i].LoadEntitySets(owner);
+                await Childs[i].LoopAddSelects(query, model, path);
+            }
+        }
+
+        internal async ValueTask LoadEntitySets(SqlStore db, Entity owner, System.Data.Common.DbTransaction txn)
+        {
+            if (Childs == null) return;
+            for (int i = 0; i < Childs.Count; i++)
+            {
+                await Childs[i].LoopLoadEntitySets(db, owner, txn);
+            }
+        }
+
+        private async ValueTask LoopLoadEntitySets(SqlStore db, Entity owner, System.Data.Common.DbTransaction txn)
+        {
+            if (Expression.Type == ExpressionType.EntitySetExpression)
+            {
+                var list = await db.LoadEntitySet(owner, (EntitySetExpression)Expression, this, txn);
+                //继续加载子级
+                if (Childs == null) return;
+                for (int i = 0; i < Childs.Count; i++)
+                {
+                    if (Childs[i].Expression.Type == ExpressionType.EntitySetExpression)
+                    {
+                        for (int j = 0; j < list.Count; j++)
+                        {
+                            await Childs[i].LoopLoadEntitySets(db, list[j], txn);
+                        }
+                    }
+                }
             }
         }
         #endregion

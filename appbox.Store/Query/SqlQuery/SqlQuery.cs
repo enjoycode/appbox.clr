@@ -81,6 +81,16 @@ namespace appbox.Store
         {
             T = new EntityExpression(entityModelID, this);
         }
+
+        /// <summary>
+        /// 仅用于加载EntitySet
+        /// </summary>
+        internal SqlQuery(SqlIncluder root)
+        {
+            T = ((EntitySetExpression)root.Expression).RootEntityExpression;
+            T.User = this;
+            _rootIncluder = root;
+        }
         #endregion
 
         #region ====Top & Page & Distinct Methods====
@@ -163,6 +173,8 @@ namespace appbox.Store
             {
                 res = FillEntity(model, reader);
             }
+            if (_rootIncluder != null)
+                await _rootIncluder.LoadEntitySets(db, res, null); //TODO:fix txn
             return res;
         }
 
@@ -237,8 +249,16 @@ namespace appbox.Store
             if (_rootIncluder != null)
                 await _rootIncluder.AddSelects(this, model);
 
+            var db = SqlStore.Get(model.SqlStoreOptions.StoreModelId);
             var list = new EntityList(T.ModelID);
-            await ExecToListInternal(list, model);
+            await ExecToListInternal(db, list, model);
+            if (_rootIncluder != null && list != null)
+            {
+                for (int i = 0; i < list.Count; i++)
+                {
+                    await _rootIncluder.LoadEntitySets(db, list[i], null); //TODO: fix txn
+                }
+            }
             return list;
         }
 
@@ -328,18 +348,18 @@ namespace appbox.Store
             //return new TreeNodePath(list);
         }
 
-        private async Task ExecToListInternal(IList<Entity> list, EntityModel model)
+        private async Task ExecToListInternal(SqlStore db, IList<Entity> list, EntityModel model)
         {
             //Dictionary<Guid, Entity> dic = null;
             //if (this.Purpose == QueryPurpose.ToEntityTreeList)
             //    dic = new Dictionary<Guid, Entity>();
 
             //递交查询
-            var db = SqlStore.Get(model.SqlStoreOptions.StoreModelId);
             var cmd = db.BuildQuery(this);
             using var conn = db.MakeConnection();
             await conn.OpenAsync();
             cmd.Connection = conn;
+            //Log.Warn(cmd.CommandText);
 
             using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())

@@ -20,7 +20,7 @@ namespace appbox.Models
         /// <remarks>
         /// 注意: 仅用于内部读取，使用设计时Api修改，不要直接修改
         /// </remarks>
-        internal List<EntityMemberModel> Members { get; private set; }
+        internal List<EntityMemberModel> Members { get; private set; } //TODO:考虑使用字典表
 
         public override ModelType ModelType => ModelType.Entity;
 
@@ -84,7 +84,7 @@ namespace appbox.Models
                 }
             }
             if (throwOnNotExists)
-                throw new Exception($"Member not exists with name:{name}");
+                throw new Exception($"Member not exists:{Name}.{name}");
             return null;
         }
 
@@ -98,7 +98,7 @@ namespace appbox.Models
                 }
             }
             if (throwOnNotExists)
-                throw new Exception($"Member not exists with name:{name.ToString()}");
+                throw new Exception($"Member not exists :{Name}.{name.ToString()}");
             return null;
         }
 

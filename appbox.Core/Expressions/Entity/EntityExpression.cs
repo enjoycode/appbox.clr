@@ -74,16 +74,16 @@ namespace appbox.Expressions
                             exp = new FieldExpression(name, this);
                             break;
                         case EntityMemberType.EntityRef:
-                            EntityRefModel rm = m as EntityRefModel;
+                            var rm = (EntityRefModel)m;
                             if (!rm.IsAggregationRef)
                                 exp = new EntityExpression(name, rm.RefModelIds[0], this);
                             else
                                 throw new NotImplementedException("尚未实现聚合引用对象的表达式");
                             break;
                         case EntityMemberType.EntitySet:
-                            //EntitySetModel esm = m as EntitySetModel;
-                            //                            EntityRefModel erm = esm.RefModel[esm.RefMemberName] as EntityRefModel;
-                            exp = new EntitySetExpression(name, this);
+                            var sm = (EntitySetModel)m;
+                            //EntityRefModel erm = esm.RefModel[esm.RefMemberName] as EntityRefModel;
+                            exp = new EntitySetExpression(name, this, sm.RefModelId);
                             break;
                         //case EntityMemberType.AggregationRefField:
                         //    exp = new AggregationRefFieldExpression(name, this);

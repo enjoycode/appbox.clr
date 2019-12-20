@@ -18,7 +18,7 @@ namespace appbox.Design
             var modelID = args.GetString();
             var memberName = args.GetString();
             var propertyName = args.GetString();
-            var propertyValue = args.GetObject();
+            var propertyValue = args.GetString();
 
             var modelNode = hub.DesignTree.FindModelNode(ModelType.Entity, ulong.Parse(modelID));
             if (modelNode == null)

@@ -102,7 +102,11 @@ public sealed class SqlStore
 
 	public Task<int> DeleteAsync(SqlEntityBase entity, DbTransaction txn = null) { return null; }
 
+	//public Task LoadAsync<T>(T entity, Action<ISqlIncluder<T>> includer) { return null; }
+
 	public Task ExecCommandAsync<TSource>(SqlUpdateCommand<TSource> cmd) where TSource : SqlEntityBase { return null; }
+
+	public Task ExecCommandAsync<TSource>(SqlDeleteCommand<TSource> cmd) where TSource : SqlEntityBase { return null; }
 }
 #endregion
 

@@ -10,13 +10,28 @@ namespace appbox.Expressions
         public override ExpressionType Type => ExpressionType.EntitySetExpression;
         public override MemberExpression this[string name] => throw new InvalidOperationException();
 
+        private readonly ulong _setModelId; //用于ThenInclude
+        private EntityExpression _root; //用于ThenInclude
+        internal EntityExpression RootEntityExpression
+        {
+            get
+            {
+                if (IsNull(_root))
+                    _root = new EntityExpression(_setModelId, null/*必须null，后面设置*/);
+                return _root;
+            }
+        }
+
         /// <summary>
         /// Ctor for Serialization
         /// </summary>
         internal EntitySetExpression() { }
 
-        internal EntitySetExpression(string name, EntityExpression owner)
-            : base(name, owner) { }
+        internal EntitySetExpression(string name, EntityExpression owner, ulong setModelId)
+            : base(name, owner)
+        {
+            _setModelId = setModelId;
+        }
 
         #region ====Overrides Methods====
         public override int GetHashCode()
