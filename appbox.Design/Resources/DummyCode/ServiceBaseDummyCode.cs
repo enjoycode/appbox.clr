@@ -205,6 +205,20 @@ public static class ISqlIncluderExts
 	{ return null; }
 }
 
+[QueriableClass(false)]
+public interface ISqlGrouping<out TKey, out TElement> //: IEnumerable<out TElement>
+{
+	TKey Key { get; }
+
+	[QueryMethod()]
+	ISqlGrouping<TKey, TElement> Having(Func<ISqlGrouping<TKey, TElement>, bool> condition);
+
+	int Sum(Func<TElement, int> selector);
+
+	[QueryMethod()]
+	public Task<IList<TResult>> ToListAsync<TResult>(Func<ISqlGrouping<TKey, TElement>, TResult> selector);
+}
+
 [RealType("appbox.Store.SqlQuery")]
 [GenericCreate()]
 [QueriableClass(false)]
@@ -331,6 +345,10 @@ public class SqlQuery<TSource> : ISqlQueryJoin<TSource>, ISqlIncluder<TSource> w
 		return null;
 	}
 
+    public ISqlGrouping<TKey, TSource> GroupBy<TKey>(Func<TSource, TKey> keySelector)
+	{
+		return null;
+	}
 	#endregion
 }
 

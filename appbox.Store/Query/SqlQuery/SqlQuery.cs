@@ -124,32 +124,6 @@ namespace appbox.Store
             Selects.Add(item.AliasName, item);
         }
 
-        public SqlSubQuery AsSubQuery(params SqlSelectItem[] selectItem)
-        {
-            if (selectItem == null || selectItem.Length <= 0)
-                throw new ArgumentException("must select some one");
-
-            foreach (var item in selectItem)
-            {
-                AddSelectItem(item.Target);
-            }
-
-            return new SqlSubQuery(this);
-        }
-
-        public SqlFromQuery AsFromQuery(params SqlSelectItem[] selectItem)
-        {
-            if (selectItem == null || selectItem.Length <= 0)
-                throw new ArgumentException("must select some one");
-
-            foreach (var item in selectItem)
-            {
-                AddSelectItem(item.Target);
-            }
-
-            return new SqlFromQuery(this);
-        }
-
         public async Task<Entity> ToSingleAsync()
         {
             Purpose = QueryPurpose.ToSingleEntity;
@@ -495,6 +469,47 @@ namespace appbox.Store
                     query.AddSelectItem(si);
                 }
             }
+        }
+        #endregion
+
+        #region ====AsXXX and GroupBy Methods====
+        public SqlSubQuery AsSubQuery(params SqlSelectItem[] selectItem)
+        {
+            if (selectItem == null || selectItem.Length <= 0)
+                throw new ArgumentException("must select some one");
+
+            foreach (var item in selectItem)
+            {
+                AddSelectItem(item.Target);
+            }
+
+            return new SqlSubQuery(this);
+        }
+
+        public SqlFromQuery AsFromQuery(params SqlSelectItem[] selectItem)
+        {
+            if (selectItem == null || selectItem.Length <= 0)
+                throw new ArgumentException("must select some one");
+
+            foreach (var item in selectItem)
+            {
+                AddSelectItem(item.Target);
+            }
+
+            return new SqlFromQuery(this);
+        }
+
+        public SqlGroupQuery GroupBy(params SqlSelectItem[] groupKeys)
+        {
+            if (groupKeys == null || groupKeys.Length <= 0)
+                throw new ArgumentException("must select some one");
+
+            foreach (var item in groupKeys)
+            {
+                AddSelectItem(item.Target);
+            }
+
+            return new SqlGroupQuery(this);
         }
         #endregion
 

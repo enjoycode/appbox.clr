@@ -53,10 +53,7 @@ namespace appbox.Store
             }
         }
 
-        public bool HasSortItems
-        {
-            get { return _sortItems != null && _sortItems.Count > 0; }
-        }
+        public bool HasSortItems => _sortItems != null && _sortItems.Count > 0;
 
         /// <summary>
         /// 筛选器

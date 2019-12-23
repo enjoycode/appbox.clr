@@ -1,13 +1,18 @@
 using System;
+using System.Linq;
+using System.Linq.Expressions;
 using Xunit;
 using appbox.Models;
 using appbox.Data;
+using System.Collections.Generic;
 
 namespace appbox.Core.Tests
 {
     class Person
     {
         public string Name { get; set; }
+        public int Age { get; set; }
+        public int DeptId { get; set; }
     }
 
     public class UnitTest1
@@ -113,6 +118,32 @@ namespace appbox.Core.Tests
             var m1 = new Caching.CharsKey(s1.AsMemory(0, 5));
             var m2 = new Caching.CharsKey(s2.AsMemory(0, 5));
             Assert.True(m1.GetHashCode() == m2.GetHashCode());
+        }
+
+        [Fact]
+        public void Test5()
+        {
+            var list = new List<Person> {
+                new Person {Name = "Rick", Age= 33, DeptId =1},
+                new Person {Name = "Johen", Age= 33, DeptId =1},
+                new Person {Name = "Eric", Age= 43, DeptId =2},
+                new Person {Name = "Steven", Age= 43, DeptId =2},
+            };
+
+            var group = list.GroupBy(t => new { t.DeptId, t.Age });
+            var res = group.Select(g => new { g.Key.DeptId, g.Key.Age, SumOfAge = g.Sum(t => t.Age) });
+            foreach (var item in res)
+            {
+                Console.WriteLine($"Key = {item.Age} SumOfAge = {item.SumOfAge}");
+            }
+
+            var q = from p in list
+                    group p by p.DeptId into g
+                    select new { g.Key, SumOfAge = g.Sum(t => t.Age) };
+            foreach (var item in q)
+            {
+                
+            }
         }
     }
 }

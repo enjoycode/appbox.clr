@@ -16,13 +16,13 @@ namespace appbox.Design.Tests.Resources.Code
 		}
 
 		/// <summary>
-		/// 手动Join
+		/// 手动Join，适用于没有导航属性的实体
 		/// </summary>
 		/// <returns></returns>
 		public async Task<object> Query2()
 		{
-			var j = new SqlQueryJoin<Entities.City>();
 			var q = new SqlQuery<Entities.Customer>();
+			var j = new SqlQueryJoin<Entities.City>();
 			q.LeftJoin(j, (cus, city) => cus.CityCode == city.Code);
 			q.Where(j, (cus, city) => city.Name == "无锡");
 			return await q.ToListAsync(j, (cus, city) => new { cus.Code, cus.Name, CityName = city.Name });
@@ -47,7 +47,7 @@ namespace appbox.Design.Tests.Resources.Code
 				.ThenInclude(customer => customer.City)
 			 .Include(order => order.Items)
 				.ThenInclude(item => item.Product);
-			return await q.ToListAsync();
+			return await q.ToSingleAsync();
 		}
 
 		/// <summary>
