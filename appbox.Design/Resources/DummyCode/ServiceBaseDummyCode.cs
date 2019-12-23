@@ -21,6 +21,15 @@ public static class SimplePerfTest
 	{ throw new Exception(); }
 }
 
+#region ====DbFuncs====
+public static class DbFuncs
+{
+	public static int Sum(int field) { return 0; }
+
+	public static long Sum(long field) { return 0; }
+}
+#endregion
+
 #region ====Entity Store====
 [RealType("appbox.Store.Transaction")]
 public sealed class Transaction : IDisposable
@@ -205,20 +214,6 @@ public static class ISqlIncluderExts
 	{ return null; }
 }
 
-[QueriableClass(false)]
-public interface ISqlGrouping<out TKey, out TElement> //: IEnumerable<out TElement>
-{
-	TKey Key { get; }
-
-	[QueryMethod()]
-	ISqlGrouping<TKey, TElement> Having(Func<ISqlGrouping<TKey, TElement>, bool> condition);
-
-	int Sum(Func<TElement, int> selector);
-
-	[QueryMethod()]
-	public Task<IList<TResult>> ToListAsync<TResult>(Func<ISqlGrouping<TKey, TElement>, TResult> selector);
-}
-
 [RealType("appbox.Store.SqlQuery")]
 [GenericCreate()]
 [QueriableClass(false)]
@@ -341,14 +336,16 @@ public class SqlQuery<TSource> : ISqlQueryJoin<TSource>, ISqlIncluder<TSource> w
 	#region ----AsXXXX Methods----
 	[QueryMethod()]
 	public SqlSubQuery<TResult> AsSubQuery<TResult>(Func<TSource, TResult> selector)
-	{
-		return null;
-	}
+	{ return null; }
+	#endregion
 
-    public ISqlGrouping<TKey, TSource> GroupBy<TKey>(Func<TSource, TKey> keySelector)
-	{
-		return null;
-	}
+	#region ----GroupBy Methods----
+	[QueryMethod()]
+	public SqlQuery<TSource> GroupBy<TResult>(Func<TSource, TResult> keySelector)
+	{ return this; }
+
+	[QueryMethod()]
+	public SqlQuery<TSource> Having(Func<TSource, bool> condition) { return this; }
 	#endregion
 }
 

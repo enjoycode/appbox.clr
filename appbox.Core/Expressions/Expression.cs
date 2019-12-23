@@ -257,6 +257,7 @@ namespace appbox.Expressions
         SelectItemExpression, //TODO: rename
 
         //InvocationExpression,
+        DbFuncExpression,
         //LambdaExpression,
 
         //FormCreationExpression,

@@ -362,6 +362,7 @@ namespace appbox.Store
         BuildUpsertSet,
         BuildWithCTE,
         BuildPageTail,
-        BuildPageOrderBy
+        BuildPageOrderBy,
+        BuildHaving,
     }
 }

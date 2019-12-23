@@ -74,6 +74,12 @@ namespace appbox.Store
 
         #endregion
 
+        #region ----GroupBy属性----
+        public SqlSelectItemExpression[] GroupByKeys { get; private set; }
+
+        public Expression HavingFilter { get; private set; }
+        #endregion
+
         #endregion
 
         #region ====Ctor====
@@ -472,7 +478,7 @@ namespace appbox.Store
         }
         #endregion
 
-        #region ====AsXXX and GroupBy Methods====
+        #region ====AsXXX Methods====
         public SqlSubQuery AsSubQuery(params SqlSelectItem[] selectItem)
         {
             if (selectItem == null || selectItem.Length <= 0)
@@ -497,19 +503,6 @@ namespace appbox.Store
             }
 
             return new SqlFromQuery(this);
-        }
-
-        public SqlGroupQuery GroupBy(params SqlSelectItem[] groupKeys)
-        {
-            if (groupKeys == null || groupKeys.Length <= 0)
-                throw new ArgumentException("must select some one");
-
-            foreach (var item in groupKeys)
-            {
-                AddSelectItem(item.Target);
-            }
-
-            return new SqlGroupQuery(this);
         }
         #endregion
 
@@ -555,5 +548,27 @@ namespace appbox.Store
         }
         #endregion
 
+        #region ====GroupBy Methods====
+        public SqlQuery GroupBy(params SqlSelectItem[] groupKeys)
+        {
+            if (groupKeys == null || groupKeys.Length <= 0)
+                throw new ArgumentException("must select some one");
+
+            GroupByKeys = new SqlSelectItemExpression[groupKeys.Length];
+            for (int i = 0; i < GroupByKeys.Length; i++)
+            {
+                groupKeys[i].Target.Owner = this;
+                GroupByKeys[i] = groupKeys[i].Target;
+            }
+
+            return this;
+        }
+
+        public SqlQuery Having(Expression condition)
+        {
+            HavingFilter = condition;
+            return this;
+        }
+        #endregion
     }
 }

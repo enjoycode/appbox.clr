@@ -48,16 +48,8 @@ namespace appbox.Store
             }
             if (query.PageIndex > -1) //分页添加行号
             {
-                ctx.Append("Row_Number() Over (Order By ");
-                for (int i = 0; i < query.SortItems.Count; i++)
-                {
-                    SqlSortItem si = query.SortItems[i];
-                    BuildExpression(si.Expression, ctx);
-                    if (si.SortType == SortType.DESC)
-                        ctx.Append(" DESC");
-                    if (i < query.SortItems.Count - 1)
-                        ctx.Append(" ,");
-                }
+                ctx.Append("Row_Number() Over (");
+                BuildOrderBy(query, ctx);
                 ctx.Append(") _rn");
             }
             else
@@ -91,20 +83,11 @@ namespace appbox.Store
                 BuildExpression(ctx.CurrentQuery.Filter, ctx);
             }
 
-            //在不分页的情况下构建Order By 
-            ctx.CurrentQueryInfo.BuildStep = BuildQueryStep.BuildOrderBy;
-            if (query.PageIndex == -1 && query.HasSortItems)
+            //在非分页及非分组的情况下构建Order By 
+            if (query.GroupByKeys == null && query.PageIndex == -1 && query.HasSortItems)
             {
-                ctx.Append(" Order By ");
-                for (int i = 0; i < query.SortItems.Count; i++)
-                {
-                    SqlSortItem si = query.SortItems[i];
-                    BuildExpression(si.Expression, ctx);
-                    if (si.SortType == SortType.DESC)
-                        ctx.Append(" DESC");
-                    if (i < query.SortItems.Count - 1)
-                        ctx.Append(" ,");
-                }
+                ctx.CurrentQueryInfo.BuildStep = BuildQueryStep.BuildOrderBy;
+                BuildOrderBy(query, ctx);
             }
 
             //构建Join
@@ -133,8 +116,50 @@ namespace appbox.Store
                     ctx.AppendFormat(" Limit {0} ", query.TopOrPageSize);
             }
 
+            //构建分组、Having及排序
+            BuildGroupBy(query, ctx);
+
             //结束上下文
             ctx.EndBuildQuery(query);
+        }
+
+        private void BuildOrderBy(ISqlSelectQuery query, BuildQueryContext ctx)
+        {
+            ctx.Append(" Order By ");
+            for (int i = 0; i < query.SortItems.Count; i++)
+            {
+                SqlSortItem si = query.SortItems[i];
+                BuildExpression(si.Expression, ctx);
+                if (si.SortType == SortType.DESC)
+                    ctx.Append(" DESC");
+                if (i < query.SortItems.Count - 1)
+                    ctx.Append(" ,");
+            }
+        }
+
+        private void BuildGroupBy(ISqlSelectQuery query, BuildQueryContext ctx)
+        {
+            if (query.GroupByKeys == null || query.GroupByKeys.Length == 0)
+                return;
+
+            ctx.CurrentQueryInfo.BuildStep = BuildQueryStep.BuildGroupBy;
+            ctx.Append(" Group By ");
+            for (int i = 0; i < query.GroupByKeys.Length; i++)
+            {
+                if (i != 0) ctx.Append(",");
+                BuildExpression(query.GroupByKeys[i], ctx);
+            }
+            if (!Expression.IsNull(query.HavingFilter))
+            {
+                ctx.CurrentQueryInfo.BuildStep = BuildQueryStep.BuildHaving;
+                ctx.Append(" Having ");
+                BuildExpression(query.HavingFilter, ctx);
+            }
+            if (query.HasSortItems)
+            {
+                ctx.CurrentQueryInfo.BuildStep = BuildQueryStep.BuildOrderBy;
+                BuildOrderBy(query, ctx);
+            }
         }
 
         private void BuildSelectItem(SqlSelectItemExpression item, BuildQueryContext ctx)
@@ -244,6 +269,9 @@ namespace appbox.Store
                 ////case ExpressionType.DbParameterExpression:
                 ////    BuildDbParameterExpression((DbParameterExpression)exp, ctx);
                 ////    break;
+                case ExpressionType.DbFuncExpression:
+                    BuidDbFuncExpression((DbFuncExpression)exp, ctx);
+                    break;
                 //case ExpressionType.InvocationExpression:
                 //    BuildInvocationExpression((InvocationExpression)exp, ctx);
                 //    break;
@@ -333,6 +361,20 @@ namespace appbox.Store
                 //右操作数
                 BuildExpression(exp.RightOperand, ctx);
             }
+        }
+
+        private void BuidDbFuncExpression(DbFuncExpression exp, BuildQueryContext ctx)
+        {
+            ctx.Append($"{exp.Name.ToString()}(");
+            if (exp.Parameters != null)
+            {
+                for (int i = 0; i < exp.Parameters.Length; i++)
+                {
+                    if (i != 0) ctx.Append(",");
+                    BuildExpression(exp.Parameters[i], ctx);
+                }
+            }
+            ctx.Append(")");
         }
         #endregion
 

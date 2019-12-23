@@ -8,7 +8,6 @@ namespace appbox.Store
     {
 
         #region ====Fields & Properties====
-
         private Dictionary<string, SqlSelectItemExpression> _t;
         private Dictionary<string, SqlSelectItemExpression> _selects;
         private List<SqlSortItem> _sortItems;
@@ -60,10 +59,7 @@ namespace appbox.Store
         /// </summary>
         public Expression Filter { get; set; }
 
-        public bool IsOutQuery
-        {
-            get { return true; }
-        }
+        public bool IsOutQuery => true;
 
         public int TopOrPageSize { get; private set; }
 
@@ -72,6 +68,12 @@ namespace appbox.Store
         public QueryPurpose Purpose { get; }
 
         public bool Distinct { get; set; }
+
+        #region ----GroupBy属性----
+        public SqlSelectItemExpression[] GroupByKeys { get; private set; }
+
+        public Expression HavingFilter { get; private set; }
+        #endregion
 
         #endregion
 

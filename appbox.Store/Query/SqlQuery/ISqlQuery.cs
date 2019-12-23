@@ -6,6 +6,9 @@ namespace appbox.Store
 {
     public interface ISqlQuery
     {
+        /// <summary>
+        /// 过滤条件
+        /// </summary>
         Expression Filter { get; }
     }
 
@@ -20,12 +23,7 @@ namespace appbox.Store
         /// <summary>
         /// 是否外部查询
         /// </summary>
-        bool IsOutQuery { get; }
-
-        ///// <summary>
-        ///// 数据库的名称
-        ///// </summary>
-        //string StoreName { get; }
+        bool IsOutQuery { get; } //TODO: remove it
 
         #region ====分页查询属性====
 
@@ -51,6 +49,15 @@ namespace appbox.Store
 
         bool Distinct { get; }
 
+        /// <summary>
+        /// 分组字段
+        /// </summary>
+        SqlSelectItemExpression[] GroupByKeys { get; }
+
+        /// <summary>
+        /// 分组过滤条件
+        /// </summary>
+        Expression HavingFilter { get; }
     }
 
     public enum QueryPurpose : byte
