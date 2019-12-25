@@ -374,7 +374,7 @@ public class SqlQueryJoin<TSource> : ISqlQueryJoin<TSource> where TSource : SqlE
 }
 
 [RealType("appbox.Store.SqlSubQuery")]
-public class SqlSubQuery<TSource> : ISqlQueryJoin<TSource>
+public class SqlSubQuery<TSource> : ISqlQueryJoin<TSource>, /*伪*/IEnumerable<TSource>
 {
 	private SqlSubQuery() { }
 }

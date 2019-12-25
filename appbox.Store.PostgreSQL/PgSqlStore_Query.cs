@@ -250,15 +250,12 @@ namespace appbox.Store
                 case ExpressionType.PrimitiveExpression:
                     BuildPrimitiveExpression((PrimitiveExpression)exp, ctx);
                     break;
-                //case ExpressionType.GroupExpression:
-                //    BuildGroupExpression((GroupExpression)exp, ctx);
-                //    break;
                 case ExpressionType.SelectItemExpression:
                     BuildSelectItem((SqlSelectItemExpression)exp, ctx);
                     break;
-                //case ExpressionType.SubQueryExpression:
-                //    BuildSubQuery((SubQuery)exp, ctx);
-                //    break;
+                case ExpressionType.SubQueryExpression:
+                    BuildSubQuery((SqlSubQuery)exp, ctx);
+                    break;
                 ////case ExpressionType.DbParameterExpression:
                 ////    BuildDbParameterExpression((DbParameterExpression)exp, ctx);
                 ////    break;
@@ -273,6 +270,13 @@ namespace appbox.Store
             }
         }
 
+        private void BuildSubQuery(SqlSubQuery exp, BuildQueryContext ctx)
+        {
+            ctx.Append("(");
+            BuildNormalQuery(exp.Target, ctx);
+            ctx.Append(")");
+        }
+
         private void BuildPrimitiveExpression(PrimitiveExpression exp, BuildQueryContext ctx)
         {
             if (exp.Value == null)
@@ -281,7 +285,7 @@ namespace appbox.Store
                 return;
             }
 
-            if (exp.Value is IEnumerable list) //用于处理In及NotIn的参数
+            if (exp.Value is IEnumerable list && !(exp.Value is string)) //用于处理In及NotIn的参数
             {
                 ctx.Append("(");
                 bool first = true;

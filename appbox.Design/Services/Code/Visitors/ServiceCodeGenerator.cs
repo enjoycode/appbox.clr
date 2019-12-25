@@ -428,10 +428,8 @@ namespace appbox.Design
                 return interceptor.VisitInvocation(node, methodSymbol, this);
 
             //再判断是否在QueryMethod的Lambda内
-            if (queryMethodCtx.HasAny && queryMethodCtx.Current.InLambdaExpression)
-            {
-                return base.VisitInvocationExpression(node);
-            }
+            //if (queryMethodCtx.HasAny && queryMethodCtx.Current.InLambdaExpression)
+            //    return base.VisitInvocationExpression(node);
 
             bool needPopQueryMethod = false;
             if (methodSymbol != null)

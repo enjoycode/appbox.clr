@@ -78,6 +78,7 @@ namespace appbox.Design
 
             var codegen = new ServiceCodeGenerator(hub, appName, semanticModel, model);
             var newRootNode = codegen.Visit(semanticModel.SyntaxTree.GetRoot()); //.NormalizeWhitespace();
+            //Log.Debug(newRootNode.ToFullString());
 
             var docName = string.Format("{0}.Services.{1}", appName, model.Name);
             var newTree = SyntaxFactory.SyntaxTree(newRootNode, path: docName + ".cs", encoding: Encoding.UTF8);
