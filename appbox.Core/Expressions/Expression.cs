@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Text;
 using appbox.Caching;
 using appbox.Serialization;
@@ -48,10 +49,29 @@ namespace appbox.Expressions
         {
             return new BinaryExpression(this, value, BinaryOperatorType.Assign);
         }
+
+        public BinaryExpression In(Expression list)
+        {
+            return new BinaryExpression(this, list, BinaryOperatorType.In);
+        }
+
+        public BinaryExpression In(IEnumerable list)
+        {
+            return new BinaryExpression(this, new PrimitiveExpression(list), BinaryOperatorType.In);
+        }
+
+        public BinaryExpression NotIn(Expression list)
+        {
+            return new BinaryExpression(this, list, BinaryOperatorType.NotIn);
+        }
+
+        public BinaryExpression NotIn(IEnumerable list)
+        {
+            return new BinaryExpression(this, new PrimitiveExpression(list), BinaryOperatorType.NotIn);
+        }
         #endregion
 
         #region ====操作符重载====
-
         public static Expression operator +(Expression left, Expression right)
         {
             return new BinaryExpression(left, right, BinaryOperatorType.Plus);

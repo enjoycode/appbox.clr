@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Text;
@@ -21,7 +22,6 @@ namespace appbox.Store
             //    BuildTreeNodePathQuery(query, ctx);
             //else
             BuildNormalQuery(query, ctx);
-
             return cmd;
         }
 
@@ -281,7 +281,22 @@ namespace appbox.Store
                 return;
             }
 
-            ctx.AppendFormat("@{0}", ctx.GetParameterName(exp.Value));
+            if (exp.Value is IEnumerable list) //用于处理In及NotIn的参数
+            {
+                ctx.Append("(");
+                bool first = true;
+                foreach (var item in list)
+                {
+                    if (first) first = false;
+                    else ctx.Append(",");
+                    ctx.AppendFormat("@{0}", ctx.GetParameterName(item));
+                }
+                ctx.Append(")");
+            }
+            else
+            {
+                ctx.AppendFormat("@{0}", ctx.GetParameterName(exp.Value));
+            }
         }
 
         private void BuildEntityExpression(EntityExpression exp, BuildQueryContext ctx)
@@ -425,6 +440,9 @@ namespace appbox.Store
                     break;
                 case BinaryOperatorType.In:
                     sb.Append(" In ");
+                    break;
+                case BinaryOperatorType.NotIn:
+                    sb.Append(" Not In ");
                     break;
                 case BinaryOperatorType.Is:
                     sb.Append(" Is ");

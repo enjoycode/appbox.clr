@@ -21,12 +21,20 @@ public static class SimplePerfTest
 	{ throw new Exception(); }
 }
 
-#region ====DbFuncs====
+#region ====DbFuncs && Extensions====
 public static class DbFuncs
 {
 	public static int Sum(int field) { return 0; }
 
 	public static long Sum(long field) { return 0; }
+
+	public static int Avg(int field) { return 0; }
+
+	public static long Avg(long field) { return 0; }
+
+	public static bool In<T>(this T source, IEnumerable<T> list) { return true; }
+
+	public static bool NotIn<T>(this T source, IEnumerable<T> list) { return true; }
 }
 #endregion
 
@@ -292,7 +300,7 @@ public class SqlQuery<TSource> : ISqlQueryJoin<TSource>, ISqlIncluder<TSource> w
 	#region ----Top & Page Methods----
 	public SqlQuery<TSource> Skip(int rows) { return this; }
 
-    public SqlQuery<TSource> Take(int rows) { return this; }
+	public SqlQuery<TSource> Take(int rows) { return this; }
 
 	public SqlQuery<TSource> Page(int pageSize, int pageIndex) { return this; } //TODO: remove it
 	#endregion
@@ -304,7 +312,7 @@ public class SqlQuery<TSource> : ISqlQueryJoin<TSource>, ISqlIncluder<TSource> w
 	#endregion
 
 	#region ----ToXXXX Methods----
-    public Task<int> CountAsync() { return null; }
+	public Task<int> CountAsync() { return null; }
 
 	//[QueryMethod()]
 	//public TResult ToScalar<TResult>(Func<TSource, TResult> selector) { return default(TResult); }

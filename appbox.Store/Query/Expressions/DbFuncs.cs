@@ -7,9 +7,13 @@ using System.Diagnostics;
 
 public static class DbFuncs
 {
-    public static DbFuncExpression Sum(MemberExpression field)
+    public static DbFuncExpression Sum(Expression field)
     {
-        Debug.Assert(field.Type == ExpressionType.FieldExpression);
         return new DbFuncExpression(DbFuncName.Sum, field);
+    }
+
+    public static DbFuncExpression Avg(Expression field)
+    {
+        return new DbFuncExpression(DbFuncName.Avg, field);
     }
 }

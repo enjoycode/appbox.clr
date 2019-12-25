@@ -203,6 +203,7 @@ namespace appbox.Expressions
         Greater = 2,
         GreaterOrEqual = 5,
         In = 17,
+        NotIn = 22,
         Is = 16,
         IsNot = 15,
         Less = 3,
