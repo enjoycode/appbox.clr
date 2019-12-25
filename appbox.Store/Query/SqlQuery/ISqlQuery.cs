@@ -20,27 +20,9 @@ namespace appbox.Store
 
         bool HasSortItems { get; }
 
-        /// <summary>
-        /// 是否外部查询
-        /// </summary>
-        bool IsOutQuery { get; } //TODO: remove it
+        int TakeSize { get; }
 
-        #region ====分页查询属性====
-
-        /// <summary>
-        /// Top或分页大小
-        /// </summary>
-        int TopOrPageSize { get; }
-
-        /// <summary>
-        /// 分页索引号
-        /// </summary>
-        /// <remarks>
-        /// 注意：-1为不分页
-        /// </remarks>
-        int PageIndex { get; }
-
-        #endregion
+        int SkipSize { get; }
 
         /// <summary>
         /// 查询的用途
@@ -63,6 +45,7 @@ namespace appbox.Store
     public enum QueryPurpose : byte
     {
         None,
+        Count,
         ToScalar,
         ToDataTable,
         ToEntityTreeList,

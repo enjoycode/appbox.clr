@@ -290,9 +290,11 @@ public class SqlQuery<TSource> : ISqlQueryJoin<TSource>, ISqlIncluder<TSource> w
 	#endregion
 
 	#region ----Top & Page Methods----
-	public SqlQuery<TSource> Top(int topSize) { return this; }
+	public SqlQuery<TSource> Skip(int rows) { return this; }
 
-	public SqlQuery<TSource> Page(int pageSize, int pageIndex) { return this; }
+    public SqlQuery<TSource> Take(int rows) { return this; }
+
+	public SqlQuery<TSource> Page(int pageSize, int pageIndex) { return this; } //TODO: remove it
 	#endregion
 
 	#region ----Join Methods-----
@@ -302,6 +304,8 @@ public class SqlQuery<TSource> : ISqlQueryJoin<TSource>, ISqlIncluder<TSource> w
 	#endregion
 
 	#region ----ToXXXX Methods----
+    public Task<int> CountAsync() { return null; }
+
 	//[QueryMethod()]
 	//public TResult ToScalar<TResult>(Func<TSource, TResult> selector) { return default(TResult); }
 

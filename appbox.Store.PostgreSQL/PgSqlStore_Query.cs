@@ -30,10 +30,6 @@ namespace appbox.Store
             //设置上下文
             ctx.BeginBuildQuery(query);
 
-            //判断是否分页
-            if (query.PageIndex > -1)
-                ctx.Append("With tt As (");
-
             //构建Select
             ctx.Append("Select ");
             if (query.Purpose == QueryPurpose.ToDataTable && query.Distinct)
@@ -41,25 +37,25 @@ namespace appbox.Store
 
             //构建Select Items
             ctx.CurrentQueryInfo.BuildStep = BuildQueryStep.BuildSelect;
-            foreach (var si in query.Selects.Values)
+            if (query.Purpose == QueryPurpose.Count)
             {
-                BuildSelectItem(si, ctx);
-                ctx.Append(",");
-            }
-            if (query.PageIndex > -1) //分页添加行号
-            {
-                ctx.Append("Row_Number() Over (");
-                BuildOrderBy(query, ctx);
-                ctx.Append(") _rn");
+                ctx.Append("Count(*)");
             }
             else
+            {
+                foreach (var si in query.Selects.Values)
+                {
+                    BuildSelectItem(si, ctx);
+                    ctx.Append(",");
+                }
                 ctx.RemoveLastChar(); //移除最后多余的,号
+            }
 
             //构建From
             ctx.CurrentQueryInfo.BuildStep = BuildQueryStep.BuildFrom;
             ctx.Append(" From ");
             //判断From源
-            if (query.IsOutQuery)
+            if (query is SqlFromQuery)
             {
                 SqlFromQuery q = (SqlFromQuery)ctx.CurrentQuery;
                 //开始构建From子查询
@@ -83,11 +79,14 @@ namespace appbox.Store
                 BuildExpression(ctx.CurrentQuery.Filter, ctx);
             }
 
-            //在非分页及非分组的情况下构建Order By 
-            if (query.GroupByKeys == null && query.PageIndex == -1 && query.HasSortItems)
+            //非分组的情况下构建Order By
+            if (query.Purpose != QueryPurpose.Count)
             {
-                ctx.CurrentQueryInfo.BuildStep = BuildQueryStep.BuildOrderBy;
-                BuildOrderBy(query, ctx);
+                if (query.GroupByKeys == null && query.HasSortItems)
+                {
+                    ctx.CurrentQueryInfo.BuildStep = BuildQueryStep.BuildOrderBy;
+                    BuildOrderBy(query, ctx);
+                }
             }
 
             //构建Join
@@ -99,21 +98,15 @@ namespace appbox.Store
             }
             ctx.BuildQueryAutoJoins(q1); //再处理自动联接
 
-            //处理分页或Top
-            ctx.CurrentQueryInfo.BuildStep = BuildQueryStep.BuildPageTail;
-            if (query.PageIndex > -1)
+            //处理Skip and Take
+            if (query.Purpose != QueryPurpose.Count)
             {
-                ctx.Append(") Select *,(Select max(_rn) From tt) _tr From tt Where _rn Between @");
-                ctx.Append(ctx.GetParameterName(query.PageIndex * query.TopOrPageSize + 1));
-                ctx.Append(" And @");
-                ctx.Append(ctx.GetParameterName((query.PageIndex + 1) * query.TopOrPageSize));
-            }
-            else //不分页追加top等价的limit
-            {
+                if (query.SkipSize > 0)
+                    ctx.AppendFormat(" Offset {0}", query.SkipSize);
                 if (query.Purpose == QueryPurpose.ToSingleEntity)
                     ctx.Append(" Limit 1 ");
-                else if (query.TopOrPageSize > 0)
-                    ctx.AppendFormat(" Limit {0} ", query.TopOrPageSize);
+                else if (query.TakeSize > 0)
+                    ctx.AppendFormat(" Limit {0} ", query.TakeSize);
             }
 
             //构建分组、Having及排序
@@ -352,13 +345,20 @@ namespace appbox.Store
                 else if (exp.BinaryType == BinaryOperatorType.NotEqual)
                     ctx.Append(" NOTNULL");
                 else
-                    throw new System.Exception("BuildBinaryExpression Error.");
+                    throw new Exception("BuildBinaryExpression Error.");
             }
             else
             {
                 //操作符
                 BuildBinaryOperatorType(exp, ctx.CurrentQueryInfo.Out);
                 //右操作数
+                //暂在这里特殊处理Like通配符
+                if (exp.BinaryType == BinaryOperatorType.Like)
+                {
+                    var pattern = exp.RightOperand as PrimitiveExpression;
+                    if (!Expression.IsNull(pattern) && pattern.Value is string)
+                        pattern.Value = $"%{pattern.Value}%";
+                }
                 BuildExpression(exp.RightOperand, ctx);
             }
         }

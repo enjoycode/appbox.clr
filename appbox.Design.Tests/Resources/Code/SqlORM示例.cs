@@ -62,5 +62,16 @@ namespace appbox.Design.Tests.Resources.Code
 			//                                                    .ThenInclude(o => o.City));
 			return order;
 		}
+
+        /// <summary>
+		/// GroupBy Query
+		/// </summary>
+		public async Task<object> Group()
+		{
+			var q = new SqlQuery<Entities.OrderItem>();
+			q.GroupBy(t => t.ProductCode)
+				.Having(t => DbFuncs.Sum(t.Quantity) > 0);
+			return await q.ToListAsync(t => new { t.ProductCode, Amount = DbFuncs.Sum(t.Quantity) });
+		}
 	}
 }

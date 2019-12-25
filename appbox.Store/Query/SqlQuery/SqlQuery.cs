@@ -52,17 +52,15 @@ namespace appbox.Store
 
         public bool HasSortItems => _sortItems != null && _sortItems.Count > 0;
 
-        public bool IsOutQuery => false;
-
         public QueryPurpose Purpose { get; internal set; }
 
         public bool Distinct { get; set; }
 
         #region ----分页查询属性----
 
-        public int TopOrPageSize { get; internal set; }
+        public int TakeSize { get; internal set; }
 
-        public int PageIndex { get; internal set; } = -1;
+        public int SkipSize { get; internal set; } = 0;
 
         #endregion
 
@@ -100,17 +98,22 @@ namespace appbox.Store
         #endregion
 
         #region ====Top & Page & Distinct Methods====
-        public SqlQuery Top(int topSize)
+        public SqlQuery Take(int rows)
         {
-            TopOrPageSize = topSize;
-            PageIndex = -1;
+            TakeSize = rows;
             return this;
         }
 
-        public SqlQuery Page(int pageSize, int pageIndex)
+        public SqlQuery Skip(int rows)
         {
-            TopOrPageSize = pageSize;
-            PageIndex = pageIndex;
+            SkipSize = rows;
+            return this;
+        }
+
+        public SqlQuery Page(int pageSize, int pageIndex) //TODO:remove it
+        {
+            TakeSize = pageSize;
+            SkipSize = pageIndex * pageSize;
             return this;
         }
         #endregion
@@ -130,6 +133,23 @@ namespace appbox.Store
             Selects.Add(item.AliasName, item);
         }
 
+        public async Task<int> CountAsync()
+        {
+            Purpose = QueryPurpose.Count;
+            var model = await Runtime.RuntimeContext.Current.GetModelAsync<EntityModel>(T.ModelID);
+            var db = SqlStore.Get(model.SqlStoreOptions.StoreModelId);
+            var cmd = db.BuildQuery(this);
+            using var conn = db.MakeConnection();
+            await conn.OpenAsync();
+            cmd.Connection = conn;
+            Log.Debug(cmd.CommandText);
+
+            using var reader = await cmd.ExecuteReaderAsync();
+            if (!await reader.ReadAsync())
+                return 0;
+            return reader.GetInt32(0);
+        }
+
         public async Task<Entity> ToSingleAsync()
         {
             Purpose = QueryPurpose.ToSingleEntity;
@@ -146,6 +166,7 @@ namespace appbox.Store
             using var conn = db.MakeConnection();
             await conn.OpenAsync();
             cmd.Connection = conn;
+            Log.Debug(cmd.CommandText);
 
             using var reader = await cmd.ExecuteReaderAsync();
             Entity res = null;
@@ -178,7 +199,7 @@ namespace appbox.Store
             if (selectItem == null || selectItem.Length <= 0)
                 throw new ArgumentException("must select some one");
 
-            if (PageIndex > -1 && !HasSortItems)
+            if (SkipSize > -1 && !HasSortItems)
                 throw new ArgumentException("Paged query must has sort items."); //TODO:加入默认主键排序
 
             Purpose = QueryPurpose.ToDataTable;
@@ -197,6 +218,7 @@ namespace appbox.Store
             using var conn = db.MakeConnection();
             await conn.OpenAsync();
             cmd.Connection = conn;
+            Log.Debug(cmd.CommandText);
 
             var list = new List<TResult>();
             try
@@ -218,9 +240,6 @@ namespace appbox.Store
 
         public async Task<EntityList> ToListAsync()
         {
-            if (PageIndex > -1 && !HasSortItems)
-                throw new ArgumentException("Paged query must has sort items.");
-
             Purpose = QueryPurpose.ToEntityList;
 
             //添加选择项
@@ -339,7 +358,7 @@ namespace appbox.Store
             using var conn = db.MakeConnection();
             await conn.OpenAsync();
             cmd.Connection = conn;
-            //Log.Warn(cmd.CommandText);
+            Log.Debug(cmd.CommandText);
 
             using var reader = await cmd.ExecuteReaderAsync();
             while (await reader.ReadAsync())

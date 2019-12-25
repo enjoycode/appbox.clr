@@ -10,6 +10,7 @@ namespace appbox
 
         public static ILogProvider Logger = new ConsoleLogProvider();
 
+        [System.Diagnostics.Conditional("DEBUG")]
         public static void Debug(string msg, [CallerFilePath] string file = "", [CallerMemberName] string method = "", [CallerLineNumber] int line = 0)
         {
             Logger.Write(LogLevel.Debug, Path.GetFileNameWithoutExtension(file), line, method, msg);

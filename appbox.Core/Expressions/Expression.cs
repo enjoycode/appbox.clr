@@ -119,10 +119,10 @@ namespace appbox.Expressions
             return new BinaryExpression(left, right, BinaryOperatorType.LessOrEqual);
         }
 
-        public static BinaryExpression Op_Like(Expression left, Expression right)
-        {
-            return new BinaryExpression(left, right, BinaryOperatorType.Like);
-        }
+        //public static BinaryExpression Op_Like(Expression left, Expression right)
+        //{
+        //    return new BinaryExpression(left, right, BinaryOperatorType.Like);
+        //}
         #endregion
 
         #region ====隐式转换====

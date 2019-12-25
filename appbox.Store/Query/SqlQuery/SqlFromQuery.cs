@@ -59,11 +59,9 @@ namespace appbox.Store
         /// </summary>
         public Expression Filter { get; set; }
 
-        public bool IsOutQuery => true;
+        public int TakeSize { get; private set; }
 
-        public int TopOrPageSize { get; private set; }
-
-        public int PageIndex { get; private set; }
+        public int SkipSize { get; private set; }
 
         public QueryPurpose Purpose { get; }
 
@@ -176,8 +174,8 @@ namespace appbox.Store
                     Selects.Add(item.Target.AliasName, item.Target);
             }
 
-            TopOrPageSize = topSize;
-            PageIndex = -1;
+            TakeSize = topSize;
+            SkipSize = -1;
 
             return new SqlSubQuery(this);
         }

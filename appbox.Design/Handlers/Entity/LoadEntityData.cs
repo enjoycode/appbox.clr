@@ -37,7 +37,7 @@ namespace appbox.Design
             if (model.SqlStoreOptions != null)
             {
                 var q = new SqlQuery(model.Id);
-                return await q.Top(20).ToListAsync();
+                return await q.Take(20).ToListAsync();
             }
             throw new NotSupportedException();
         }
