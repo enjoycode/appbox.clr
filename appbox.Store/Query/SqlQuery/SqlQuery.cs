@@ -198,9 +198,8 @@ namespace appbox.Store
         {
             if (selectItem == null || selectItem.Length <= 0)
                 throw new ArgumentException("must select some one");
-
-            if (SkipSize > -1 && !HasSortItems)
-                throw new ArgumentException("Paged query must has sort items."); //TODO:加入默认主键排序
+            //if (SkipSize > -1 && !HasSortItems)
+            //    throw new ArgumentException("Paged query must has sort items."); //TODO:加入默认主键排序
 
             Purpose = QueryPurpose.ToDataTable;
 

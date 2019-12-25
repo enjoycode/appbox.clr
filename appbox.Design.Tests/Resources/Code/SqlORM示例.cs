@@ -73,5 +73,19 @@ namespace appbox.Design.Tests.Resources.Code
 				.Having(t => DbFuncs.Sum(t.Quantity) > 0);
 			return await q.ToListAsync(t => new { t.ProductCode, Amount = DbFuncs.Sum(t.Quantity) });
 		}
+
+        /// <summary>
+		/// SubQuery
+		/// </summary>
+		public async Task<object> SubQuery()
+		{
+			var q = new SqlQuery<Entities.OrderItem>();
+			var sq = new SqlQuery<Entities.Product>();
+
+			q.Where(t => t.ProductCode.In(
+				sq.Where(p => p.Name.Contains("15")).AsSubQuery(p => p.Code)
+				));
+			return await q.ToListAsync();
+		}
 	}
 }
