@@ -309,6 +309,7 @@ namespace appbox.Store
             {
                 if (BuildStep == BuildQueryStep.BuildWhere
                     || BuildStep == BuildQueryStep.BuildOrderBy
+                    || BuildStep == BuildQueryStep.BuildSkipAndTake
                     || BuildStep == BuildQueryStep.BuildPageTail)
                     return sb2;
                 return sb;
@@ -376,6 +377,7 @@ namespace appbox.Store
         BuildWithCTE,
         BuildPageTail,
         BuildPageOrderBy,
+        BuildSkipAndTake,
         BuildHaving,
     }
 }

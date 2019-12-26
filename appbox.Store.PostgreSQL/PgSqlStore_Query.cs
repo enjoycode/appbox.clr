@@ -101,6 +101,7 @@ namespace appbox.Store
             //处理Skip and Take
             if (query.Purpose != QueryPurpose.Count)
             {
+                ctx.CurrentQueryInfo.BuildStep = BuildQueryStep.BuildSkipAndTake;
                 if (query.SkipSize > 0)
                     ctx.AppendFormat(" Offset {0}", query.SkipSize);
                 if (query.Purpose == QueryPurpose.ToSingleEntity)
