@@ -262,6 +262,9 @@ namespace appbox.Store
                 case ExpressionType.DbFuncExpression:
                     BuidDbFuncExpression((DbFuncExpression)exp, ctx);
                     break;
+                case ExpressionType.DbParameterExpression:
+                    BuildDbParameterExpression((DbParameterExpression)exp, ctx);
+                    break;
                 //case ExpressionType.InvocationExpression:
                 //    BuildInvocationExpression((InvocationExpression)exp, ctx);
                 //    break;
@@ -394,6 +397,11 @@ namespace appbox.Store
                 }
             }
             ctx.Append(")");
+        }
+
+        private void BuildDbParameterExpression(DbParameterExpression exp, BuildQueryContext ctx)
+        {
+            ctx.AppendFormat("@{0}", ctx.GetDbParameterName());
         }
         #endregion
 

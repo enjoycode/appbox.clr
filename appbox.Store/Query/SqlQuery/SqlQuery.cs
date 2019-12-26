@@ -249,14 +249,9 @@ namespace appbox.Store
 
             var db = SqlStore.Get(model.SqlStoreOptions.StoreModelId);
             var list = new EntityList(T.ModelID);
-            await ExecToListInternal(db, list, model);
+            await ToListInternal(db, list, model);
             if (_rootIncluder != null && list != null)
-            {
-                for (int i = 0; i < list.Count; i++)
-                {
-                    await _rootIncluder.LoadEntitySets(db, list[i], null); //TODO: fix txn
-                }
-            }
+                await _rootIncluder.LoadEntitySets(db, list, null); //TODO:fix txn
             return list;
         }
 
@@ -346,7 +341,7 @@ namespace appbox.Store
             //return new TreeNodePath(list);
         }
 
-        private async Task ExecToListInternal(SqlStore db, IList<Entity> list, EntityModel model)
+        private async Task ToListInternal(SqlStore db, IList<Entity> list, EntityModel model)
         {
             //Dictionary<Guid, Entity> dic = null;
             //if (this.Purpose == QueryPurpose.ToEntityTreeList)

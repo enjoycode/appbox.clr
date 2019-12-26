@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using appbox.Data;
@@ -37,6 +39,8 @@ namespace appbox.Store
         public SqlIncluder Parent { get; private set; }
 
         public List<SqlIncluder> Childs { get; private set; }
+
+        private DbCommand _loadEntitySetCmd; //仅用于加载EntitySet，防止重复生成
 
         #region ====Ctor====
         /// <summary>
@@ -178,7 +182,7 @@ namespace appbox.Store
             }
         }
 
-        internal async ValueTask LoadEntitySets(SqlStore db, Entity owner, System.Data.Common.DbTransaction txn)
+        internal async ValueTask LoadEntitySets(SqlStore db, Entity owner, DbTransaction txn)
         {
             if (Childs == null) return;
             for (int i = 0; i < Childs.Count; i++)
@@ -187,23 +191,79 @@ namespace appbox.Store
             }
         }
 
-        private async ValueTask LoopLoadEntitySets(SqlStore db, Entity owner, System.Data.Common.DbTransaction txn)
+        internal async ValueTask LoadEntitySets(SqlStore db, EntityList list, DbTransaction txn)
         {
-            if (Expression.Type == ExpressionType.EntitySetExpression)
+            if (Childs == null) return;
+            if (!Childs.Any(t => t.Expression.Type == ExpressionType.EntitySetExpression)) return;
+
+            //TODO:考虑一次加载方案
+            for (int i = 0; i < list.Count; i++)
             {
-                var list = await db.LoadEntitySet(owner, (EntitySetExpression)Expression, this, txn);
-                //继续加载子级
-                if (Childs == null) return;
-                for (int i = 0; i < Childs.Count; i++)
+                await LoadEntitySets(db, list[i], txn); //TODO: fix txn
+            }
+        }
+
+        private async ValueTask LoopLoadEntitySets(SqlStore db, Entity owner, DbTransaction txn)
+        {
+            if (Expression.Type != ExpressionType.EntitySetExpression) return;
+
+            //判断是否已经生成加载命令
+            var setmm = (EntitySetModel)owner.Model.GetMember(MemberExpression.Name, true);
+            var setModel = await Runtime.RuntimeContext.Current.GetModelAsync<EntityModel>(setmm.RefModelId);
+            if (_loadEntitySetCmd == null)
+            {
+                var fkmm = (EntityRefModel)setModel.GetMember(setmm.RefMemberId, true);
+                SqlQuery q = new SqlQuery(this);
+                //生成条件
+                for (int i = 0; i < fkmm.FKMemberIds.Length; i++)
                 {
-                    if (Childs[i].Expression.Type == ExpressionType.EntitySetExpression)
-                    {
-                        for (int j = 0; j < list.Count; j++)
-                        {
-                            await Childs[i].LoopLoadEntitySets(db, list[j], txn);
-                        }
-                    }
+                    //外键字段 == 当前主键字段
+                    var fkExp = q.T[setModel.GetMember(fkmm.FKMemberIds[i], true).Name];
+                    //var pkValue = owner.GetMember(owner.Model.SqlStoreOptions.PrimaryKeys[i].MemberId).BoxedValue;
+                    q.AndWhere(fkExp == new DbParameterExpression());
                 }
+                //AddSelects
+                SqlQuery.AddAllSelects(q, setModel, ((EntitySetExpression)Expression).RootEntityExpression, null);
+                await AddSelects(q, setModel);
+
+                _loadEntitySetCmd = db.BuildQuery(q);
+            }
+            //重设加载命令外键参数值为主键值
+            for (int i = 0; i < owner.Model.SqlStoreOptions.PrimaryKeys.Count; i++)
+            {
+                var pkValue = owner.GetMember(owner.Model.SqlStoreOptions.PrimaryKeys[i].MemberId).BoxedValue;
+                _loadEntitySetCmd.Parameters[i].Value = pkValue;
+            }
+            //开始执行sql加载
+            using var conn = db.MakeConnection(); //TODO:暂每次new SqlConnection
+            await conn.OpenAsync();
+            _loadEntitySetCmd.Connection = conn;
+            Log.Debug(_loadEntitySetCmd.CommandText);
+
+            using var reader = await _loadEntitySetCmd.ExecuteReaderAsync();
+            var list = new EntityList(setModel.Id);
+            while (await reader.ReadAsync())
+            {
+                Entity obj = SqlQuery.FillEntity(setModel, reader);
+                list.Add(obj);
+            }
+            InitEntitySetForLoad(owner, setmm, list);
+            //继续加载子级
+            await LoadEntitySets(db, list, txn);
+        }
+
+        private static void InitEntitySetForLoad(Entity owner, EntitySetModel entitySetModel, EntityList list)
+        {
+            //设置EntitySet成员, eg: Order.Items
+            ref EntityMember m = ref owner.GetMember(entitySetModel.MemberId);
+            m.Flag.HasLoad = true;
+            m.ObjectValue = list;
+            //循环处理EntityRef引用, eg: Order.Items内每个Item.Order
+            for (int i = 0; i < list.Count; i++)
+            {
+                ref EntityMember rm = ref list[i].GetMember(entitySetModel.RefMemberId);
+                rm.Flag.HasLoad = rm.Flag.HasValue = true;
+                rm.ObjectValue = owner;
             }
         }
         #endregion

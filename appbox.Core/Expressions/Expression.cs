@@ -278,6 +278,7 @@ namespace appbox.Expressions
 
         //InvocationExpression,
         DbFuncExpression,
+        DbParameterExpression,
         //LambdaExpression,
 
         //FormCreationExpression,

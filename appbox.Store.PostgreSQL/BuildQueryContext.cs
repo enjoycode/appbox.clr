@@ -104,7 +104,7 @@ namespace appbox.Store
         /// <returns></returns>
         public string GetParameterName(object value)
         {
-            string pname = null;
+            string pname;
             if (!Parameters.TryGetValue(value, out pname))
             {
                 _parameterIndex += 1;
@@ -122,6 +122,19 @@ namespace appbox.Store
             return pname;
         }
 
+        /// <summary>
+        /// 仅用于DbParameter占位
+        /// </summary>
+        public string GetDbParameterName()
+        {
+            _parameterIndex += 1;
+            var pname = $"p{_parameterIndex.ToString()}";
+            DbParameter para = Command.CreateParameter();
+            para.ParameterName = pname;
+            Command.Parameters.Add(para);
+            return pname;
+        }
+
         public void BeginBuildQuery(ISqlQuery query)
         {
             QueryInfo qi = null;
@@ -132,10 +145,10 @@ namespace appbox.Store
                 qi = AddSubQuery(query);
 
             //设置上级的查询及相应的查询信息
-            if (!ReferenceEquals(query, this.RootQuery))
+            if (!ReferenceEquals(query, RootQuery))
             {
-                qi.ParentQuery = this.CurrentQuery;
-                qi.ParentInfo = this.CurrentQueryInfo;
+                qi.ParentQuery = CurrentQuery;
+                qi.ParentInfo = CurrentQueryInfo;
             }
             //设置当前的查询及相应的查询信息
             CurrentQuery = query;
@@ -235,7 +248,7 @@ namespace appbox.Store
         public string GetEntityRefAliasName(EntityExpression exp, SqlQueryBase query)
         {
             string path = exp.ToString();
-            Dictionary<string, EntityExpression> ds = this.AutoJoins[query];
+            Dictionary<string, EntityExpression> ds = AutoJoins[query];
 
             EntityExpression e = null;
             if (!ds.TryGetValue(path, out e))

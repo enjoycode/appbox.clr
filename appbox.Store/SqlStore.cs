@@ -173,50 +173,6 @@ namespace appbox.Store
             }
         }
 
-        /// <summary>
-        /// 加载指定实体的EntitySet
-        /// </summary>
-        internal async Task<IList<Entity>> LoadEntitySet(Entity owner, Expressions.EntitySetExpression entitySet,
-            SqlIncluder includer, DbTransaction txn = null)
-        {
-            var setmm = (EntitySetModel)owner.Model.GetMember(entitySet.Name, true);
-            var setModel = await RuntimeContext.Current.GetModelAsync<EntityModel>(setmm.RefModelId);
-            var fkmm = (EntityRefModel)setModel.GetMember(setmm.RefMemberId, true);
-
-            SqlQuery q;
-            if (includer != null)
-                q = new SqlQuery(includer);
-            else
-                q = new SqlQuery(setmm.RefModelId);
-            //生成条件
-            for (int i = 0; i < fkmm.FKMemberIds.Length; i++)
-            {
-                //外键字段 == 当前主键字段
-                var fkExp = q.T[setModel.GetMember(fkmm.FKMemberIds[i], true).Name];
-                var pkValue = owner.GetMember(owner.Model.SqlStoreOptions.PrimaryKeys[i].MemberId).BoxedValue;
-                q.AndWhere(fkExp == new Expressions.PrimitiveExpression(pkValue));
-            }
-            var list = await q.ToListAsync();
-            if (list == null) list = new EntityList(setModel.Id);
-            InitEntitySetForLoad(owner, setmm, list);
-            return list;
-        }
-
-        private void InitEntitySetForLoad(Entity owner, EntitySetModel entitySetModel, EntityList list)
-        {
-            //设置EntitySet成员, eg: Order.Items
-            ref EntityMember m = ref owner.GetMember(entitySetModel.MemberId);
-            m.Flag.HasLoad = true;
-            m.ObjectValue = list;
-            //循环处理EntityRef引用, eg: Order.Items内每个Item.Order
-            for (int i = 0; i < list.Count; i++)
-            {
-                ref EntityMember rm = ref list[i].GetMember(entitySetModel.RefMemberId);
-                rm.Flag.HasLoad = rm.Flag.HasValue = true;
-                rm.ObjectValue = owner;
-            }
-        }
-
         public async Task<int> InsertAsync(Entity entity, DbTransaction txn)
         {
             if (entity == null) throw new ArgumentNullException(nameof(entity));

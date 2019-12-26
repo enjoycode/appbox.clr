@@ -317,7 +317,7 @@ public class SqlQuery<TSource> : ISqlQueryJoin<TSource>, ISqlIncluder<TSource> w
 	//[QueryMethod()]
 	//public TResult ToScalar<TResult>(Func<TSource, TResult> selector) { return default(TResult); }
 
-	//public TSource ToSingle() { return default(TSource); }
+	public Task<TSource> ToSingleAsync() { return null; }
 
 	public Task<IList<TSource>> ToListAsync() { return null; }
 
