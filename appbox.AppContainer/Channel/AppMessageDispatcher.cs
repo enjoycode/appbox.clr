@@ -112,45 +112,5 @@ namespace appbox.AppContainer
             if (!ok)
                 Log.Warn("无法加入线程池");
         }
-
-        #region ====Test Methods====
-        private static int nameCount;
-        private async ValueTask InsertEmploeeAsync()
-        {
-            var index = Interlocked.Increment(ref nameCount);
-            string name = $"AAAAA{index}";
-            var txn = await Store.Transaction.BeginAsync();
-            try
-            {
-                var model = await Runtime.RuntimeContext.Current.GetModelAsync<EntityModel>(Consts.SYS_EMPLOEE_MODEL_ID);
-                var emp1 = new Data.Entity(model);
-                emp1.SetString(Consts.EMPLOEE_NAME_ID, name);
-                emp1.SetString(Consts.EMPLOEE_ACCOUNT_ID, name);
-                await Store.EntityStore.InsertEntityAsync(emp1, txn);
-                await txn.CommitAsync();
-            }
-            catch (Exception ex)
-            {
-                Log.Warn(ex.Message);
-                txn.Rollback();
-            }
-        }
-
-        private async ValueTask<string> TestInsertPerf()
-        {
-            return await SimplePerfTest.Run(64, 1000, async (i, j) =>
-            {
-                await InsertEmploeeAsync();
-            });
-        }
-
-        private async ValueTask<string> TestReadPerf()
-        {
-            return await SimplePerfTest.Run(64, 2000, async (i, j) =>
-            {
-                await Store.ModelStore.LoadApplicationAsync(Consts.SYS_APP_ID);
-            });
-        }
-        #endregion
     }
 }

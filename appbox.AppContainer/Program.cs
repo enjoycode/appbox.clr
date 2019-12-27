@@ -1,7 +1,4 @@
-﻿using System;
-using System.Runtime.InteropServices;
-using System.Threading;
-using appbox.Runtime;
+﻿using appbox.Runtime;
 using appbox.Server;
 
 namespace appbox.AppContainer
@@ -26,7 +23,11 @@ namespace appbox.AppContainer
                 //建立通道
                 runtimeCtx.Channel = new SharedMemoryChannel("AppChannel", new AppMessageDispatcher());
                 //初始化存储
+#if FUTURE
                 Store.StoreApi.Init(new Store.AppStoreApi(runtimeCtx.Channel));
+#else
+                Log.Warn("实现初始化默认SqlStore");
+#endif
                 //开始接收并处理消息
                 runtimeCtx.Channel.StartReceiveOnCurrentThread();
             }
@@ -38,7 +39,11 @@ namespace appbox.AppContainer
                     runtimeCtx.services.InjectDebugService(debugSessionId);
                     //同上建立通道并初始化存储
                     runtimeCtx.Channel = new SharedMemoryChannel(debugSessionId.ToString(), new AppMessageDispatcher());
+#if FUTURE
                     Store.StoreApi.Init(new Store.AppStoreApi(runtimeCtx.Channel));
+#else
+                    Log.Warn("实现初始化默认SqlStore");
+#endif
                     //发送已准备好消息给Host进程
 
                     //开始接收并处理消息

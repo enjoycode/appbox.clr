@@ -1,4 +1,6 @@
-﻿using System;
+﻿#if !FUTURE
+
+using System;
 using System.Data.Common;
 using System.IO;
 using System.Linq;
@@ -16,6 +18,58 @@ namespace appbox.Store
     internal static class ModelStore
     {
         private const int APP_DATA_OFFSET = 9;
+
+        private const byte Meta_Application = 0x0C;
+
+        #region ====初始化====
+        /// <summary>
+        /// 如果没有初始化则创建元数据表结构
+        /// </summary>
+        internal static void TryInitMetaStore()
+        {
+            var db = SqlStore.Default;
+            var esc = db.NameEscaper;
+            //暂通过查询判断有无初始化过
+            using var cmd1 = db.MakeCommand();
+            cmd1.CommandText = $"Select {esc}MetaType{esc} From {esc}sys.Meta{esc} Where {esc}MetaType{esc}={Meta_Application} And {esc}Id{esc}={Consts.SYS_APP_ID}";
+            using var conn = db.MakeConnection();
+            try
+            {
+                conn.Open();
+            }
+            catch (Exception ex)
+            {
+                Log.Warn($"Open sql connection error: {ex.Message}");
+                Environment.Exit(1);
+            }
+            
+            cmd1.Connection = conn;
+            try
+            {
+                using var dr = cmd1.ExecuteReader();
+                return;
+            }
+            catch (Exception)
+            {
+                Log.Info("Start create meta store...");
+            }
+
+            using var cmd2 = db.MakeCommand();
+            cmd2.CommandText = $"Create Table {esc}sys.Meta{esc} ({esc}MetaType{esc} char NOT NULL, {esc}Id{esc} varchar(100) NOT NULL, {esc}ModelType{esc} char, {esc}Data{esc} {db.BlobType} NOT NULL);";
+            cmd2.CommandText += $"Alter Table {esc}sys.Meta{esc} Add CONSTRAINT {esc}PK_Meta{esc} Primary Key ({esc}MetaType{esc},{esc}Id{esc});";
+            cmd2.Connection = conn;
+            try
+            {
+                cmd2.ExecuteNonQuery();
+                Log.Info("Create meta store done.");
+            }
+            catch (Exception ex)
+            {
+                Log.Warn($"Create meta store error: {ex.Message}");
+                Environment.Exit(1);
+            }
+        }
+        #endregion
 
         #region ====模型相关操作====
         /// <summary>
@@ -304,3 +358,5 @@ namespace appbox.Store
         #endregion
     }
 }
+
+#endif

@@ -26,7 +26,7 @@ namespace appbox.Models
         internal DataStoreModel() { }
 
         internal DataStoreModel(DataStoreKind kind, string provider, string storeName) :
-            base((ulong)StringHelper.GetHashCode(storeName), storeName) //注意使用一致性Hash产生Id
+            base(unchecked((ulong)StringHelper.GetHashCode(storeName)), storeName) //注意使用一致性Hash产生Id
         {
             Kind = kind;
             Provider = provider;

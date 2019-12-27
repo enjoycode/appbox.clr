@@ -13,15 +13,24 @@ namespace appbox.Store
 
         public override string NameEscaper => "\"";
 
+        public override string BlobType => "bytea";
+
         public override bool IsAtomicUpsertSupported => true;
 
         public override bool UseReaderForOutput => true;
 
         public PgSqlStore(string settings)
         {
-            //根据设置创建ConnectionString
-            var s = Newtonsoft.Json.JsonConvert.DeserializeObject<Settings>(settings);
-            _connectionString = $"Server={s.Host};Port={s.Port};Database={s.Database};Userid={s.User};Password={s.Password};Enlist=true;Pooling=true;MinPoolSize=1;MaxPoolSize=200;";
+            if (settings.StartsWith('{')) //TODO:暂简单判断
+            {
+                //根据设置创建ConnectionString
+                var s = Newtonsoft.Json.JsonConvert.DeserializeObject<Settings>(settings);
+                _connectionString = $"Server={s.Host};Port={s.Port};Database={s.Database};Userid={s.User};Password={s.Password};Enlist=true;Pooling=true;MinPoolSize=1;MaxPoolSize=200;";
+            }
+            else
+            {
+                _connectionString = settings;
+            }
         }
 
         #region ====overrides Create Methods====

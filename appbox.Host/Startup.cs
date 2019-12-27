@@ -27,7 +27,7 @@ namespace appbox.Host
             var type = asm.GetType(configuration["DefaultSqlStore:Type"]);
             var sqlStore = (Store.SqlStore)Activator.CreateInstance(type,
                 configuration["DefaultSqlStore:ConnectionString"]);
-            Store.SqlStore.InitDefaultSqlStore(sqlStore);
+            Store.SqlStore.SetDefaultSqlStore(sqlStore);
 #endif
         }
 

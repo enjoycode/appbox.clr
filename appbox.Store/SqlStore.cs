@@ -26,12 +26,14 @@ namespace appbox.Store
 #if !FUTURE
         internal static SqlStore Default { get; private set; }
 
-        internal static void InitDefaultSqlStore(SqlStore defaultSqlStore)
+        internal static void SetDefaultSqlStore(SqlStore defaultSqlStore)
         {
             Debug.Assert(defaultSqlStore != null);
-            var defaultStoreId = (ulong)StringHelper.GetHashCode("Default"); //同新建
+            var defaultStoreId = unchecked((ulong)StringHelper.GetHashCode("Default")); //同新建
             sqlStores.Add(defaultStoreId, defaultSqlStore);
             Default = defaultSqlStore;
+            //暂在这里尝试初始化Meta表结构
+            ModelStore.TryInitMetaStore();
         }
 #endif
 
@@ -81,6 +83,11 @@ namespace appbox.Store
         /// 名称转义符，如PG用引号包括字段名称\"xxx\"
         /// </summary>
         public abstract string NameEscaper { get; }
+
+        /// <summary>
+        /// 用于消除差异,eg: PgSqlStore=bytea
+        /// </summary>
+        public abstract string BlobType { get; }
 
         /// <summary>
         /// 是否支持原子Upsert
