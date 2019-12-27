@@ -17,8 +17,8 @@ namespace appbox.Store
     /// </summary>
     public abstract class SqlStore
     {
-        public const string TotalRowsColumnName = "_tr";
-        public const string RowNumberColumnName = "_rn";
+        public const string TotalRowsColumnName = "_tr"; //TODO:remove it
+        public const string RowNumberColumnName = "_rn"; //TODO:remove it
 
         #region ====Statics====
         private static readonly Dictionary<ulong, SqlStore> sqlStores = new Dictionary<ulong, SqlStore>();
@@ -32,8 +32,6 @@ namespace appbox.Store
             var defaultStoreId = unchecked((ulong)StringHelper.GetHashCode("Default")); //同新建
             sqlStores.Add(defaultStoreId, defaultSqlStore);
             Default = defaultSqlStore;
-            //暂在这里尝试初始化Meta表结构
-            ModelStore.TryInitMetaStore();
         }
 #endif
 
