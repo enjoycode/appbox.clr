@@ -1,4 +1,6 @@
-﻿using System;
+﻿#if FUTURE
+
+using System;
 using System.Threading.Tasks;
 using System.Linq;
 using appbox.Models;
@@ -15,7 +17,7 @@ namespace appbox.Store
     /// </summary>
     public sealed class IndexScan : KVScan
     {
-        #region ====Fields & Properties====
+#region ====Fields & Properties====
         private readonly byte indexId;
 
         private IndexPredicates _keys;
@@ -30,16 +32,16 @@ namespace appbox.Store
                 return _keys;
             }
         }
-        #endregion
+#endregion
 
-        #region ====Ctor====
+#region ====Ctor====
         public IndexScan(ulong modelId, byte indexId) : base(modelId)
         {
             this.indexId = indexId;
         }
-        #endregion
+#endregion
 
-        #region ====Skip & Take Methods====
+#region ====Skip & Take Methods====
         public IndexScan Skip(uint skip)
         {
             this.skip = skip;
@@ -51,9 +53,9 @@ namespace appbox.Store
             this.take = take;
             return this;
         }
-        #endregion
+#endregion
 
-        #region ====ToXXX Methods====
+#region ====ToXXX Methods====
         /// <summary>
         /// 执行本地索引扫描，分区表与非分区表通用
         /// </summary>
@@ -188,6 +190,8 @@ namespace appbox.Store
                 return list;
             }
         }
-        #endregion
+#endregion
     }
 }
+
+#endif

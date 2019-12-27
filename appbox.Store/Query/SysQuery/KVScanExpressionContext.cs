@@ -1,4 +1,6 @@
-﻿using System;
+﻿#if FUTURE
+
+using System;
 using System.Linq.Expressions;
 
 namespace appbox.Store
@@ -33,3 +35,5 @@ namespace appbox.Store
         }
     }
 }
+
+#endif

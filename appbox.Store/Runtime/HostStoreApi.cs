@@ -1,4 +1,6 @@
-﻿using System;
+﻿#if FUTURE
+
+using System;
 using System.Diagnostics;
 using System.Linq.Expressions;
 using System.Runtime.InteropServices;
@@ -404,3 +406,5 @@ namespace appbox.Store
         #endregion
     }
 }
+
+#endif

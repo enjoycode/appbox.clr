@@ -1,4 +1,6 @@
-﻿using System;
+﻿#if FUTURE
+
+using System;
 using appbox.Data;
 
 namespace appbox.Store
@@ -11,3 +13,5 @@ namespace appbox.Store
         //TODO:缓存同一事务加载的数据, 分为EntityCache及EntityMemberCache
     }
 }
+
+#endif

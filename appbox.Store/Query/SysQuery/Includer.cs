@@ -1,4 +1,6 @@
-﻿using System;
+﻿#if FUTURE
+
+using System;
 using System.Diagnostics;
 using System.Collections.Generic;
 using appbox.Data;
@@ -193,3 +195,5 @@ namespace appbox.Store
         }
     }
 }
+
+#endif

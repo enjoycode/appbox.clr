@@ -1,4 +1,6 @@
-﻿using System;
+﻿#if FUTURE
+
+using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -15,11 +17,11 @@ namespace appbox.Store
     /// </summary>
     public sealed class TableScan : KVScan
     {
-        #region ====Ctor====
+#region ====Ctor====
         public TableScan(ulong modelId) : base(modelId) { }
-        #endregion
+#endregion
 
-        #region ====Skip & Take Methods====
+#region ====Skip & Take Methods====
         public TableScan Skip(uint skip)
         {
             this.skip = skip;
@@ -31,18 +33,18 @@ namespace appbox.Store
             this.take = take;
             return this;
         }
-        #endregion
+#endregion
 
-        #region ====Filter Methods====
+#region ====Filter Methods====
         public TableScan Filter(Expression conditon)
         {
             //t.GetString(1) == "Rick" && t.GetInt32(2) > 20
             filter = conditon;
             return this;
         }
-        #endregion
+#endregion
 
-        #region ====ToXXX Methods====
+#region ====ToXXX Methods====
         /// <summary>
         /// 执行分区扫描，全局表与分区表通用
         /// </summary>
@@ -202,6 +204,8 @@ namespace appbox.Store
             }
             return res;
         }
-        #endregion
+#endregion
     }
 }
+
+#endif

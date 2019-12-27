@@ -1,4 +1,6 @@
-﻿using System;
+﻿#if FUTURE
+
+using System;
 using System.Threading.Tasks;
 using System.Runtime.CompilerServices;
 using appbox.Caching;
@@ -12,7 +14,7 @@ namespace appbox.Store
 {
     public static class EntityStore
     {
-        #region ====静态辅助方法====
+#region ====静态辅助方法====
         //[MethodImpl(MethodImplOptions.AggressiveInlining)]
         //private static unsafe bool MemorySame(void *src, int srcSize, void *dest, int destSize)
         //{
@@ -38,9 +40,9 @@ namespace appbox.Store
             if (lm.HasValue != rm.HasValue) return false;
             return lm.GuidValue == rm.GuidValue && Equals(lm.ObjectValue, rm.ObjectValue); //对象使用Equals比较，不要使用==
         }
-        #endregion
+#endregion
 
-        #region ====分区缓存相关操作====
+#region ====分区缓存相关操作====
         internal static async ValueTask<ulong> TryGetPartionByReadIndex(BytesKey partionKey)
         {
             var pkey = partionKey.CopyToManaged(); //必须在异步await前先Copy
@@ -223,9 +225,9 @@ namespace appbox.Store
 
             return groupId;
         }
-        #endregion
+#endregion
 
-        #region ====数据及索引相关操作====
+#region ====数据及索引相关操作====
         //TODO:*** Insert/Update/Delete本地索引及数据通过BatchCommand优化，减少RPC次数
 
         internal static async ValueTask InsertEntityAsync(Entity entity, Transaction txn)
@@ -676,9 +678,9 @@ namespace appbox.Store
         //    if (groupId == 0)
         //        throw new Exception("Can't get index partion");
         //}
-        #endregion
+#endregion
 
-        #region ====由服务调用的简化方法====
+#region ====由服务调用的简化方法====
         public static async ValueTask SaveAsync(Entity entity)
         {
             using (var txn = await Transaction.BeginAsync())
@@ -876,6 +878,8 @@ namespace appbox.Store
 
             return list;
         }
-        #endregion
+#endregion
     }
 }
+
+#endif

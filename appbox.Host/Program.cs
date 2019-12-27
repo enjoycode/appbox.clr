@@ -1,14 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using appbox.Runtime;
+﻿using appbox.Runtime;
 using appbox.Server;
-using Microsoft.AspNetCore;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 
 namespace appbox.Host
 {
@@ -16,14 +7,16 @@ namespace appbox.Host
     {
         public static void Main(string[] args)
         {
-            Console.WriteLine("Hello Future!");
-
             //初始化运行时
-            RuntimeContext.Init(new HostRuntimeContext(), 0x1041);
+            RuntimeContext.Init(new HostRuntimeContext(), 0x1041); //TODO:fix peerid
             Server.Runtime.SysServiceContainer.Init();
 
-            //启动应用子进程通道
+            //启动应用子进程
             ChildProcess.StartAppContainer();
+
+            //设置调试服务创建消息通道的委托
+            Design.DebugSessionManager.DebugMessageDispatcherMaker =
+                (debugSessionManager) => new HostMessageDispatcher(debugSessionManager);
 
             //启动WebHost
             WebHost.Run(args);

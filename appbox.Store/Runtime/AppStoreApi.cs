@@ -1,4 +1,6 @@
-﻿using System;
+﻿#if FUTURE
+
+using System;
 using System.Threading.Tasks;
 using appbox.Caching;
 using appbox.Runtime;
@@ -182,3 +184,5 @@ namespace appbox.Store
         #endregion
     }
 }
+
+#endif

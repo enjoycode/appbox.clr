@@ -1,4 +1,6 @@
-﻿using System;
+﻿#if FUTURE
+
+using System;
 using appbox.Data;
 using appbox.Server;
 
@@ -36,3 +38,5 @@ namespace appbox.Store
         }
     }
 }
+
+#endif

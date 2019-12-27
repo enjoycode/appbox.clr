@@ -1,4 +1,6 @@
-﻿using System;
+﻿#if FUTURE
+
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using appbox.Data;
@@ -12,7 +14,7 @@ namespace appbox.Store
     /// </summary>
     public abstract class KVScan
     {
-        #region ====Fields & Properties====
+#region ====Fields & Properties====
         //const int MaxTake = 10000;
         protected readonly ulong modelId;
         protected uint skip;
@@ -41,16 +43,16 @@ namespace appbox.Store
                 return _partitions;
             }
         }
-        #endregion
+#endregion
 
-        #region ====Ctor====
+#region ====Ctor====
         protected KVScan(ulong modelId)
         {
             this.modelId = modelId;
         }
-        #endregion
+#endregion
 
-        #region ====TupleFieldExpression Methods====
+#region ====TupleFieldExpression Methods====
         public KVFieldExpression GetString(ushort id)
         {
             return new KVFieldExpression(id, EntityFieldType.String);
@@ -110,9 +112,9 @@ namespace appbox.Store
         {
             return new KVFieldExpression(id, EntityFieldType.Double);
         }
-        #endregion
+#endregion
 
-        #region ====Include Methods====
+#region ====Include Methods====
         /// <summary>
         /// 用于Include EntityRef or EntitySet
         /// </summary>
@@ -139,9 +141,9 @@ namespace appbox.Store
                 await rootIncluder.LoadAsync(list[i], txn);
             }
         }
-        #endregion
+#endregion
 
-        #region ====Partition Methods====
+#region ====Partition Methods====
         protected async ValueTask< ulong[]> GetPartitions(byte appId, EntityModel model)
         {
             ulong[] parts;
@@ -151,6 +153,9 @@ namespace appbox.Store
                 parts = await _partitions.GetPartitions(appId, model);
             return parts;
         }
-        #endregion
+#endregion
     }
 }
+
+
+#endif

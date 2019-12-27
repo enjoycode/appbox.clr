@@ -1,4 +1,6 @@
-﻿using System;
+﻿#if FUTURE
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -19,7 +21,7 @@ namespace appbox.Store
         internal const byte KEY_TYPE_PATH = 0;
         internal const byte KEY_TYPE_FILE = 1;
 
-        #region ====Write Methods====
+#region ====Write Methods====
         public static async ValueTask UploadAsync(byte appId, Stream stream, string toPath)
         {
             //TODO:判断长度超过限制
@@ -203,9 +205,9 @@ namespace appbox.Store
 
             return await StoreApi.Api.BlobCreateChunkAsync(appId, pathPtr, (uint)pathData.Length, needSize);
         }
-        #endregion
+#endregion
 
-        #region ====Read Methods====
+#region ====Read Methods====
         public static async ValueTask DownloadAsync(byte appId, Stream stream, string fromPath)
         {
             if (!fromPath.StartsWith('/'))
@@ -296,9 +298,9 @@ namespace appbox.Store
                 return *srcPtr;
             }
         }
-        #endregion
+#endregion
 
-        #region ====List Methods====
+#region ====List Methods====
         /// <summary>
         /// 列出指定目录下的子目录及文件信息
         /// </summary>
@@ -317,7 +319,7 @@ namespace appbox.Store
             ulong metaRaftGroupId = (ulong)appId << IdUtil.RAFTGROUPID_APPID_OFFSET
                 | (ulong)IdUtil.RAFT_TYPE_BLOB_META << (IdUtil.RAFTGROUPID_FLAGS_OFFFSET + IdUtil.RAFTGROUPID_FLAGS_TYPE_OFFSET);
 
-            #region ----先查询目录是否存在----
+#region ----先查询目录是否存在----
             byte[] pathData = System.Text.Encoding.UTF8.GetBytes(path);
             if (path.Length > 1) //注意: 非根目录替换last '/' 0x2F to 0x00
             {
@@ -348,9 +350,9 @@ namespace appbox.Store
             BlobPath curPath = new BlobPath();
             curPath.ReadFrom(pathMetaData.DataPtr);
             pathMetaData.Dispose();
-            #endregion
+#endregion
 
-            #region ----查询当前目录下子目录----
+#region ----查询当前目录下子目录----
             string pathPrefix = path.Length == 1 ? path : path + "/";
             byte[] childPathPrefixData = System.Text.Encoding.UTF8.GetBytes(pathPrefix);
             childPathPrefixData[childPathPrefixData.Length - 1] = 0;  //注意替换last '/' 0x2F to 0x00
@@ -402,9 +404,9 @@ namespace appbox.Store
                 });
                 scanRes.Dispose();
             }
-            #endregion
+#endregion
 
-            #region ----查询当前目录下文件----
+#region ----查询当前目录下文件----
             if (curPath.Chunks != null && curPath.Chunks.Length > 0)
             {
                 keySize = 19;
@@ -453,14 +455,14 @@ namespace appbox.Store
                     scanRes.Dispose();
                 }
             }
-            #endregion
+#endregion
 
             return list.ToArray();
         }
-        #endregion
+#endregion
     }
 
-    #region ====Structs & Enums====
+#region ====Structs & Enums====
     /// <summary>
     /// 包装BlobPath or BlobFile，用于传至前端
     /// </summary>
@@ -472,7 +474,7 @@ namespace appbox.Store
         public DateTime ModifiedTime;
         public bool IsFile;
 
-        #region ----Json----
+#region ----Json----
         public PayloadType JsonPayloadType => PayloadType.UnknownType;
 
         public void ReadFromJson(ref Utf8JsonReader reader, ReadedObjects objrefs) => throw new NotSupportedException();
@@ -485,7 +487,7 @@ namespace appbox.Store
             writer.WriteString(nameof(ModifiedTime), ModifiedTime);
             writer.WriteBoolean(nameof(IsFile), IsFile);
         }
-        #endregion
+#endregion
 
         internal unsafe void ReadFrom(IntPtr kp, int ks, IntPtr vp, int vs)
         {
@@ -581,5 +583,7 @@ namespace appbox.Store
         kGetFileSegment = 1,
         kGetFileMeta = 10,
     };
-    #endregion
+#endregion
 }
+
+#endif

@@ -1,7 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -20,6 +19,16 @@ namespace appbox.Host
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
+
+#if !FUTURE
+            //加载默认SqlStore
+            var asm = Assembly.LoadFile(Path.Combine(Runtime.RuntimeContext.Current.AppPath,
+                Server.Consts.LibPath, $"{configuration["DefaultSqlStore:Assembly"]}.dll"));
+            var type = asm.GetType(configuration["DefaultSqlStore:Type"]);
+            var sqlStore = (Store.SqlStore)Activator.CreateInstance(type,
+                configuration["DefaultSqlStore:ConnectionString"]);
+            Store.SqlStore.InitDefaultSqlStore(sqlStore);
+#endif
         }
 
         public IConfiguration Configuration { get; }
@@ -72,34 +81,34 @@ namespace appbox.Host
             //TODO:改造为中间件
             app.Use(async (context, next) =>
             {
-               if (context.Request.Path == "/wsapi") //通过WebSocket通道进行Api调用
-               {
-                   if (context.WebSockets.IsWebSocketRequest)
-                   {
-                       var webSocket = await context.WebSockets.AcceptWebSocketAsync();
-                       await Server.Channel.WebSocketManager.OnAccept(context, webSocket);
-                   }
-                   else
-                   {
-                       context.Response.StatusCode = 400;
-                   }
-               }
-               //else if (context.Request.Path == "/ssh")
-               //{
-               //    if (context.WebSockets.IsWebSocketRequest)
-               //    {
-               //        var webSocket = await context.WebSockets.AcceptWebSocketAsync();
-               //        await SSHManager.OnAccept(context, webSocket);
-               //    }
-               //    else
-               //    {
-               //        context.Response.StatusCode = 400;
-               //    }
-               //}
-               else
-               {
-                   await next();
-               }
+                if (context.Request.Path == "/wsapi") //通过WebSocket通道进行Api调用
+                {
+                    if (context.WebSockets.IsWebSocketRequest)
+                    {
+                        var webSocket = await context.WebSockets.AcceptWebSocketAsync();
+                        await Server.Channel.WebSocketManager.OnAccept(context, webSocket);
+                    }
+                    else
+                    {
+                        context.Response.StatusCode = 400;
+                    }
+                }
+                //else if (context.Request.Path == "/ssh")
+                //{
+                //    if (context.WebSockets.IsWebSocketRequest)
+                //    {
+                //        var webSocket = await context.WebSockets.AcceptWebSocketAsync();
+                //        await SSHManager.OnAccept(context, webSocket);
+                //    }
+                //    else
+                //    {
+                //        context.Response.StatusCode = 400;
+                //    }
+                //}
+                else
+                {
+                    await next();
+                }
             });
             //app.UseMetricsMiddleware();
 

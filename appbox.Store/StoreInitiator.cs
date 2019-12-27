@@ -89,7 +89,11 @@ namespace appbox.Store
             testou.SetEntityId(Consts.ORGUNIT_PARENTID_ID, itdeptou.Id);
 
             //事务保存
+#if FUTURE
             var txn = await Transaction.BeginAsync();
+#else
+            var txn = SqlStore.Default.BeginTransaction();
+#endif
             await ModelStore.UpsertFolderAsync(entityRootFolder, txn);
             await ModelStore.UpsertFolderAsync(viewRootFolder, txn);
 
@@ -134,6 +138,7 @@ namespace appbox.Store
             runtime.AddModelCache(staged);
             runtime.AddModelCache(checkout);
 
+#if FUTURE
             await EntityStore.InsertEntityAsync(defaultEnterprise, txn);
             await EntityStore.InsertEntityAsync(itdept, txn);
             await EntityStore.InsertEntityAsync(admin, txn);
@@ -142,6 +147,16 @@ namespace appbox.Store
             await EntityStore.InsertEntityAsync(itdeptou, txn);
             await EntityStore.InsertEntityAsync(adminou, txn);
             await EntityStore.InsertEntityAsync(testou, txn);
+#else
+            await SqlStore.Default.InsertAsync(defaultEnterprise, txn);
+            await SqlStore.Default.InsertAsync(itdept, txn);
+            await SqlStore.Default.InsertAsync(admin, txn);
+            await SqlStore.Default.InsertAsync(test, txn);
+            await SqlStore.Default.InsertAsync(entou, txn);
+            await SqlStore.Default.InsertAsync(itdeptou, txn);
+            await SqlStore.Default.InsertAsync(adminou, txn);
+            await SqlStore.Default.InsertAsync(testou, txn);
+#endif
 
             //添加权限模型在保存OU实例之后
             var admin_permission = new PermissionModel(Consts.SYS_PERMISSION_ADMIN_ID, "Admin");
@@ -153,7 +168,11 @@ namespace appbox.Store
             await ModelStore.InsertModelAsync(admin_permission, txn);
             await ModelStore.InsertModelAsync(developer_permission, txn);
 
+#if FUTURE
             await txn.CommitAsync();
+#else
+            txn.Commit();
+#endif
         }
 
         private static EntityModel CreateEmploeeModel(ApplicationModel app)
@@ -293,7 +312,13 @@ namespace appbox.Store
             return model;
         }
 
-        private static async Task CreateServiceModel(string name, ulong idIndex, Guid? folderId, Transaction txn, List<string> references = null)
+        private static async Task CreateServiceModel(string name, ulong idIndex, Guid? folderId,
+#if FUTURE
+            Transaction txn,
+#else
+            System.Data.Common.DbTransaction txn,
+#endif
+            List<string> references = null)
         {
             var modelId = ((ulong)Consts.SYS_APP_ID << IdUtil.MODELID_APPID_OFFSET)
                 | ((ulong)ModelType.Service << IdUtil.MODELID_TYPE_OFFSET) | (idIndex << IdUtil.MODELID_SEQ_OFFSET);
@@ -310,7 +335,13 @@ namespace appbox.Store
             await ModelStore.UpsertAssemblyAsync(true, $"sys.{name}", asmData, txn);
         }
 
-        private static async Task CreateViewModel(string name, ulong idIndex, Guid? folderId, Transaction txn, string routePath = null)
+        private static async Task CreateViewModel(string name, ulong idIndex, Guid? folderId,
+#if FUTURE
+            Transaction txn,
+#else
+            System.Data.Common.DbTransaction txn,
+#endif
+            string routePath = null)
         {
             var modelId = ((ulong)Consts.SYS_APP_ID << IdUtil.MODELID_APPID_OFFSET)
                 | ((ulong)ModelType.View << IdUtil.MODELID_TYPE_OFFSET) | (idIndex << IdUtil.MODELID_SEQ_OFFSET);

@@ -1,4 +1,6 @@
-﻿using System;
+﻿#if FUTURE
+
+using System;
 namespace appbox.Store
 {
     /// <summary>
@@ -9,3 +11,5 @@ namespace appbox.Store
         
     }
 }
+
+#endif

@@ -1,4 +1,6 @@
-﻿using System;
+﻿#if FUTURE
+
+using System;
 using System.Threading.Tasks;
 using appbox.Data;
 using appbox.Models;
@@ -12,7 +14,7 @@ namespace appbox.Store
         private readonly EntityIndexModel _indexModel;
         private readonly KeyPredicate[] _predicates;
 
-        #region ====Ctor====
+#region ====Ctor====
         public IndexGet(ulong entityModelId, byte indexId)
         {
             var model = RuntimeContext.Current.GetModelAsync<EntityModel>(entityModelId).Result;
@@ -48,7 +50,7 @@ namespace appbox.Store
             _indexModel = indexModel;
             _predicates = new KeyPredicate[_indexModel.Fields.Length];
         }
-        #endregion
+#endregion
 
         public IndexGet Where(KeyPredicate cond)
         {
@@ -122,3 +124,5 @@ namespace appbox.Store
         }
     }
 }
+
+#endif

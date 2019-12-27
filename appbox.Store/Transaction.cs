@@ -1,4 +1,6 @@
-﻿using System;
+﻿#if FUTURE
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
@@ -57,7 +59,7 @@ namespace appbox.Store
             StoreApi.Api.RollbackTransaction(Handle, true);
         }
 
-        #region ====外键引用相关====
+#region ====外键引用相关====
         /// <summary>
         /// 增减外键引用计数值
         /// </summary>
@@ -152,9 +154,9 @@ namespace appbox.Store
             internal uint FromTableId; //注意已包含AppId且按大字节序编码
             internal int Diff;
         }
-        #endregion
+#endregion
 
-        #region ====IDisposable====
+#region ====IDisposable====
         private bool disposedValue;
 
         void Dispose(bool disposing)
@@ -176,6 +178,8 @@ namespace appbox.Store
             Dispose(true);
             GC.SuppressFinalize(this);
         }
-        #endregion
+#endregion
     }
 }
+
+#endif

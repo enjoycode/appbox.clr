@@ -7,7 +7,7 @@ namespace appbox.Host
     public static class WebHost
     {
         private static IWebHost webHost;
-        private static CancellationTokenSource stopCTS = new CancellationTokenSource();
+        private static readonly CancellationTokenSource stopCTS = new CancellationTokenSource();
         private static ushort ListenPort;
 
         public static void StartAsync(ushort port)
@@ -23,9 +23,6 @@ namespace appbox.Host
             webHost.WaitForShutdown();
         }
 
-        /// <summary>
-        /// 仅用于测试
-        /// </summary>
         internal static void Run(string[] args)
         {
             ListenPort = 5000;

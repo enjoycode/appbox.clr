@@ -1,4 +1,6 @@
-﻿using System;
+﻿#if FUTURE
+
+using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using appbox.Models;
@@ -114,7 +116,7 @@ namespace appbox.Store
             }
         }
 
-        #region ====Static Methods====
+#region ====Static Methods====
         /// <summary>
         /// 根据分区键谓词计算扫描PartCF时KeySize
         /// </summary>
@@ -253,6 +255,8 @@ namespace appbox.Store
             }
             return raftGroupIds;
         }
-        #endregion
+#endregion
     }
 }
+
+#endif

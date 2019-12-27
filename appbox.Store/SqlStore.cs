@@ -23,6 +23,18 @@ namespace appbox.Store
         #region ====Statics====
         private static readonly Dictionary<ulong, SqlStore> sqlStores = new Dictionary<ulong, SqlStore>();
 
+#if !FUTURE
+        internal static SqlStore Default { get; private set; }
+
+        internal static void InitDefaultSqlStore(SqlStore defaultSqlStore)
+        {
+            Debug.Assert(defaultSqlStore != null);
+            var defaultStoreId = (ulong)StringHelper.GetHashCode("Default"); //同新建
+            sqlStores.Add(defaultStoreId, defaultSqlStore);
+            Default = defaultSqlStore;
+        }
+#endif
+
         /// <summary>
         /// 获取SqlStore实例，缓存不存在则创建
         /// </summary>
@@ -82,6 +94,8 @@ namespace appbox.Store
         #endregion
 
         #region ====abstract Create Methods====
+        public abstract DbTransaction BeginTransaction();
+
         public abstract DbConnection MakeConnection();
 
         public abstract DbCommand MakeCommand();

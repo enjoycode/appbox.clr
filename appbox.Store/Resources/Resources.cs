@@ -6,7 +6,7 @@ namespace appbox.Store
     static class Resources
     {
 
-        private static readonly Assembly resAssembly = typeof(BlobStore).Assembly;
+        private static readonly Assembly resAssembly = typeof(SqlStore).Assembly;
 
         internal static string GetString(string res)
         {

@@ -1,13 +1,15 @@
-﻿using System;
+﻿#if FUTURE
+
+using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Threading;
-using System.Threading.Tasks;
 using appbox.Runtime;
 using appbox.Server;
 
 namespace appbox
 {
+
     public static class ClrHost
     {
         private static readonly List<NativeMessageHandler> Handlers = new List<NativeMessageHandler>
@@ -129,3 +131,5 @@ namespace appbox
     }
 
 }
+
+#endif
