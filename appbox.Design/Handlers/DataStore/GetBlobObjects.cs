@@ -10,11 +10,15 @@ namespace appbox.Design
     {
         public async Task<object> Handle(DesignHub hub, InvokeArgs args)
         {
+#if FUTURE
             var appName = args.GetString();
             var path = args.GetString();
 
             var app = await RuntimeContext.Current.GetApplicationModelAsync(appName);
             return await Store.BlobStore.ListAsync(app.StoreId, path);
+#else
+            throw new NotImplementedException();
+#endif
         }
     }
 }

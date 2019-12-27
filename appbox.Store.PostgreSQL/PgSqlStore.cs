@@ -25,6 +25,13 @@ namespace appbox.Store
         }
 
         #region ====overrides Create Methods====
+        public override DbTransaction BeginTransaction()
+        {
+            var conn = MakeConnection();
+            conn.Open();
+            return conn.BeginTransaction();
+        }
+
         public override DbConnection MakeConnection()
         {
             return new NpgsqlConnection(_connectionString);

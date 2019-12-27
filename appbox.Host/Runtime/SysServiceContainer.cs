@@ -12,7 +12,9 @@ namespace appbox.Server.Runtime
     {
 
         private static readonly IService AdminService = new Services.AdminService();
+#if FUTURE
         private static readonly IService ClusterService = new Services.ClusterService();
+#endif
         private static readonly IService DesignService = new Design.DesignService();
 
         internal static void Init()
@@ -22,7 +24,7 @@ namespace appbox.Server.Runtime
         internal static bool TryGet(ReadOnlyMemory<char> serviceName, out IService instance)
         {
             //TODO:待实现ReadOnlyMemoryHasher后从字典表获取
-            if(serviceName.Span.SequenceEqual(nameof(DesignService).AsSpan()))
+            if (serviceName.Span.SequenceEqual(nameof(DesignService).AsSpan()))
             {
                 instance = DesignService; return true;
             }
@@ -30,10 +32,12 @@ namespace appbox.Server.Runtime
             {
                 instance = AdminService; return true;
             }
+#if FUTURE
             if (serviceName.Span.SequenceEqual(nameof(ClusterService).AsSpan()))
             {
                 instance = ClusterService; return true;
             }
+#endif
             instance = null;
             return false;
         }

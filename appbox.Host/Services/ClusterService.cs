@@ -1,4 +1,6 @@
-﻿using System;
+﻿#if FUTURE
+
+using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -330,3 +332,5 @@ namespace appbox.Services
     }
     #endregion
 }
+
+#endif

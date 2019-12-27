@@ -66,6 +66,7 @@ namespace appbox.Controllers
             return empModel == null ? "Null" : $"{empModel.Name}";
         }
 
+#if FUTURE
         private static int nameIndex;
         private async ValueTask InsertEmploeeAsync()
         {
@@ -279,6 +280,7 @@ namespace appbox.Controllers
                 await Store.EntityStore.LoadEntitySetAsync(Consts.SYS_ORGUNIT_MODEL_ID, parentId, Consts.ORGUNIT_CHILDS_ID);
             });
         }
+#endif
 
         [HttpGet("GetServiceAsm/{app}/{service}")]
         public async Task<ActionResult> GetServiceAsm(string app, string service)

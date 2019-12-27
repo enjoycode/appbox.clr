@@ -81,9 +81,15 @@ namespace appbox.Services
             }
             //保存
             //oldModel.InDesign = true;
+#if FUTURE
             var txn = await Store.Transaction.BeginAsync();
             await Store.ModelStore.UpdateModelAsync(oldModel, txn, appid => RuntimeContext.Current.GetApplicationModelAsync(appid).Result);
             await txn.CommitAsync();
+#else
+            var txn = Store.SqlStore.Default.BeginTransaction();
+            await Store.ModelStore.UpdateModelAsync(oldModel, txn, appid => RuntimeContext.Current.GetApplicationModelAsync(appid).Result);
+            txn.Commit();
+#endif
 
             //更新服务端缓存
             RuntimeContext.Current.InvalidModelsCache(null, new ulong[] { oldModel.Id }, true);

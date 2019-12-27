@@ -21,8 +21,10 @@ namespace appbox.Design
             var model = (EntityModel)modelNode.Model;
             if (model.SysStoreOptions != null)
             {
+#if FUTURE
                 //注意刷新构建中的索引状态
                 await Store.ModelStore.LoadIndexBuildingStatesAsync(modelNode.AppNode.Model, (EntityModel)modelNode.Model);
+#endif
             }
             else if (model.SqlStoreOptions != null)
             {

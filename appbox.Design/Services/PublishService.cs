@@ -163,7 +163,11 @@ namespace appbox.Design
         {
             package.SortAllModels();
 
+#if FUTURE
             var txn = await Transaction.BeginAsync();
+#else
+            var txn = SqlStore.Default.BeginTransaction();
+#endif
             //注意目前实现无法保证第三方数据库与内置模型存储的一致性,第三方数据库发生异常只能手动清理
             var otherStoreTxns = new Dictionary<ulong, DbTransaction>();
             //TODO:发布锁
@@ -187,7 +191,11 @@ namespace appbox.Design
                     conn.Dispose();
                 }
                 //再递交系统数据库事务
+#if FUTURE
                 await txn.CommitAsync();
+#else
+                txn.Commit();
+#endif
             }
             catch (Exception) { throw; }
             finally
@@ -220,7 +228,12 @@ namespace appbox.Design
             return txn;
         }
 
-        private static async Task SaveModelsAsync(DesignHub hub, PublishPackage package, Transaction txn,
+        private static async Task SaveModelsAsync(DesignHub hub, PublishPackage package,
+#if FUTURE
+            Transaction txn,
+#else
+            DbTransaction txn,
+#endif
             Dictionary<ulong, DbTransaction> otherStoreTxns)
         {
             DbTransaction sqlTxn = null;

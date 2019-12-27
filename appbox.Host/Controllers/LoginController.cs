@@ -25,6 +25,7 @@ namespace appbox.Server.WebHost.Controllers
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] LoginRequire require)
         {
+#if FUTURE
             if (string.IsNullOrEmpty(require.User) || string.IsNullOrEmpty(require.Password))
                 return Ok(new { Succeed = false, Error = "User accout or password is null" });
 
@@ -62,6 +63,9 @@ namespace appbox.Server.WebHost.Controllers
             //返回登录成功
             Log.Debug($"用户[{session.GetFullName()}]登录.");
             return Ok(new { Succeed = true, UserInfo = returnUserInfo });
+#else
+            throw new NotImplementedException();
+#endif
         }
 
         /// <summary>

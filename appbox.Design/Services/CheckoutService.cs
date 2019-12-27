@@ -21,7 +21,11 @@ namespace appbox.Design
 
             //尝试向存储插入签出信息
             var model = await RuntimeContext.Current.GetModelAsync<EntityModel>(Consts.SYS_CHECKOUT_MODEL_ID);
+#if FUTURE
             var txn = await Transaction.BeginAsync();
+#else
+            var txn = SqlStore.Default.BeginTransaction();
+#endif
             try
             {
                 for (int i = 0; i < checkoutInfos.Count; i++)
@@ -34,8 +38,13 @@ namespace appbox.Design
                     obj.SetString(Consts.CHECKOUT_DEVELOPERNAME_ID, info.DeveloperName);
                     obj.SetInt32(Consts.CHECKOUT_VERSION_ID, (int)info.Version);
 
+#if FUTURE
                     await EntityStore.InsertEntityAsync(obj, txn);
                     await txn.CommitAsync();
+#else
+                    await SqlStore.Default.InsertAsync(obj, txn);
+                    txn.Commit();
+#endif
                 }
             }
             catch (Exception)
@@ -64,7 +73,11 @@ namespace appbox.Design
         {
             var list = new Dictionary<string, CheckoutInfo>();
 
+#if FUTURE
             var q = new TableScan(Consts.SYS_CHECKOUT_MODEL_ID);
+#else
+            var q = new SqlQuery(Consts.SYS_CHECKOUT_MODEL_ID);
+#endif
             var res = await q.ToListAsync();
             if (res != null)
             {
@@ -85,20 +98,36 @@ namespace appbox.Design
         /// <summary>
         /// 签入当前用户所有已签出项
         /// </summary>
-        internal static async Task CheckinAsync(Transaction txn)
+        internal static async Task CheckinAsync(
+#if FUTURE
+            Transaction txn
+#else
+            System.Data.Common.DbTransaction txn
+#endif
+            )
         {
             var devId = RuntimeContext.Current.CurrentSession.LeafOrgUnitID;
             var model = await RuntimeContext.Current.GetModelAsync<EntityModel>(Consts.SYS_CHECKOUT_MODEL_ID);
 
             //TODO:***** Use DeleteCommand(join txn), 暂临时使用查询再删除
+#if FUTURE
             var q = new TableScan(Consts.SYS_CHECKOUT_MODEL_ID);
             q.Filter(q.GetGuid(Consts.CHECKOUT_DEVELOPERID_ID) == devId);
+#else
+            var q = new SqlQuery(Consts.SYS_CHECKOUT_MODEL_ID);
+            q.Where(q.T["DeveloperId"] == devId);
+#endif
+
             var list = await q.ToListAsync();
             if (list != null)
             {
                 for (int i = 0; i < list.Count; i++)
                 {
+#if FUTURE
                     await EntityStore.DeleteEntityAsync(model, list[i].Id, txn);
+#else
+                    await SqlStore.Default.DeleteAsync(list[i], txn);
+#endif
                 }
             }
         }

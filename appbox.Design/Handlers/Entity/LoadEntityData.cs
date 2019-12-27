@@ -28,11 +28,13 @@ namespace appbox.Design
             }
             if (model.SysStoreOptions != null)
             {
+#if FUTURE
                 var q = new TableScan(model.Id);
                 var res = await q.Take(20).ToListAsync();
                 if (res == null || res.Count == 0)
                     throw new Exception("no record"); //TODO: 同上
                 return res;
+#endif
             }
             if (model.SqlStoreOptions != null)
             {

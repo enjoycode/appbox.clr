@@ -52,11 +52,17 @@ namespace appbox.Design
         {
             var developerID = RuntimeContext.Current.CurrentSession.LeafOrgUnitID;
 
+#if FUTURE
             var q = new TableScan(Consts.SYS_STAGED_MODEL_ID);
             q.Filter(q.GetGuid(Consts.STAGED_DEVELOPERID_ID) == developerID &
                      q.GetString(Consts.STAGED_MODELID_ID) == serviceModelId.ToString() &
                      q.GetByte(Consts.STAGED_TYPE_ID) == (byte)StagedType.SourceCode);
-
+#else
+            var q = new SqlQuery(Consts.SYS_STAGED_MODEL_ID);
+            q.Where(q.T["DeveloperId"] == developerID &
+                q.T["ModelId"] == serviceModelId.ToString() &
+                q.T["Type"] == (byte)StagedType.SourceCode);
+#endif
             var res = await q.ToListAsync();
             if (res == null || res.Count == 0)
                 return null;
@@ -79,11 +85,17 @@ namespace appbox.Design
         {
             var developerID = RuntimeContext.Current.CurrentSession.LeafOrgUnitID;
 
+#if FUTURE
             var q = new TableScan(Consts.SYS_STAGED_MODEL_ID);
             q.Filter(q.GetGuid(Consts.STAGED_DEVELOPERID_ID) == developerID &
                      q.GetString(Consts.STAGED_MODELID_ID) == modelId.ToString() &
                      q.GetByte(Consts.STAGED_TYPE_ID) == (byte)StagedType.SourceCode);
-
+#else
+            var q = new SqlQuery(Consts.SYS_STAGED_MODEL_ID);
+            q.Where(q.T["DeveloperId"] == developerID &
+                q.T["ModelId"] == modelId.ToString() &
+                q.T["Type"] == (byte)StagedType.SourceCode);
+#endif
             var res = await q.ToListAsync();
             if (res == null || res.Count == 0)
                 return ValueTuple.Create<bool, string, string, string>(false, null, null, null);
@@ -106,11 +118,17 @@ namespace appbox.Design
         {
             var developerID = RuntimeContext.Current.CurrentSession.LeafOrgUnitID;
 
+#if FUTURE
             var q = new TableScan(Consts.SYS_STAGED_MODEL_ID);
             q.Filter(q.GetGuid(Consts.STAGED_DEVELOPERID_ID) == developerID &
                      q.GetString(Consts.STAGED_MODELID_ID) == viewModelId.ToString() &
                      q.GetByte(Consts.STAGED_TYPE_ID) == (byte)StagedType.ViewRuntimeCode);
-
+#else
+            var q = new SqlQuery(Consts.SYS_STAGED_MODEL_ID);
+            q.Where(q.T["DeveloperId"] == developerID &
+                q.T["ModelId"] == viewModelId.ToString() &
+                q.T["Type"] == (byte)StagedType.ViewRuntimeCode);
+#endif
             var res = await q.ToListAsync();
             if (res == null || res.Count == 0)
                 return null;
@@ -127,20 +145,34 @@ namespace appbox.Design
 
             //TODO:使用SelectForUpdate or BatchDelete
 
+#if FUTURE
             var q = new TableScan(Consts.SYS_STAGED_MODEL_ID);
             byte typeValue = (byte)type;
             q.Filter(q.GetByte(Consts.STAGED_TYPE_ID) == typeValue &
                 q.GetString(Consts.STAGED_MODELID_ID) == modelId &
                 q.GetGuid(Consts.STAGED_DEVELOPERID_ID) == developerID);
 
-            var res = await q.ToListAsync();
             var txn = await Transaction.BeginAsync();
+#else
+            var q = new SqlQuery(Consts.SYS_STAGED_MODEL_ID);
+            q.Where(q.T["Type"] == (byte)type &
+                q.T["ModelId"] == modelId &
+                q.T["DeveloperId"] == developerID);
+
+            var txn = SqlStore.Default.BeginTransaction();
+#endif
+
+            var res = await q.ToListAsync();
             if (res != null && res.Count > 0)
             {
                 //TODO:*****临时先删除再重新插入
                 for (int i = 0; i < res.Count; i++)
                 {
+#if FUTURE
                     await EntityStore.DeleteEntityAsync(model, res[i].Id, txn);
+#else
+                    await SqlStore.Default.DeleteAsync(res[i], txn);
+#endif
                 }
             }
 
@@ -149,9 +181,13 @@ namespace appbox.Design
             obj.SetString(Consts.STAGED_MODELID_ID, modelId);
             obj.SetGuid(Consts.STAGED_DEVELOPERID_ID, developerID);
             obj.SetBytes(Consts.STAGED_DATA_ID, data);
+#if FUTURE
             await EntityStore.InsertEntityAsync(obj, txn);
-
             await txn.CommitAsync();
+#else
+            await SqlStore.Default.InsertAsync(obj, txn);
+            txn.Commit();
+#endif
         }
 
         /// <summary>
@@ -163,13 +199,20 @@ namespace appbox.Design
             //TODO:考虑用于DesignTree加载时连服务模型的代码一并加载
             var developerID = RuntimeContext.Current.CurrentSession.LeafOrgUnitID;
 
+#if FUTURE
             var q = new TableScan(Consts.SYS_STAGED_MODEL_ID);
             if (onlyModelsAndFolders)
                 q.Filter(q.GetGuid(Consts.STAGED_DEVELOPERID_ID) == developerID &
                          q.GetByte(Consts.STAGED_TYPE_ID) <= (byte)StagedType.Folder);
             else
                 q.Filter(q.GetGuid(Consts.STAGED_DEVELOPERID_ID) == developerID);
-
+#else
+            var q = new SqlQuery(Consts.SYS_STAGED_MODEL_ID);
+            if (onlyModelsAndFolders)
+                q.Where(q.T["DeveloperId"] == developerID & q.T["Type"] == (byte)StagedType.Folder);
+            else
+                q.Where(q.T["DeveloperId"] == developerID);
+#endif
             var res = await q.ToListAsync();
             return new StagedItems(res);
         }
@@ -177,19 +220,34 @@ namespace appbox.Design
         /// <summary>
         /// 发布时删除当前会话下所有挂起
         /// </summary>
-        internal static async Task DeleteStagedAsync(Transaction txn)
+        internal static async Task DeleteStagedAsync(
+#if FUTURE
+            Transaction txn
+#else
+            System.Data.Common.DbTransaction txn
+#endif
+            )
         {
             //TODO:****暂查询再删除, use BatchDelete
             var devId = RuntimeContext.Current.CurrentSession.LeafOrgUnitID;
             var model = await RuntimeContext.Current.GetModelAsync<EntityModel>(Consts.SYS_STAGED_MODEL_ID);
+#if FUTURE
             var q = new TableScan(Consts.SYS_STAGED_MODEL_ID);
             q.Filter(q.GetGuid(Consts.STAGED_DEVELOPERID_ID) == devId);
+#else
+            var q = new SqlQuery(Consts.SYS_STAGED_MODEL_ID);
+            q.Where(q.T["DeveloperId"] == devId);
+#endif
             var list = await q.ToListAsync();
             if (list == null)
                 return;
             for (int i = 0; i < list.Count; i++)
             {
+#if FUTURE
                 await EntityStore.DeleteEntityAsync(model, list[i].Id, txn);
+#else
+                await SqlStore.Default.DeleteAsync(list[i], txn);
+#endif
             }
         }
 
@@ -201,15 +259,25 @@ namespace appbox.Design
             //TODO:***暂查询再删除
             var devId = RuntimeContext.Current.CurrentSession.LeafOrgUnitID;
             //删除模型
+#if FUTURE
             var q = new TableScan(Consts.SYS_STAGED_MODEL_ID);
             q.Filter(q.GetGuid(Consts.STAGED_DEVELOPERID_ID) == devId
                 & q.GetString(Consts.STAGED_MODELID_ID) == modelId.ToString());
+#else
+            var q = new SqlQuery(Consts.SYS_STAGED_MODEL_ID);
+            q.Where(q.T["DeveloperId"] == devId &
+                q.T["ModelId"] == modelId.ToString());
+#endif
             var list = await q.ToListAsync();
             if (list == null)
                 return;
             for (int i = 0; i < list.Count; i++)
             {
+#if FUTURE
                 await EntityStore.DeleteAsync(list[i]);
+#else
+                await SqlStore.Default.DeleteAsync(list[i], null);
+#endif
             }
         }
     }
