@@ -9,5 +9,10 @@ namespace appbox.Server
     public interface IDesignContext
     {
         EntityModel GetEntityModel(ulong modelID);
+
+        /// <summary>
+        /// 根据AppId获取其名称
+        /// </summary>
+        string GetAppName(uint appId);
     }
 }

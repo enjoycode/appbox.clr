@@ -33,7 +33,7 @@ namespace appbox.Design
                     DesignNodeType.DataStoreNode, model.SqlStoreOptions.StoreModelId.ToString());
                 if (storeNode == null)
                     throw new Exception($"Cannot find Store: {model.SqlStoreOptions.StoreModelId}");
-                model.SqlStoreOptions.StoreName = storeNode.Model.Name;
+                model.SqlStoreOptions.StoreModel = storeNode.Model; //set cache
             }
 
             return modelNode.Model;

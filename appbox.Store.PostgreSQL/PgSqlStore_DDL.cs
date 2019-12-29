@@ -15,12 +15,13 @@ namespace appbox.Store
     {
         protected override IList<DbCommand> MakeCreateTable(EntityModel model, Server.IDesignContext ctx)
         {
+            var tableName = $"{ctx.GetAppName(model.AppId)}.{model.SqlTableName}";
             //List<DbCommand> funcCmds = new List<DbCommand>();
             List<string> fks = new List<string>(); //引用外键集合
 
             var sb = StringBuilderCache.Acquire();
             //Build Create Table
-            sb.Append($"CREATE TABLE \"{model.SqlTableName}\" (");
+            sb.Append($"CREATE TABLE \"{tableName}\" (");
             foreach (var mm in model.Members)
             {
                 if (mm.Type == EntityMemberType.DataField)
@@ -33,7 +34,7 @@ namespace appbox.Store
                     var rm = (EntityRefModel)mm;
                     if (!rm.IsAggregationRef) //只有非聚合引合创建外键
                     {
-                        fks.Add(BuildForeignKey(rm, ctx));
+                        fks.Add(BuildForeignKey(rm, ctx, tableName));
                         //考虑旧实现CreateGetTreeNodeChildsDbFuncCommand
                     }
                 }
@@ -47,7 +48,7 @@ namespace appbox.Store
             {
                 //使用模型标识作为PK名称以避免重命名影响
                 sb.AppendLine();
-                sb.Append($"ALTER TABLE \"{model.SqlTableName}\" ADD CONSTRAINT \"PK_{model.Id}\"");
+                sb.Append($"ALTER TABLE \"{tableName}\" ADD CONSTRAINT \"PK_{model.Id}\"");
                 sb.Append(" PRIMARY KEY (");
                 foreach (var pk in model.SqlStoreOptions.PrimaryKeys)
                 {
@@ -68,7 +69,7 @@ namespace appbox.Store
             res.Add(new NpgsqlCommand(StringBuilderCache.GetStringAndRelease(sb)));
 
             //Build Indexes
-            BuildIndexes(model, res);
+            BuildIndexes(model, res, tableName);
 
             return res;
         }
@@ -76,6 +77,9 @@ namespace appbox.Store
         protected override IList<DbCommand> MakeAlterTable(EntityModel model, Server.IDesignContext ctx)
         {
             //TODO:***处理主键变更
+
+            var tableName = $"{ctx.GetAppName(model.AppId)}.{model.SqlTableName}";
+
             StringBuilder sb;
             bool needCommand = false; //用于判断是否需要处理NpgsqlCommand
             List<string> fks = new List<string>(); //引用外键列表
@@ -84,7 +88,8 @@ namespace appbox.Store
             //先处理表名称有没有变更，后续全部使用新名称
             if (model.IsNameChanged)
             {
-                var renameTableCmd = new NpgsqlCommand($"ALTER TABLE \"{model.SqlTableOriginalName}\" RENAME TO \"{model.SqlTableName}\"");
+                var oldTableName = $"{ctx.GetAppName(model.AppId)}.{model.SqlTableOriginalName}";
+                var renameTableCmd = new NpgsqlCommand($"ALTER TABLE \"{oldTableName}\" RENAME TO \"{tableName}\"");
                 commands.Add(renameTableCmd);
             }
 
@@ -99,8 +104,7 @@ namespace appbox.Store
                     if (m.Type == EntityMemberType.DataField)
                     {
                         needCommand = true;
-                        sb.AppendFormat("ALTER TABLE \"{0}\" DROP COLUMN \"{1}\";",
-                            model.SqlTableName, ((DataFieldModel)m).SqlColOriginalName);
+                        sb.AppendFormat("ALTER TABLE \"{0}\" DROP COLUMN \"{1}\";", tableName, ((DataFieldModel)m).SqlColOriginalName);
                     }
                     else if (m.Type == EntityMemberType.EntityRef)
                     {
@@ -108,7 +112,7 @@ namespace appbox.Store
                         if (!rm.IsAggregationRef)
                         {
                             var fkName = $"FK_{rm.Owner.Id}_{rm.MemberId}"; //TODO:特殊处理DbFirst导入表的外键约束名称
-                            fks.Add($"ALTER TABLE \"{model.SqlTableName}\" DROP CONSTRAINT \"{fkName}\";");
+                            fks.Add($"ALTER TABLE \"{tableName}\" DROP CONSTRAINT \"{fkName}\";");
                         }
                     }
                 }
@@ -152,7 +156,7 @@ namespace appbox.Store
                         var rm = (EntityRefModel)m;
                         if (!rm.IsAggregationRef) //只有非聚合引合创建外键
                         {
-                            fks.Add(BuildForeignKey(rm, ctx));
+                            fks.Add(BuildForeignKey(rm, ctx, tableName));
                             //考虑CreateGetTreeNodeChildsDbFuncCommand
                         }
                     }
@@ -191,7 +195,7 @@ namespace appbox.Store
                         if (dfm.IsDataTypeChanged)
                         {
                             sb = StringBuilderCache.Acquire();
-                            sb.AppendFormat("ALTER TABLE \"{0}\" ALTER COLUMN ", m.Owner.SqlTableName);
+                            sb.AppendFormat("ALTER TABLE \"{0}\" ALTER COLUMN ", tableName);
                             string defaultValue = BuildFieldDefine(dfm, sb, true);
 
                             if (dfm.AllowNull)
@@ -212,7 +216,7 @@ namespace appbox.Store
                         //再处理重命名列
                         if (m.IsNameChanged)
                         {
-                            var renameColCmd = new NpgsqlCommand($"ALTER TABLE \"{model.SqlTableName}\" RENAME COLUMN \"{dfm.SqlColOriginalName}\" TO \"{dfm.SqlColName}\"");
+                            var renameColCmd = new NpgsqlCommand($"ALTER TABLE \"{tableName}\" RENAME COLUMN \"{dfm.SqlColOriginalName}\" TO \"{dfm.SqlColName}\"");
                             commands.Add(renameColCmd);
                         }
                     }
@@ -225,14 +229,15 @@ namespace appbox.Store
             }
 
             //处理索引变更
-            BuildIndexes(model, commands);
+            BuildIndexes(model, commands, tableName);
 
             return commands;
         }
 
-        protected override DbCommand MakeDropTable(EntityModel model)
+        protected override DbCommand MakeDropTable(EntityModel model, Server.IDesignContext ctx)
         {
-            return new NpgsqlCommand($"DROP TABLE IF EXISTS \"{model.SqlTableOriginalName}\"");
+            var tableName = $"{ctx.GetAppName(model.AppId)}.{model.SqlTableOriginalName}"; //使用旧名称
+            return new NpgsqlCommand($"DROP TABLE IF EXISTS \"{tableName}\"");
         }
 
         #region ====Help Methods====
@@ -340,13 +345,13 @@ namespace appbox.Store
             return defaultValue;
         }
 
-        private static string BuildForeignKey(EntityRefModel rm, Server.IDesignContext ctx)
+        private static string BuildForeignKey(EntityRefModel rm, Server.IDesignContext ctx, string tableName)
         {
             var refModel = ctx.GetEntityModel(rm.RefModelIds[0]);
             //使用模型标识+成员标识作为fk name以减少重命名带来的影响
             var fkName = $"FK_{rm.Owner.Id}_{rm.MemberId}";
             var rsb = StringBuilderCache.Acquire();
-            rsb.Append($"ALTER TABLE \"{rm.Owner.SqlTableName}\" ADD CONSTRAINT \"{fkName}\" FOREIGN KEY (");
+            rsb.Append($"ALTER TABLE \"{tableName}\" ADD CONSTRAINT \"{fkName}\" FOREIGN KEY (");
             for (int i = 0; i < rm.FKMemberIds.Length; i++)
             {
                 var fk = (DataFieldModel)rm.Owner.GetMember(rm.FKMemberIds[i], true);
@@ -365,7 +370,7 @@ namespace appbox.Store
             return StringBuilderCache.GetStringAndRelease(rsb);
         }
 
-        private static void BuildIndexes(EntityModel model, List<DbCommand> commands)
+        private static void BuildIndexes(EntityModel model, List<DbCommand> commands, string tableName)
         {
             Debug.Assert(commands != null);
             if (!model.SqlStoreOptions.HasIndexes)
@@ -386,7 +391,7 @@ namespace appbox.Store
                 var sb = StringBuilderCache.Acquire();
                 sb.Append("CREATE ");
                 if (index.Unique) sb.Append("UNIQUE ");
-                sb.Append($"INDEX \"IX_{model.Id}_{index.IndexId}\" ON \"{model.SqlTableName}\" (");
+                sb.Append($"INDEX \"IX_{model.Id}_{index.IndexId}\" ON \"{tableName}\" (");
                 for (int i = 0; i < index.Fields.Length; i++)
                 {
                     if (i != 0) sb.Append(',');

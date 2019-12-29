@@ -21,10 +21,24 @@ namespace appbox.Models
         /// </summary>
         public ulong StoreModelId { get; private set; }
 
+        private DataStoreModel _storeModel;
         /// <summary>
-        /// 仅用于设计时缓存
+        /// 仅用于缓存
         /// </summary>
-        internal string StoreName { get; set; }
+        internal DataStoreModel StoreModel
+        {
+            get
+            {
+                if (_storeModel == null) //仅在运行时可能为null
+                    _storeModel = Runtime.RuntimeContext.Current.GetModelAsync<DataStoreModel>(StoreModelId).Result;
+                return _storeModel;
+            }
+            set
+            {
+                //仅用于设计时
+                _storeModel = value;
+            }
+        }
 
         /// <summary>
         /// 主键成员
@@ -187,7 +201,7 @@ namespace appbox.Models
 
         public void WriteToJson(Utf8JsonWriter writer, WritedObjects objrefs)
         {
-            writer.WriteString(nameof(StoreName), StoreName);
+            writer.WriteString("StoreName", StoreModel.Name);
 
             writer.WritePropertyName(nameof(PrimaryKeys));
             if (HasPrimaryKeys)

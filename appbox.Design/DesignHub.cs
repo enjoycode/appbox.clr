@@ -125,6 +125,11 @@ namespace appbox.Design
         #endregion
 
         #region ====DesignTimeModelContainer====
+        public string GetAppName(uint appId)
+        {
+            return DesignTree.FindApplicationNode(appId).Model.Name;
+        }
+
         public EntityModel GetEntityModel(ulong modelID)
         {
             if (!DesignTree.HasLoad) //注意：签出根文件夹重新加载导致该判断无效

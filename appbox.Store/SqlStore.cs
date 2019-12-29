@@ -143,7 +143,7 @@ namespace appbox.Store
 
         protected internal abstract IList<DbCommand> MakeAlterTable(EntityModel model, Server.IDesignContext ctx);
 
-        protected internal abstract DbCommand MakeDropTable(EntityModel model);
+        protected internal abstract DbCommand MakeDropTable(EntityModel model, Server.IDesignContext ctx);
         #endregion
 
         #region ====DML Methods====
