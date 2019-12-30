@@ -70,7 +70,7 @@ namespace appbox.Store
             ctx.BeginBuildQuery(deleteCommand);
 
             EntityModel m = Runtime.RuntimeContext.Current.GetModelAsync<EntityModel>(deleteCommand.T.ModelID).Result;
-            ctx.AppendFormat("Delete From \"{0}\" t ", m.SqlTableName);
+            ctx.AppendFormat("Delete From \"{0}\" t ", m.GetSqlTableName(false, null));
 
             //构建Where
             ctx.CurrentQueryInfo.BuildStep = BuildQueryStep.BuildWhere;

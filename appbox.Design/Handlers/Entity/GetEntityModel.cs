@@ -11,7 +11,11 @@ namespace appbox.Design
     /// </summary>
     sealed class GetEntityModel : IRequestHandler
     {
-        public async Task<object> Handle(DesignHub hub, InvokeArgs args)
+        public
+#if FUTURE
+            async
+#endif
+            Task<object> Handle(DesignHub hub, InvokeArgs args)
         {
             var modelId = args.GetString();
             var modelNode = hub.DesignTree.FindModelNode(ModelType.Entity, ulong.Parse(modelId));
@@ -33,10 +37,14 @@ namespace appbox.Design
                     DesignNodeType.DataStoreNode, model.SqlStoreOptions.StoreModelId.ToString());
                 if (storeNode == null)
                     throw new Exception($"Cannot find Store: {model.SqlStoreOptions.StoreModelId}");
-                model.SqlStoreOptions.StoreModel = storeNode.Model; //set cache
+                model.SqlStoreOptions.DataStoreModel = storeNode.Model; //set cache
             }
 
+#if FUTURE
             return modelNode.Model;
+#else
+            return Task.FromResult<object>(modelNode.Model);
+#endif
         }
     }
 }

@@ -68,7 +68,7 @@ namespace appbox.Store
             {
                 SqlQuery q = (SqlQuery)ctx.CurrentQuery;
                 var model = Runtime.RuntimeContext.Current.GetModelAsync<EntityModel>(q.T.ModelID).Result;
-                ctx.AppendFormat("\"{0}\" {1}", model.SqlTableName, q.AliasName);
+                ctx.AppendFormat("\"{0}\" {1}", model.GetSqlTableName(false, null), q.AliasName);
             }
 
             //构建Where
@@ -210,7 +210,7 @@ namespace appbox.Store
                 {
                     var j = (SqlQueryJoin)item.Right;
                     var jModel = Runtime.RuntimeContext.Current.GetModelAsync<EntityModel>(j.T.ModelID).Result;
-                    ctx.AppendFormat("\"{0}\" {1} On ", jModel.SqlTableName, j.AliasName);
+                    ctx.AppendFormat("\"{0}\" {1} On ", jModel.GetSqlTableName(false, null), j.AliasName);
                     BuildExpression(item.OnConditon, ctx);
 
                     //再处理手工联接的自动联接

@@ -13,9 +13,9 @@ namespace appbox.Store
 {
     partial class PgSqlStore
     {
-        protected override IList<DbCommand> MakeCreateTable(EntityModel model, Server.IDesignContext ctx)
+        protected override IList<DbCommand> MakeCreateTable(EntityModel model, Design.IDesignContext ctx)
         {
-            var tableName = $"{ctx.GetAppName(model.AppId)}.{model.SqlTableName}";
+            var tableName = model.GetSqlTableName(false, ctx);
             //List<DbCommand> funcCmds = new List<DbCommand>();
             List<string> fks = new List<string>(); //引用外键集合
 
@@ -74,11 +74,11 @@ namespace appbox.Store
             return res;
         }
 
-        protected override IList<DbCommand> MakeAlterTable(EntityModel model, Server.IDesignContext ctx)
+        protected override IList<DbCommand> MakeAlterTable(EntityModel model, Design.IDesignContext ctx)
         {
             //TODO:***处理主键变更
 
-            var tableName = $"{ctx.GetAppName(model.AppId)}.{model.SqlTableName}";
+            var tableName = model.GetSqlTableName(false, ctx);
 
             StringBuilder sb;
             bool needCommand = false; //用于判断是否需要处理NpgsqlCommand
@@ -88,7 +88,7 @@ namespace appbox.Store
             //先处理表名称有没有变更，后续全部使用新名称
             if (model.IsNameChanged)
             {
-                var oldTableName = $"{ctx.GetAppName(model.AppId)}.{model.SqlTableOriginalName}";
+                var oldTableName = model.GetSqlTableName(true, ctx);
                 var renameTableCmd = new NpgsqlCommand($"ALTER TABLE \"{oldTableName}\" RENAME TO \"{tableName}\"");
                 commands.Add(renameTableCmd);
             }
@@ -147,7 +147,7 @@ namespace appbox.Store
                     if (m.Type == EntityMemberType.DataField)
                     {
                         needCommand = true;
-                        sb.AppendFormat("ALTER TABLE \"{0}\" ADD COLUMN ", model.SqlTableName);
+                        sb.AppendFormat("ALTER TABLE \"{0}\" ADD COLUMN ", tableName);
                         BuildFieldDefine((DataFieldModel)m, sb, false);
                         sb.Append(";");
                     }
@@ -234,9 +234,9 @@ namespace appbox.Store
             return commands;
         }
 
-        protected override DbCommand MakeDropTable(EntityModel model, Server.IDesignContext ctx)
+        protected override DbCommand MakeDropTable(EntityModel model, Design.IDesignContext ctx)
         {
-            var tableName = $"{ctx.GetAppName(model.AppId)}.{model.SqlTableOriginalName}"; //使用旧名称
+            var tableName = model.GetSqlTableName(true, ctx); //使用旧名称
             return new NpgsqlCommand($"DROP TABLE IF EXISTS \"{tableName}\"");
         }
 
@@ -345,7 +345,7 @@ namespace appbox.Store
             return defaultValue;
         }
 
-        private static string BuildForeignKey(EntityRefModel rm, Server.IDesignContext ctx, string tableName)
+        private static string BuildForeignKey(EntityRefModel rm, Design.IDesignContext ctx, string tableName)
         {
             var refModel = ctx.GetEntityModel(rm.RefModelIds[0]);
             //使用模型标识+成员标识作为fk name以减少重命名带来的影响
@@ -358,7 +358,7 @@ namespace appbox.Store
                 if (i != 0) rsb.Append(',');
                 rsb.Append($"\"{fk.SqlColName}\"");
             }
-            rsb.Append($") REFERENCES \"{refModel.SqlTableName}\" (");
+            rsb.Append($") REFERENCES \"{refModel.GetSqlTableName(false, ctx)}\" ("); //引用目标使用新名称
             for (int i = 0; i < refModel.SqlStoreOptions.PrimaryKeys.Count; i++)
             {
                 var pk = (DataFieldModel)refModel.GetMember(refModel.SqlStoreOptions.PrimaryKeys[i].MemberId, true);

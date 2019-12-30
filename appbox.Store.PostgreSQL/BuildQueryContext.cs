@@ -276,7 +276,7 @@ namespace appbox.Store
                 var rqModel = Runtime.RuntimeContext.Current.GetModelAsync<EntityModel>(rq.ModelID).Result;
                 //eg: Customer.City的Customer
                 var rqOwnerModel = Runtime.RuntimeContext.Current.GetModelAsync<EntityModel>(rq.Owner.ModelID).Result;
-                AppendFormat(" Left Join \"{0}\" {1} On ", rqModel.SqlTableName, rq.AliasName);
+                AppendFormat(" Left Join \"{0}\" {1} On ", rqModel.GetSqlTableName(false, null), rq.AliasName);
                 //Build ON Condition, other.pks == this.fks
                 var rm = (EntityRefModel)rqOwnerModel.GetMember(rq.Name, true);
                 for (int i = 0; i < rqModel.SqlStoreOptions.PrimaryKeys.Count; i++)

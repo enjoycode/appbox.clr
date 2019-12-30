@@ -7,7 +7,7 @@ namespace appbox.Design
     /// <summary>
     /// 一个开发者对应一个DesignHub实例
     /// </summary>
-    public sealed class DesignHub : Server.IDesignContext, IDisposable //TODO: rename to DesignContext
+    public sealed class DesignHub : IDesignContext, IDisposable //TODO: rename to DesignContext
     {
 
         /// <summary>
@@ -125,9 +125,9 @@ namespace appbox.Design
         #endregion
 
         #region ====DesignTimeModelContainer====
-        public string GetAppName(uint appId)
+        public ApplicationModel GetApplicationModel(uint appId)
         {
-            return DesignTree.FindApplicationNode(appId).Model.Name;
+            return DesignTree.FindApplicationNode(appId).Model;
         }
 
         public EntityModel GetEntityModel(ulong modelID)

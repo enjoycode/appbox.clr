@@ -318,7 +318,7 @@ namespace appbox.Design
                                 {
                                     var sqlStore = SqlStore.Get(em.SqlStoreOptions.StoreModelId);
                                     sqlTxn = await MakeOtherStoreTxn(em.SqlStoreOptions.StoreModelId, otherStoreTxns);
-                                    await sqlStore.DropTableAsync(em, sqlTxn);
+                                    await sqlStore.DropTableAsync(em, sqlTxn, hub);
                                 }
                             }
                             //判断模型类型删除相关代码及编译好的组件

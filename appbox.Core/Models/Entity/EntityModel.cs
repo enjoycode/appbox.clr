@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text.Json;
 using appbox.Serialization;
@@ -34,13 +35,6 @@ namespace appbox.Models
         /// 存储用的标识号，模型标识号后3字节
         /// </summary>
         internal uint TableId => (uint)(Id & 0xFFFFFF);
-
-        /// <summary>
-        /// 保留用于根据规则生成Sql表的名称, eg:相同前缀、命名规则等
-        /// </summary>
-        internal string SqlTableName => Name;
-
-        internal string SqlTableOriginalName => OriginalName;
         #endregion
         #endregion
 
@@ -118,6 +112,41 @@ namespace appbox.Models
         #endregion
 
         #region ====Design Methods====
+#if !FUTURE
+        private string _sqlTableName_cached;
+#endif
+        /// <summary>
+        /// 用于根据规则生成Sql表的名称, eg:相同前缀、命名规则等
+        /// </summary>
+        /// <param name="original">true表示设计时获取旧名称</param>
+        /// <param name="ctx">null表示运行时</param>
+        internal string GetSqlTableName(bool original, Design.IDesignContext ctx)
+        {
+            Debug.Assert(SqlStoreOptions != null);
+#if FUTURE
+            return Name; //暂直接返回名称
+#else
+            if (!original && _sqlTableName_cached != null)
+                return _sqlTableName_cached;
+
+            var name = original ? OriginalName : Name;
+            //if ((SqlStoreOptions.DataStoreModel.NameRules & DataStoreNameRules.AppPrefixForTable)
+            //    == DataStoreNameRules.AppPrefixForTable)
+            //{
+            ApplicationModel app = ctx == null ? Runtime.RuntimeContext.Current.GetApplicationModelAsync(AppId).Result
+                : ctx.GetApplicationModel(AppId);
+            if (original) return $"{app.Name}.{name}";
+
+            _sqlTableName_cached = $"{app.Name}.{name}";
+            //}
+            //else
+            //{
+            //    _sqlTableName_cached = name;
+            //}
+            return _sqlTableName_cached;
+#endif
+        }
+
         protected internal void ChangeSchemaVersion()
         {
             if (PersistentState != Data.PersistentState.Detached && SysStoreOptions != null)

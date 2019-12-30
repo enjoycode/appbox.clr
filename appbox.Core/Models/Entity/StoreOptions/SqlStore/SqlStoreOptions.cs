@@ -21,22 +21,22 @@ namespace appbox.Models
         /// </summary>
         public ulong StoreModelId { get; private set; }
 
-        private DataStoreModel _storeModel;
+        private DataStoreModel _dataStoreModel_cached;
         /// <summary>
         /// 仅用于缓存
         /// </summary>
-        internal DataStoreModel StoreModel
+        internal DataStoreModel DataStoreModel
         {
             get
             {
-                if (_storeModel == null) //仅在运行时可能为null
-                    _storeModel = Runtime.RuntimeContext.Current.GetModelAsync<DataStoreModel>(StoreModelId).Result;
-                return _storeModel;
+                if (_dataStoreModel_cached == null) //仅在运行时可能为null
+                    _dataStoreModel_cached = Runtime.RuntimeContext.Current.GetModelAsync<DataStoreModel>(StoreModelId).Result;
+                return _dataStoreModel_cached;
             }
             set
             {
                 //仅用于设计时
-                _storeModel = value;
+                _dataStoreModel_cached = value;
             }
         }
 
@@ -201,7 +201,7 @@ namespace appbox.Models
 
         public void WriteToJson(Utf8JsonWriter writer, WritedObjects objrefs)
         {
-            writer.WriteString("StoreName", StoreModel.Name);
+            writer.WriteString("StoreName", DataStoreModel.Name);
 
             writer.WritePropertyName(nameof(PrimaryKeys));
             if (HasPrimaryKeys)

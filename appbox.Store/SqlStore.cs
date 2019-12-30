@@ -109,7 +109,7 @@ namespace appbox.Store
         #endregion
 
         #region ====DDL Methods====
-        public async Task CreateTableAsync(EntityModel model, DbTransaction txn, Server.IDesignContext ctx)
+        public async Task CreateTableAsync(EntityModel model, DbTransaction txn, Design.IDesignContext ctx)
         {
             Debug.Assert(txn != null);
             var cmds = MakeCreateTable(model, ctx);
@@ -120,7 +120,7 @@ namespace appbox.Store
             }
         }
 
-        public async Task AlterTableAsync(EntityModel model, DbTransaction txn, Server.IDesignContext ctx)
+        public async Task AlterTableAsync(EntityModel model, DbTransaction txn, Design.IDesignContext ctx)
         {
             Debug.Assert(txn != null);
             var cmds = MakeAlterTable(model, ctx);
@@ -131,22 +131,24 @@ namespace appbox.Store
             }
         }
 
-        public async Task DropTableAsync(EntityModel model, DbTransaction txn)
+        public async Task DropTableAsync(EntityModel model, DbTransaction txn, Design.IDesignContext ctx)
         {
             Debug.Assert(txn != null);
-            var cmd = MakeDropTable(model);
+            var cmd = MakeDropTable(model, ctx);
             cmd.Connection = txn.Connection;
             await cmd.ExecuteNonQueryAsync();
         }
 
-        protected internal abstract IList<DbCommand> MakeCreateTable(EntityModel model, Server.IDesignContext ctx);
+        protected internal abstract IList<DbCommand> MakeCreateTable(EntityModel model, Design.IDesignContext ctx);
 
-        protected internal abstract IList<DbCommand> MakeAlterTable(EntityModel model, Server.IDesignContext ctx);
+        protected internal abstract IList<DbCommand> MakeAlterTable(EntityModel model, Design.IDesignContext ctx);
 
-        protected internal abstract DbCommand MakeDropTable(EntityModel model, Server.IDesignContext ctx);
+        protected internal abstract DbCommand MakeDropTable(EntityModel model, Design.IDesignContext ctx);
         #endregion
 
         #region ====DML Methods====
+        //TODO:**** cache Load\Insert\Update\Delete command
+
         /// <summary>
         /// 从存储加载指定主键的单个实体，不存在返回null
         /// </summary>
@@ -388,8 +390,9 @@ namespace appbox.Store
             var sb = StringBuilderCache.Acquire();
             int pindex = 0;
             EntityMemberModel mm;
+            var tableName = model.GetSqlTableName(false, null);
 
-            sb.Append($"Select * From {NameEscaper}{model.SqlTableName}{NameEscaper} Where ");
+            sb.Append($"Select * From {NameEscaper}{tableName}{NameEscaper} Where ");
             for (int i = 0; i < model.SqlStoreOptions.PrimaryKeys.Count; i++)
             {
                 pindex++;
@@ -420,8 +423,9 @@ namespace appbox.Store
             int pindex = 0;
             string sep = "";
             EntityMemberModel mm;
+            var tableName = model.GetSqlTableName(false, null);
             //开始构建Sql
-            sb.Append($"Insert Into {NameEscaper}{model.SqlTableName}{NameEscaper} (");
+            sb.Append($"Insert Into {NameEscaper}{tableName}{NameEscaper} (");
             for (int i = 0; i < entity.Members.Length; i++)
             {
                 mm = model.GetMember(entity.Members[i].Id, true);
@@ -454,7 +458,9 @@ namespace appbox.Store
             var cmd = MakeCommand();
             var sb = StringBuilderCache.Acquire();
             int pindex = 0;
-            sb.Append($"Delete From {NameEscaper}{model.SqlTableName}{NameEscaper} Where ");
+            var tableName = model.GetSqlTableName(false, null);
+
+            sb.Append($"Delete From {NameEscaper}{tableName}{NameEscaper} Where ");
             //根据主键生成条件
             FieldWithOrder pk;
             DataFieldModel mm;
@@ -484,8 +490,9 @@ namespace appbox.Store
             int pindex = 0;
             EntityMemberModel mm;
             bool hasChangedMember = false;
+            var tableName = model.GetSqlTableName(false, null);
 
-            sb.Append($"Update \"{model.SqlTableName}\" Set ");
+            sb.Append($"Update \"{tableName}\" Set ");
             for (int i = 0; i < model.Members.Count; i++)
             {
                 mm = model.Members[i];
@@ -501,7 +508,7 @@ namespace appbox.Store
                     para.ParameterName = $"V{pindex}";
                     if (m.HasValue)
                     {
-                        para.Value = m.BoxedValue;
+                        para.Value = m.BoxedValue; //TODO: no boxing
                     }
                     else
                     {
