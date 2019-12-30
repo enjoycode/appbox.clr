@@ -77,8 +77,8 @@ namespace appbox.Store
             }
             catch (Exception ex)
             {
-                Log.Warn($"Init default sql store error: {ex.Message}");
-                Environment.Exit(0);
+                Log.Warn($"Init default sql store error: {ex.GetType().Name}\n{ex.Message}\n{ex.StackTrace}");
+                Environment.Exit(0); //TODO:退出前关闭子进程
             }
         }
         #endregion

@@ -330,7 +330,7 @@ namespace appbox.Store
                     sb.Append("bytea ");
                     break;
                 default:
-                    throw new NotImplementedException("PgSqlStore.BuildFieldDefine");
+                    throw new NotImplementedException($"PgSqlStore.BuildFieldDefine with type: {dfm.DataType}");
             }
 
             if (!dfm.AllowNull && !forAlter)
