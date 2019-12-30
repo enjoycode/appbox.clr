@@ -13,6 +13,8 @@ namespace appbox.Store
 
         public override string NameEscaper => "\"";
 
+        public override string ParameterName => "@";
+
         public override string BlobType => "bytea";
 
         public override bool IsAtomicUpsertSupported => true;

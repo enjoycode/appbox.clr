@@ -82,6 +82,8 @@ namespace appbox.Store
         /// </summary>
         public abstract string NameEscaper { get; }
 
+        public abstract string ParameterName { get; }
+
         /// <summary>
         /// 用于消除差异,eg: PgSqlStore=bytea
         /// </summary>

@@ -130,6 +130,7 @@ namespace appbox.Models
                 return _sqlTableName_cached;
 
             var name = original ? OriginalName : Name;
+            //TODO:根据规则生成，另注意默认存储使用默认规则
             //if ((SqlStoreOptions.DataStoreModel.NameRules & DataStoreNameRules.AppPrefixForTable)
             //    == DataStoreNameRules.AppPrefixForTable)
             //{

@@ -28,6 +28,8 @@ namespace appbox.Host
             var sqlStore = (Store.SqlStore)Activator.CreateInstance(type,
                 configuration["DefaultSqlStore:ConnectionString"]);
             Store.SqlStore.SetDefaultSqlStore(sqlStore);
+            //暂在这里尝试初始化默认存储
+            Store.ModelStore.TryInitStoreAsync().Wait();
 #endif
         }
 

@@ -32,7 +32,7 @@ namespace appbox.AppContainer
 #if FUTURE
                 Store.StoreApi.Init(new Store.AppStoreApi(runtimeCtx.Channel));
 #else
-                InitDefaultSqlStore();
+                SetDefaultSqlStore();
 #endif
                 //开始接收并处理消息
                 runtimeCtx.Channel.StartReceiveOnCurrentThread();
@@ -48,7 +48,7 @@ namespace appbox.AppContainer
 #if FUTURE
                     Store.StoreApi.Init(new Store.AppStoreApi(runtimeCtx.Channel));
 #else
-                    InitDefaultSqlStore();
+                    SetDefaultSqlStore();
 #endif
                     //发送已准备好消息给Host进程
 
@@ -65,7 +65,7 @@ namespace appbox.AppContainer
         }
 
 #if !FUTURE
-        private static void InitDefaultSqlStore()
+        private static void SetDefaultSqlStore()
         {
             var settingFile = Path.Combine(RuntimeContext.Current.AppPath, "appsettings.json");
             var settings = JObject.Parse(File.ReadAllText(settingFile));
@@ -74,8 +74,6 @@ namespace appbox.AppContainer
             var asm = Assembly.LoadFile(Path.Combine(RuntimeContext.Current.AppPath, Server.Consts.LibPath, storeSetting.Assembly + ".dll"));
             var sqlStore = (Store.SqlStore)Activator.CreateInstance(asm.GetType(storeSetting.Type), storeSetting.ConnectionString);
             Store.SqlStore.SetDefaultSqlStore(sqlStore);
-            //暂在这里尝试初始化Meta表结构
-            Store.ModelStore.TryInitMetaStore();
         }
 #endif
 

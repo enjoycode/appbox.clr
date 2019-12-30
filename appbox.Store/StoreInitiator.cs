@@ -11,13 +11,20 @@ namespace appbox.Store
     /// </summary>
     static class StoreInitiator
     {
-        internal static async Task InitAsync()
+        internal static async Task InitAsync(
+#if !FUTURE
+            System.Data.Common.DbTransaction txn
+#endif
+            )
         {
             //TODO:判断是否已初始化
             //新建sys ApplicationModel
             var app = new ApplicationModel("appbox", Consts.SYS);
+#if FUTURE
             await ModelStore.CreateApplicationAsync(app);
-
+#else
+            await ModelStore.CreateApplicationAsync(app, txn);
+#endif
             //新建默认文件夹
             var entityRootFolder = new ModelFolder(app.Id, ModelType.Entity);
             var entityOrgUnitsFolder = new ModelFolder(entityRootFolder, "OrgUnits");
@@ -91,8 +98,6 @@ namespace appbox.Store
             //事务保存
 #if FUTURE
             var txn = await Transaction.BeginAsync();
-#else
-            var txn = SqlStore.Default.BeginTransaction();
 #endif
             await ModelStore.UpsertFolderAsync(entityRootFolder, txn);
             await ModelStore.UpsertFolderAsync(viewRootFolder, txn);
@@ -148,14 +153,14 @@ namespace appbox.Store
             await EntityStore.InsertEntityAsync(adminou, txn);
             await EntityStore.InsertEntityAsync(testou, txn);
 #else
-            await SqlStore.Default.InsertAsync(defaultEnterprise, txn);
-            await SqlStore.Default.InsertAsync(itdept, txn);
-            await SqlStore.Default.InsertAsync(admin, txn);
-            await SqlStore.Default.InsertAsync(test, txn);
-            await SqlStore.Default.InsertAsync(entou, txn);
-            await SqlStore.Default.InsertAsync(itdeptou, txn);
-            await SqlStore.Default.InsertAsync(adminou, txn);
-            await SqlStore.Default.InsertAsync(testou, txn);
+            //await SqlStore.Default.InsertAsync(defaultEnterprise, txn);
+            //await SqlStore.Default.InsertAsync(itdept, txn);
+            //await SqlStore.Default.InsertAsync(admin, txn);
+            //await SqlStore.Default.InsertAsync(test, txn);
+            //await SqlStore.Default.InsertAsync(entou, txn);
+            //await SqlStore.Default.InsertAsync(itdeptou, txn);
+            //await SqlStore.Default.InsertAsync(adminou, txn);
+            //await SqlStore.Default.InsertAsync(testou, txn);
 #endif
 
             //添加权限模型在保存OU实例之后
@@ -170,8 +175,6 @@ namespace appbox.Store
 
 #if FUTURE
             await txn.CommitAsync();
-#else
-            txn.Commit();
 #endif
         }
 
@@ -365,4 +368,5 @@ namespace appbox.Store
             await ModelStore.UpsertAssemblyAsync(false, $"sys.{name}", runtimeCodeData, txn);
         }
     }
+
 }

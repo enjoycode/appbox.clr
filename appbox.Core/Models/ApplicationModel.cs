@@ -20,7 +20,7 @@ namespace appbox.Models
         public string Name { get; private set; }
 
         /// <summary>
-        /// 映射至存储的编号，由EntityStore生成
+        /// 映射至系统存储的编号，由EntityStore生成
         /// </summary>
         internal byte StoreId { get; set; }
         internal uint DevModelIdSeq { get; set; } //仅用于导入导出，注意导出前需要从存储刷新
