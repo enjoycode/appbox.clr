@@ -24,13 +24,14 @@ namespace appbox.Store
         private static readonly Dictionary<ulong, SqlStore> sqlStores = new Dictionary<ulong, SqlStore>();
 
 #if !FUTURE
+        internal static readonly ulong DefaultSqlStoreId = unchecked((ulong)StringHelper.GetHashCode("Default"));
+
         internal static SqlStore Default { get; private set; }
 
         internal static void SetDefaultSqlStore(SqlStore defaultSqlStore)
         {
             Debug.Assert(defaultSqlStore != null);
-            var defaultStoreId = unchecked((ulong)StringHelper.GetHashCode("Default")); //同新建
-            sqlStores.Add(defaultStoreId, defaultSqlStore);
+            sqlStores.Add(DefaultSqlStoreId, defaultSqlStore);
             Default = defaultSqlStore;
         }
 #endif
@@ -437,7 +438,21 @@ namespace appbox.Store
                     pindex++;
                     var para = MakeParameter();
                     para.ParameterName = $"V{pindex}";
-                    para.Value = entity.Members[i].BoxedValue;
+                    switch (dfm.DataType)
+                    {
+                        case EntityFieldType.UInt16:
+                            para.Value = unchecked((short)entity.Members[i].UInt16Value);
+                            break;
+                        case EntityFieldType.UInt32:
+                            para.Value = unchecked((int)entity.Members[i].UInt32Value);
+                            break;
+                        case EntityFieldType.UInt64:
+                            para.Value = unchecked((long)entity.Members[i].UInt64Value);
+                            break;
+                        default:
+                            para.Value = entity.Members[i].BoxedValue; //TODO: no boxing
+                            break;
+                    }
                     cmd.Parameters.Add(para);
 
                     sb.Append($"{sep}{NameEscaper}{dfm.SqlColName}{NameEscaper}");
@@ -474,7 +489,7 @@ namespace appbox.Store
                 pindex++;
                 var para = MakeParameter();
                 para.ParameterName = $"V{pindex}";
-                para.Value = entity.GetMember(pk.MemberId).BoxedValue;
+                para.Value = entity.GetMember(pk.MemberId).BoxedValue; //TODO: no boxing
                 cmd.Parameters.Add(para);
 
                 if (i != 0) sb.Append(" And");
@@ -510,7 +525,21 @@ namespace appbox.Store
                     para.ParameterName = $"V{pindex}";
                     if (m.HasValue)
                     {
-                        para.Value = m.BoxedValue; //TODO: no boxing
+                        switch (dfm.DataType)
+                        {
+                            case EntityFieldType.UInt16:
+                                para.Value = unchecked((short)entity.Members[i].UInt16Value);
+                                break;
+                            case EntityFieldType.UInt32:
+                                para.Value = unchecked((int)entity.Members[i].UInt32Value);
+                                break;
+                            case EntityFieldType.UInt64:
+                                para.Value = unchecked((long)entity.Members[i].UInt64Value);
+                                break;
+                            default:
+                                para.Value = entity.Members[i].BoxedValue; //TODO: no boxing
+                                break;
+                        }
                     }
                     else
                     {
