@@ -18,10 +18,11 @@ namespace appbox.Store
 
             //if (query.Purpose == QueryPurpose.ToEntityTreeList)
             //    BuildTreeQuery(query, ctx);
-            //else if (query.Purpose == QueryPurpose.ToTreeNodePath)
-            //    BuildTreeNodePathQuery(query, ctx);
             //else
-            BuildNormalQuery(query, ctx);
+            if (query.Purpose == QueryPurpose.ToTreeNodePath)
+                BuildTreeNodePathQuery(query, ctx);
+            else
+                BuildNormalQuery(query, ctx);
             return cmd;
         }
 
@@ -115,6 +116,77 @@ namespace appbox.Store
 
             //结束上下文
             ctx.EndBuildQuery(query);
+        }
+
+        private void BuildTreeNodePathQuery(ISqlSelectQuery query, BuildQueryContext ctx)
+        {
+            //设置上下文
+            ctx.BeginBuildQuery(query);
+
+            ctx.Append("With RECURSIVE cte (\"Id\",\"ParentId\",\"Text\",\"Level\") As (Select ");
+            //Select Anchor
+            ctx.SetBuildStep(BuildQueryStep.BuildSelect);
+            BuildCTE_SelectItems(query, ctx, true);
+            ctx.Append("0 From ");
+            //From Anchor
+            ctx.SetBuildStep(BuildQueryStep.BuildFrom);
+            SqlQuery q = (SqlQuery)query;
+            var model = Runtime.RuntimeContext.Current.GetModelAsync<EntityModel>(q.T.ModelID).Result;
+            ctx.AppendFormat("\"{0}\" As {1}", model.GetSqlTableName(false, null), q.AliasName);
+            //Where Anchor
+            ctx.SetBuildStep(BuildQueryStep.BuildWhere);
+            if (!Equals(null, query.Filter))
+            {
+                ctx.Append(" Where ");
+                BuildExpression(query.Filter, ctx);
+            }
+            //End 1
+            ctx.EndBuildQuery(query);
+
+            //Union all
+            ctx.SetBuildStep(BuildQueryStep.BuildSelect);
+            ctx.Append(" Union All Select ");
+            //Select 2
+            //ctx.SetBuildStep(BuildQueryStep.BuildSelect);
+            BuildCTE_SelectItems(query, ctx, true);
+            ctx.Append("\"Level\" + 1 From ");
+            //From 2
+            ctx.SetBuildStep(BuildQueryStep.BuildFrom);
+            ctx.AppendFormat("\"{0}\" As {1}", model.GetSqlTableName(false, null), q.AliasName);
+            //Inner Join 
+            ctx.Append(" Inner Join cte as d On d.\"ParentId\"=t.\"Id\" ) Select * From cte");
+
+            //End 1
+            ctx.EndBuildQuery(query);
+        }
+
+        private void BuildCTE_SelectItems(ISqlSelectQuery query, BuildQueryContext ctx, bool forTeeNodePath = false)
+        {
+            //ctx.IsBuildCTESelectItem = true;
+            foreach (var si in query.Selects.Values)
+            {
+                FieldExpression fsi = si.Expression as FieldExpression;
+                if (!Expression.IsNull(fsi))
+                {
+                    if (Equals(fsi.Owner.Owner, null))
+                    {
+                        if (forTeeNodePath)
+                            ctx.AppendFormat("t.\"{0}\" \"{1}\",", fsi.Name, si.AliasName);
+                        else
+                            ctx.AppendFormat("t.\"{0}\",", fsi.Name);
+                    }
+                }
+                //else if (forTeeNodePath)
+                //{
+                //    var aggRefField = si.Expression as AggregationRefFieldExpression;
+                //    if (!object.Equals(null, aggRefField))
+                //    {
+                //        BuildAggregationRefFieldExpression(aggRefField, ctx);
+                //        ctx.AppendFormat(" \"{0}\",", si.AliasName);
+                //    }
+                //}
+            }
+            //ctx.IsBuildCTESelectItem = false;
         }
 
         private void BuildOrderBy(ISqlSelectQuery query, BuildQueryContext ctx)

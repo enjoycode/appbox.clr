@@ -293,52 +293,40 @@ namespace appbox.Store
         /// </summary>
         /// <returns>注意：可能返回Null</returns>
         /// <param name="parentMember">Parent member.</param>
-        public TreeNodePath ToTreeNodePath(MemberExpression parentMember)
+        public async Task<TreeNodePath> ToTreeNodePathAsync(MemberExpression parentMember, Expression displayText)
         {
-            throw new NotImplementedException();
-            ////todo:验证parentMember为EntityExpression,且非聚合引用，且引用目标为自身
-            //var refMember = parentMember as EntityExpression;
-            //if (Expression.IsNull(refMember))
-            //{
-            //    throw new ArgumentException("parentMember must be EntityRef", nameof(parentMember));
-            //}
-            //var entityModel = RuntimeContext.Default.EntityModelContainer.GetModel(T.ModelID);
-            //var refModel = (EntityRefModel)entityModel[refMember.Name];
-            //if (refModel.IsAggregationRef)
-            //{
-            //    throw new ArgumentException("can not be AggregationRef", nameof(parentMember));
-            //}
-            //if (refModel.GetRefModel(0).ID != entityModel.ID)
-            //{
-            //    throw new ArgumentException("must be self-ref", nameof(parentMember));
-            //}
+            //todo:验证parentMember为EntityExpression,且非聚合引用，且引用目标为自身
+            var refMember = parentMember as EntityExpression;
+            if (Expression.IsNull(refMember))
+                throw new ArgumentException("parentMember must be EntityRef", nameof(parentMember));
 
-            //this.Purpose = QueryPurpose.ToTreeNodePath;
-            //this.AddSelectItem(new SelectItemExpression(T["ID"]));
-            //this.AddSelectItem(new SelectItemExpression(T[parentMember.Name + "ID"], "ParentID"));
-            //var toStringExp = entityModel.ToStringExpression;
-            //if (Expression.IsNull(toStringExp))
-            //{
-            //    this.AddSelectItem(new SelectItemExpression(this.T["ID"], "Text"));
-            //}
-            //else
-            //{
-            //    var newExp = ToStringExpressionHelper.ReplaceEntityExpression(toStringExp, this.T);
-            //    this.AddSelectItem(new SelectItemExpression(newExp, "Text"));
-            //}
+            var model = await Runtime.RuntimeContext.Current.GetModelAsync<EntityModel>(T.ModelID);
+            var refModel = (EntityRefModel)model.GetMember(refMember.Name, true);
+            if (refModel.IsAggregationRef)
+                throw new ArgumentException("can not be AggregationRef", nameof(parentMember));
+            if (refModel.RefModelIds[0] != model.Id)
+                throw new ArgumentException("must be self-ref", nameof(parentMember));
 
-            //var db = SqlStore.Get(this.StoreName);
-            //var cmd = db.DbCommandBuilder.CreateQueryCommand(this);
-            //var list = new List<TreeNodeInfo>();
-            //db.ExecuteReader(cmd, reader =>
-            //{
-            //    while (reader.Read())
-            //    {
-            //        list.Add(new TreeNodeInfo() { ID = reader.GetGuid(0), Text = reader.GetString(2) });
-            //    }
-            //});
+            Purpose = QueryPurpose.ToTreeNodePath;
+            AddSelectItem(new SqlSelectItemExpression(T["Id"])); //TODO: fix Id to pk
+            AddSelectItem(new SqlSelectItemExpression(T[parentMember.Name + "Id"], "ParentId")); //TODO:fix fk
+            AddSelectItem(new SqlSelectItemExpression(displayText, "Text"));
 
-            //return new TreeNodePath(list);
+            var db = SqlStore.Get(model.SqlStoreOptions.StoreModelId);
+            using var cmd = db.BuildQuery(this);
+            using var conn = db.MakeConnection();
+            await conn.OpenAsync();
+            cmd.Connection = conn;
+            Log.Debug(cmd.CommandText);
+
+            var list = new List<TreeNodeInfo>();
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                list.Add(new TreeNodeInfo() { ID = reader.GetGuid(0), Text = reader.GetString(2) });
+            }
+
+            return new TreeNodePath(list);
         }
 
         private async Task ToListInternal(SqlStore db, IList<Entity> list, EntityModel model)

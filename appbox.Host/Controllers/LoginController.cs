@@ -1,11 +1,9 @@
 ﻿using System;
-using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 using appbox.Data;
 using appbox.Store;
 using appbox.Runtime;
@@ -25,10 +23,10 @@ namespace appbox.Server.WebHost.Controllers
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] LoginRequire require)
         {
-#if FUTURE
             if (string.IsNullOrEmpty(require.User) || string.IsNullOrEmpty(require.Password))
                 return Ok(new { Succeed = false, Error = "User accout or password is null" });
 
+#if FUTURE
             //TODO:以下逻辑合并至ServerMessageDispatcher.ProcessLoginRequire
 
             //根据账号索引查询
@@ -53,6 +51,33 @@ namespace appbox.Server.WebHost.Controllers
 
             TreeNodePath path = await EntityStore.LoadTreeNodePathAsync(
                 appbox.Consts.SYS_ORGUNIT_MODEL_ID, ous[0].Id, appbox.Consts.ORGUNIT_PARENT_ID, appbox.Consts.ORGUNIT_NAME_ID);
+
+#else
+            //查找账号并验证密码
+            var q = new SqlQuery(appbox.Consts.SYS_EMPLOEE_MODEL_ID);
+            q.Where(q.T["Account"] == require.User);
+            var emp = await q.ToSingleAsync();
+            if (emp == null)
+                return Ok(new { Succeed = false, Error = "User account not exists" });
+            Guid emploeeID = emp.GetGuid(StoreInitiator.PK_Member_Id);
+
+            byte[] passData = emp.GetBytes(appbox.Consts.EMPLOEE_PASSWORD_ID);
+            if (passData == null)
+                return Ok(new { Succeed = false, Error = "User password not exists" });
+
+            if (!RuntimeContext.PasswordHasher.VerifyHashedPassword(passData, require.Password))
+                return Ok(new { Succeed = false, Error = "Password not match" });
+            //查找对应的OrgUnits
+            var q1 = new SqlQuery(appbox.Consts.SYS_ORGUNIT_MODEL_ID);
+            q1.Where(q1.T["BaseId"] == emploeeID);
+            var ous = await q1.ToListAsync();
+            if (ous == null || ous.Count == 0)
+                return Ok(new { Succeed = false, Error = "User must mapped to OrgUnit" });
+
+            var q2 = new SqlQuery(appbox.Consts.SYS_ORGUNIT_MODEL_ID);
+            TreeNodePath path = await q2.ToTreeNodePathAsync(q2.T["Parent"], q2.T["Name"]);
+#endif
+
             object returnUserInfo = new { ous[0].Id, Name = path[0].Text, Account = require.User };
 
             //注册会话
@@ -63,9 +88,6 @@ namespace appbox.Server.WebHost.Controllers
             //返回登录成功
             Log.Debug($"用户[{session.GetFullName()}]登录.");
             return Ok(new { Succeed = true, UserInfo = returnUserInfo });
-#else
-            throw new NotImplementedException();
-#endif
         }
 
         /// <summary>

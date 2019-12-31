@@ -13,7 +13,7 @@ namespace appbox.Store
     static class StoreInitiator
     {
 #if !FUTURE
-        private const ushort PK_Member_Id = 0; //暂为0
+        internal const ushort PK_Member_Id = 0; //暂为0
 #endif
 
         internal static async Task InitAsync(
