@@ -75,6 +75,7 @@ namespace appbox.Server.WebHost.Controllers
                 return Ok(new { Succeed = false, Error = "User must mapped to OrgUnit" });
 
             var q2 = new SqlQuery(appbox.Consts.SYS_ORGUNIT_MODEL_ID);
+            q2.Where(q2.T["Id"] == ous[0].GetGuid(StoreInitiator.PK_Member_Id));
             TreeNodePath path = await q2.ToTreeNodePathAsync(q2.T["Parent"], q2.T["Name"]);
 #endif
 

@@ -141,13 +141,12 @@ namespace appbox.Store
                 BuildExpression(query.Filter, ctx);
             }
             //End 1
-            ctx.EndBuildQuery(query);
+            ctx.CurrentQueryInfo.EndBuidQuery(); //ctx.EndBuildQuery(query);
 
             //Union all
             ctx.SetBuildStep(BuildQueryStep.BuildSelect);
             ctx.Append(" Union All Select ");
             //Select 2
-            //ctx.SetBuildStep(BuildQueryStep.BuildSelect);
             BuildCTE_SelectItems(query, ctx, true);
             ctx.Append("\"Level\" + 1 From ");
             //From 2
@@ -157,7 +156,7 @@ namespace appbox.Store
             ctx.Append(" Inner Join cte as d On d.\"ParentId\"=t.\"Id\" ) Select * From cte");
 
             //End 1
-            ctx.EndBuildQuery(query);
+            ctx.EndBuildQuery(query, true);
         }
 
         private void BuildCTE_SelectItems(ISqlSelectQuery query, BuildQueryContext ctx, bool forTeeNodePath = false)

@@ -17,8 +17,6 @@ namespace appbox.Store
     /// </summary>
     internal static class ModelStore
     {
-        private const int APP_DATA_OFFSET = 9;
-
         private const byte Meta_Application = 0x0C;
         private const byte Meta_Model = 0x0D;
         private const byte Meta_Code = 0x0E;
@@ -99,27 +97,16 @@ namespace appbox.Store
             return ms.ToArray();
         }
 
-        internal static unsafe object DeserializeModel(IntPtr dataPtr, int dataSize, int offset = 0)
+        internal static object DeserializeModel(byte[] data)
         {
-            byte* dp = (byte*)dataPtr.ToPointer();
-
             object result = null;
-            var stream = new UnmanagedMemoryStream(dp + offset, dataSize - offset);
-            BinSerializer cf = new BinSerializer(stream);
+
+            using var ms = new MemoryStream(data);
+            BinSerializer cf = new BinSerializer(ms);
             try { result = cf.Deserialize(); }
             catch (Exception) { throw; }
             finally { cf.Clear(); }
 
-            stream.Close();
-
-            if (result != null && result is ApplicationModel && offset == APP_DATA_OFFSET)
-            {
-                var app = (ApplicationModel)result;
-                app.StoreId = dp[0];
-                uint* devIdCounterPtr = (uint*)(dp + 1);
-                //uint* usrIdCounterPtr = (uint*)(dp + 5);
-                app.DevModelIdSeq = *devIdCounterPtr;
-            }
             return result;
         }
 
@@ -155,7 +142,7 @@ namespace appbox.Store
         /// </summary>
         internal static async ValueTask<ApplicationModel> LoadApplicationAsync(uint appId)
         {
-            throw new NotImplementedException();
+            return (ApplicationModel)await LoadMetaAsync(Meta_Application, appId.ToString());
         }
 
         /// <summary>
@@ -187,7 +174,7 @@ namespace appbox.Store
         /// </summary>
         internal static async ValueTask<ModelBase> LoadModelAsync(ulong modelId)
         {
-            throw new NotImplementedException();
+            return (ModelBase)await LoadMetaAsync(Meta_Model, modelId.ToString());
         }
 
         internal static async ValueTask InsertModelAsync(ModelBase model, DbTransaction txn)
@@ -290,8 +277,8 @@ namespace appbox.Store
             var model = isService ? ModelType.Service : ModelType.View;
             using var cmd = SqlStore.Default.MakeCommand();
             cmd.Connection = txn.Connection;
-            BuildDeleteMetaCommand(cmd, Meta_Code, asmName);
-            BuildInsertMetaCommand(cmd, Meta_Code, asmName, model, asmData, true);
+            BuildDeleteMetaCommand(cmd, meta, asmName);
+            BuildInsertMetaCommand(cmd, meta, asmName, model, asmData, true);
             await cmd.ExecuteNonQueryAsync();
         }
 
@@ -370,6 +357,25 @@ namespace appbox.Store
             throw new NotImplementedException();
         }
         #endregion
+
+        private static async Task<object> LoadMetaAsync(byte metaType, string id)
+        {
+            var db = SqlStore.Default;
+            var esc = db.NameEscaper;
+            using var conn = db.MakeConnection();
+            await conn.OpenAsync();
+            using var cmd = db.MakeCommand();
+            cmd.Connection = conn;
+            cmd.CommandText = $"Select data From {esc}sys.Meta{esc} Where meta={metaType} And id='{id}'";
+            using var reader = await cmd.ExecuteReaderAsync();
+            object meta = null;
+            if (await reader.ReadAsync())
+            {
+                meta = DeserializeModel((byte[])reader.GetValue(0)); //TODO:暂使用GetValue
+            }
+            Log.Debug($"Load Meta {meta.GetType()} from meta store.");
+            return meta;
+        }
 
         private static void BuildInsertMetaCommand(DbCommand cmd, byte metaType, string id, ModelType modelType, byte[] data, bool append)
         {

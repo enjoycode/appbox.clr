@@ -158,16 +158,16 @@ namespace appbox.Store
             LoopAddQueryJoins((SqlQueryBase)query);
         }
 
-        public void EndBuildQuery(ISqlQuery query)
+        public void EndBuildQuery(ISqlQuery query, bool cte = false)
         {
             //判断是否根查询
             if (ReferenceEquals(CurrentQuery, RootQuery))
             {
-                Command.CommandText = CurrentQueryInfo.GetCommandText();
+                Command.CommandText = CurrentQueryInfo.GetCommandText(cte);
             }
             else
             {
-                CurrentQueryInfo.EndBuidSubQuery();
+                CurrentQueryInfo.EndBuidQuery();
                 CurrentQuery = CurrentQueryInfo.ParentQuery;
                 CurrentQueryInfo = CurrentQueryInfo.ParentInfo;
             }
@@ -350,14 +350,15 @@ namespace appbox.Store
         #endregion
 
         #region ====Methods====
-        internal void EndBuidSubQuery()
+        internal void EndBuidQuery()
         {
             sb.Append(StringBuilderCache.GetStringAndRelease(sb2));
         }
 
-        internal string GetCommandText()
+        internal string GetCommandText(bool cte)
         {
-            sb.Append(StringBuilderCache.GetStringAndRelease(sb2));
+            if (!cte)
+                sb.Append(StringBuilderCache.GetStringAndRelease(sb2));
             return StringBuilderCache.GetStringAndRelease(sb);
         }
         #endregion

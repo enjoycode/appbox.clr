@@ -431,11 +431,14 @@ namespace appbox.Store
                         case EntityFieldType.Float: m.FloatValue = reader.GetFloat(clIndex); break;
                         case EntityFieldType.Enum: m.Int32Value = reader.GetInt32(clIndex); break;
                         case EntityFieldType.Int64: m.Int64Value = reader.GetInt64(clIndex); break;
+                        case EntityFieldType.UInt64: m.UInt64Value = unchecked((ulong)reader.GetInt64(clIndex)); break;
                         case EntityFieldType.Int32: m.Int32Value = reader.GetInt32(clIndex); break;
+                        case EntityFieldType.UInt32: m.UInt32Value = unchecked((uint)reader.GetInt32(clIndex)); break;
                         case EntityFieldType.Int16: m.Int16Value = reader.GetInt16(clIndex); break;
+                        case EntityFieldType.UInt16: m.UInt16Value = unchecked((ushort)reader.GetInt16(clIndex)); break;
                         case EntityFieldType.Byte: m.ByteValue = reader.GetByte(clIndex); break;
                         case EntityFieldType.Boolean: m.BooleanValue = reader.GetBoolean(clIndex); break;
-                        default: throw new NotSupportedException();
+                        default: throw new NotSupportedException(m.ValueType.ToString());
                     }
                 }
             }
