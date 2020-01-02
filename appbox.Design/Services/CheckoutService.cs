@@ -72,7 +72,6 @@ namespace appbox.Design
         internal static async Task<Dictionary<string, CheckoutInfo>> LoadAllAsync()
         {
             var list = new Dictionary<string, CheckoutInfo>();
-
 #if FUTURE
             var q = new TableScan(Consts.SYS_CHECKOUT_MODEL_ID);
 #else

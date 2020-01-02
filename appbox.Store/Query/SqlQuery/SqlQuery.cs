@@ -295,7 +295,8 @@ namespace appbox.Store
         /// <param name="parentMember">Parent member.</param>
         public async Task<TreeNodePath> ToTreeNodePathAsync(MemberExpression parentMember, Expression displayText)
         {
-            //todo:验证parentMember为EntityExpression,且非聚合引用，且引用目标为自身
+            //TODO:验证parentMember为EntityExpression,且非聚合引用，且引用目标为自身
+            //TODO:验证是否具备主键条件
             var refMember = parentMember as EntityExpression;
             if (Expression.IsNull(refMember))
                 throw new ArgumentException("parentMember must be EntityRef", nameof(parentMember));

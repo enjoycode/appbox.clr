@@ -153,7 +153,7 @@ namespace appbox.Store
             ctx.SetBuildStep(BuildQueryStep.BuildFrom);
             ctx.AppendFormat("\"{0}\" As {1}", model.GetSqlTableName(false, null), q.AliasName);
             //Inner Join 
-            ctx.Append(" Inner Join cte as d On d.\"ParentId\"=t.\"Id\" ) Select * From cte");
+            ctx.Append(" Inner Join cte as d On d.\"ParentId\"=t.\"Id\") Select * From cte");
 
             //End 1
             ctx.EndBuildQuery(query, true);
