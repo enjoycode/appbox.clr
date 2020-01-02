@@ -1,6 +1,7 @@
 ﻿#if !FUTURE
 
 using System;
+using System.Collections.Generic;
 using System.Data.Common;
 using System.IO;
 using System.Linq;
@@ -142,7 +143,8 @@ namespace appbox.Store
         /// </summary>
         internal static async ValueTask<ApplicationModel> LoadApplicationAsync(uint appId)
         {
-            return (ApplicationModel)await LoadMetaAsync(Meta_Application, appId.ToString());
+            var data = await LoadMetaDataAsync(Meta_Application, appId.ToString());
+            return (ApplicationModel)DeserializeModel(data);
         }
 
         /// <summary>
@@ -150,7 +152,7 @@ namespace appbox.Store
         /// </summary>
         internal static async ValueTask<ApplicationModel[]> LoadAllApplicationAsync()
         {
-            throw new NotImplementedException();
+            return await LoadMetasAsync<ApplicationModel>(Meta_Application);
         }
 
         /// <summary>
@@ -158,7 +160,12 @@ namespace appbox.Store
         /// </summary>
         internal static async ValueTask<ModelBase[]> LoadAllModelAsync()
         {
-            throw new NotImplementedException();
+            var res = await LoadMetasAsync<ModelBase>(Meta_Model);
+            for (int i = 0; i < res.Length; i++) //暂循环转换状态
+            {
+                res[i].AcceptChanges();
+            }
+            return res;
         }
 
         /// <summary>
@@ -166,7 +173,7 @@ namespace appbox.Store
         /// </summary>
         internal static async ValueTask<ModelFolder[]> LoadAllFolderAsync()
         {
-            throw new NotImplementedException();
+            return await LoadMetasAsync<ModelFolder>(Meta_Folder);
         }
 
         /// <summary>
@@ -174,7 +181,8 @@ namespace appbox.Store
         /// </summary>
         internal static async ValueTask<ModelBase> LoadModelAsync(ulong modelId)
         {
-            return (ModelBase)await LoadMetaAsync(Meta_Model, modelId.ToString());
+            var data = await LoadMetaDataAsync(Meta_Model, modelId.ToString());
+            return (ModelBase)DeserializeModel(data);
         }
 
         internal static async ValueTask InsertModelAsync(ModelBase model, DbTransaction txn)
@@ -239,12 +247,10 @@ namespace appbox.Store
         /// </summary>
         internal static async ValueTask<string> LoadServiceCodeAsync(ulong modelId)
         {
-            var res = await LoadModelCodeAsync(modelId);
-            if (res == null)
+            var data = await LoadMetaDataAsync(Meta_Code, modelId.ToString());
+            if (data == null)
                 return null;
-
-            ModelCodeUtil.DecodeServiceCode(res.DataPtr, (int)res.Size, out string sourceCode, out string declareCode);
-            res.Dispose();
+            ModelCodeUtil.DecodeServiceCode(data, out string sourceCode, out _);
             return sourceCode;
         }
 
@@ -253,18 +259,12 @@ namespace appbox.Store
         /// </summary>
         internal static async ValueTask<ValueTuple<string, string, string>> LoadViewCodeAsync(ulong modelId)
         {
-            var res = await LoadModelCodeAsync(modelId);
-            if (res == null)
+            var data = await LoadMetaDataAsync(Meta_Code, modelId.ToString());
+            if (data == null)
                 return ValueTuple.Create<string, string, string>(null, null, null);
 
-            ModelCodeUtil.DecodeViewCode(res.DataPtr, (int)res.Size, out string templateCode, out string scriptCode, out string styleCode);
-            res.Dispose();
+            ModelCodeUtil.DecodeViewCode(data, out string templateCode, out string scriptCode, out string styleCode);
             return ValueTuple.Create(templateCode, scriptCode, styleCode);
-        }
-
-        private static ValueTask<INativeData> LoadModelCodeAsync(ulong modelId)
-        {
-            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -358,7 +358,8 @@ namespace appbox.Store
         }
         #endregion
 
-        private static async Task<object> LoadMetaAsync(byte metaType, string id)
+        #region ====Helpers====
+        private static async Task<byte[]> LoadMetaDataAsync(byte metaType, string id)
         {
             var db = SqlStore.Default;
             var esc = db.NameEscaper;
@@ -367,14 +368,34 @@ namespace appbox.Store
             using var cmd = db.MakeCommand();
             cmd.Connection = conn;
             cmd.CommandText = $"Select data From {esc}sys.Meta{esc} Where meta={metaType} And id='{id}'";
+            Log.Debug(cmd.CommandText);
             using var reader = await cmd.ExecuteReaderAsync();
-            object meta = null;
+            byte[] metaData = null;
             if (await reader.ReadAsync())
             {
-                meta = DeserializeModel((byte[])reader.GetValue(0)); //TODO:暂使用GetValue
+                metaData = (byte[])reader.GetValue(0); //TODO:暂使用GetValue
             }
-            Log.Debug($"Load Meta {meta.GetType()} from meta store.");
-            return meta;
+            return metaData;
+        }
+
+        private static async Task<T[]> LoadMetasAsync<T>(byte metaType)
+        {
+            var db = SqlStore.Default;
+            var esc = db.NameEscaper;
+            using var conn = db.MakeConnection();
+            await conn.OpenAsync();
+            using var cmd = db.MakeCommand();
+            cmd.Connection = conn;
+            cmd.CommandText = $"Select data From {esc}sys.Meta{esc} Where meta={metaType}";
+            Log.Debug(cmd.CommandText);
+            using var reader = await cmd.ExecuteReaderAsync();
+            var list = new List<T>();
+            while (await reader.ReadAsync())
+            {
+                var meta = (T)DeserializeModel((byte[])reader.GetValue(0)); //TODO:暂使用GetValue
+                list.Add(meta);
+            }
+            return list.ToArray();
         }
 
         private static void BuildInsertMetaCommand(DbCommand cmd, byte metaType, string id, ModelType modelType, byte[] data, bool append)
@@ -401,6 +422,7 @@ namespace appbox.Store
             var esc = db.NameEscaper;
             cmd.CommandText = $"Delete From {esc}sys.Meta{esc} Where meta={metaType} And id='{id}'";
         }
+        #endregion
     }
 }
 
