@@ -62,6 +62,16 @@ namespace appbox.Design
 
             var mmodels = await Store.ModelStore.LoadAllModelAsync();
             var models = new List<ModelBase>(mmodels);
+#if !FUTURE
+            //加载默认存储模型
+            var defaultStoreType = Store.SqlStore.Default.GetType();
+            var defaultStoreModel = new DataStoreModel(DataStoreKind.Sql,
+                $"{defaultStoreType.Assembly.GetName().Name};{defaultStoreType.Name}", "Default");
+            defaultStoreModel.NameRules = DataStoreNameRules.AppPrefixForTable;
+            //defaultStoreModel.Settings = ""; //TODO:fix settings
+            defaultStoreModel.AcceptChanges();
+            models.Add(defaultStoreModel);
+#endif
             //加载staged中新建的模型，可能包含DataStoreModel
             models.AddRange(Staged.FindNewModels());
 
