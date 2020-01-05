@@ -42,6 +42,7 @@ namespace appbox.Expressions
             //TODO: 优化TupleField<String>的相关比较，直接用原生utf8，不要再转换为C#字符串
             var left = LeftOperand.ToLinqExpression(ctx);
             var right = RightOperand.ToLinqExpression(ctx);
+#if FUTURE
             if (LeftOperand.Type == ExpressionType.KVFieldExpression)
             {
                 var tupleExp = (KVFieldExpression)LeftOperand;
@@ -62,6 +63,7 @@ namespace appbox.Expressions
                     left = System.Linq.Expressions.Expression.Convert(left, right.Type);
                 }
             }
+#endif
 
             System.Linq.Expressions.ExpressionType type;
             switch (BinaryType)
@@ -173,9 +175,9 @@ namespace appbox.Expressions
             return bt;
         }
 
-        #endregion
+#endregion
 
-        #region ====Serialization Methods====
+#region ====Serialization Methods====
         public override void WriteObject(BinSerializer bs)
         {
             bs.Serialize(LeftOperand);
@@ -189,7 +191,7 @@ namespace appbox.Expressions
             BinaryType = (BinaryOperatorType)bs.ReadByte();
             RightOperand = (Expression)bs.Deserialize();
         }
-        #endregion
+#endregion
 
     }
 

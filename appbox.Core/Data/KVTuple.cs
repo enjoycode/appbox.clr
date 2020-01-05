@@ -1,7 +1,8 @@
-﻿using System;
+﻿#if FUTURE
+
+using System;
 using System.Collections.Generic;
 using appbox.Caching;
-using System.Runtime.InteropServices;
 
 namespace appbox.Data
 {
@@ -178,3 +179,5 @@ namespace appbox.Data
     }
 
 }
+
+#endif

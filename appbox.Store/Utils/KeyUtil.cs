@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if FUTURE
+using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using appbox.Data;
@@ -210,3 +211,4 @@ namespace appbox.Store
         }
     }
 }
+#endif

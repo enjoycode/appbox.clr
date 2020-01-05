@@ -1,4 +1,6 @@
-﻿using System;
+﻿#if FUTURE
+
+using System;
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -225,3 +227,5 @@ namespace appbox.Expressions
         #endregion
     }
 }
+
+#endif

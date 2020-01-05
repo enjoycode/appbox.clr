@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if FUTURE
+using System;
 using System.Runtime.CompilerServices;
 using appbox.Data;
 using appbox.Models;
@@ -530,3 +531,4 @@ namespace appbox.Store
         #endregion
     }
 }
+#endif

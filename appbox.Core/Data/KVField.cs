@@ -1,4 +1,6 @@
-﻿using System;
+﻿#if FUTURE
+
+using System;
 using System.Runtime.InteropServices;
 
 namespace appbox.Data
@@ -164,3 +166,5 @@ namespace appbox.Data
         #endregion
     }
 }
+
+#endif
