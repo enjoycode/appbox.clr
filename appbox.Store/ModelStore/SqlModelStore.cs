@@ -18,6 +18,9 @@ namespace appbox.Store
     /// </summary>
     internal static class ModelStore
     {
+
+        private const byte Meta_App_Model_Dev_Counter = 0xAC;
+        private const byte Meta_App_Model_Usr_Counter = 0xAD;
         private const byte Meta_Application = 0x0C;
         private const byte Meta_Model = 0x0D;
         private const byte Meta_Code = 0x0E;
@@ -111,31 +114,59 @@ namespace appbox.Store
             return result;
         }
 
-        internal static async ValueTask CreateApplicationAsync(ApplicationModel app
-#if !FUTURE
-            , DbTransaction txn
-#endif
-            )
+        internal static async ValueTask CreateApplicationAsync(ApplicationModel app, DbTransaction txn)
         {
             using var cmd = SqlStore.Default.MakeCommand();
-            cmd.Connection = txn.Connection;
+            cmd.Transaction = txn;
             BuildInsertMetaCommand(cmd, Meta_Application, app.Id.ToString(), ModelType.Application, SerializeModel(app), false);
             await cmd.ExecuteNonQueryAsync();
         }
 
         internal static async ValueTask<ulong> GenModelIdAsync(uint appId, ModelType type, ModelLayer layer)
         {
-            throw new NotImplementedException();
-            //if (layer == ModelLayer.SYS) //不允许SYS Layer
-            //    throw new ArgumentException(nameof(layer));
+            if (layer == ModelLayer.SYS) //不允许SYS Layer
+                throw new ArgumentException(nameof(layer));
+            var meta = layer == ModelLayer.DEV ? Meta_App_Model_Dev_Counter : Meta_App_Model_Usr_Counter;
+            var id = appId.ToString();
 
-            //var seq = await HostApi.MetaGenModelIdAsync(appId, layer == ModelLayer.DEV);
+            var db = SqlStore.Default;
+            var esc = db.NameEscaper;
+            using var conn = db.MakeConnection();
+            await conn.OpenAsync();
+            using var txn = conn.BeginTransaction(); //不支持select for update的事务隔离级别
 
-            //var nid = (ulong)appId << IdUtil.MODELID_APPID_OFFSET;
-            //nid |= (ulong)type << IdUtil.MODELID_TYPE_OFFSET;
-            //nid |= (ulong)seq << IdUtil.MODELID_SEQ_OFFSET;
-            //nid |= (ulong)layer;
-            //return nid;
+            using var cmd1 = db.MakeCommand();
+            cmd1.Transaction = txn;
+            cmd1.CommandText = $"Select data From {esc}sys.Meta{esc} Where meta={meta} And id='{id}' For Update";
+            using var reader = await cmd1.ExecuteReaderAsync();
+            byte[] counterData = null;
+            uint seq = 0;
+
+            using var cmd2 = db.MakeCommand();
+            if (await reader.ReadAsync()) //已存在计数器
+            {
+                counterData = (byte[])reader.GetValue(0);
+                seq = BitConverter.ToUInt32(counterData) + 1; //TODO:判断溢出
+                counterData = BitConverter.GetBytes(seq);
+
+                BuildUpdateMetaCommand(cmd2, meta, id, counterData);
+            }
+            else //不存在计数器
+            {
+                seq = 1;
+                counterData = BitConverter.GetBytes(seq);
+                BuildInsertMetaCommand(cmd2, meta, id, ModelType.Application, counterData, false);
+            }
+            cmd2.Transaction = txn;
+            await cmd2.ExecuteNonQueryAsync();
+
+            txn.Commit();
+
+            var nid = (ulong)appId << IdUtil.MODELID_APPID_OFFSET;
+            nid |= (ulong)type << IdUtil.MODELID_TYPE_OFFSET;
+            nid |= (ulong)seq << IdUtil.MODELID_SEQ_OFFSET;
+            nid |= (ulong)layer;
+            return nid;
         }
 
         /// <summary>
@@ -188,19 +219,25 @@ namespace appbox.Store
         internal static async ValueTask InsertModelAsync(ModelBase model, DbTransaction txn)
         {
             using var cmd = SqlStore.Default.MakeCommand();
-            cmd.Connection = txn.Connection;
+            cmd.Transaction = txn;
             BuildInsertMetaCommand(cmd, Meta_Model, model.Id.ToString(), model.ModelType, SerializeModel(model), false);
             await cmd.ExecuteNonQueryAsync();
         }
 
         internal static async ValueTask UpdateModelAsync(ModelBase model, DbTransaction txn, Func<uint, ApplicationModel> getApp)
         {
-            throw new NotImplementedException();
+            using var cmd = SqlStore.Default.MakeCommand();
+            cmd.Transaction = txn;
+            BuildUpdateMetaCommand(cmd, Meta_Model, model.Id.ToString(), SerializeModel(model));
+            await cmd.ExecuteNonQueryAsync();
         }
 
         internal static async ValueTask DeleteModelAsync(ModelBase model, DbTransaction txn, Func<uint, ApplicationModel> getApp)
         {
-            throw new NotImplementedException();
+            using var cmd = SqlStore.Default.MakeCommand();
+            cmd.Transaction = txn;
+            BuildDeleteMetaCommand(cmd, Meta_Model, model.Id.ToString());
+            await cmd.ExecuteNonQueryAsync();
         }
 
         /// <summary>
@@ -214,7 +251,7 @@ namespace appbox.Store
             //TODO:暂先删除再插入
             var id = folder.AppId.ToString(); //只需要AppId，RootFolder.Id=Guid.Empty
             using var cmd = SqlStore.Default.MakeCommand();
-            cmd.Connection = txn.Connection;
+            cmd.Transaction = txn;
             BuildDeleteMetaCommand(cmd, Meta_Folder, id);
             BuildInsertMetaCommand(cmd, Meta_Folder, id, ModelType.Folder, SerializeModel(folder), true);
             await cmd.ExecuteNonQueryAsync();
@@ -231,7 +268,7 @@ namespace appbox.Store
             //TODO:暂先删除再插入
             var id = modelId.ToString();
             using var cmd = SqlStore.Default.MakeCommand();
-            cmd.Connection = txn.Connection;
+            cmd.Transaction = txn;
             BuildDeleteMetaCommand(cmd, Meta_Code, id);
             BuildInsertMetaCommand(cmd, Meta_Code, id, ModelType.Application/**/, codeData, true);
             await cmd.ExecuteNonQueryAsync();
@@ -239,7 +276,10 @@ namespace appbox.Store
 
         internal static async ValueTask DeleteModelCodeAsync(ulong modelId, DbTransaction txn)
         {
-            throw new NotImplementedException();
+            using var cmd = SqlStore.Default.MakeCommand();
+            cmd.Transaction = txn;
+            BuildDeleteMetaCommand(cmd, Meta_Code, modelId.ToString());
+            await cmd.ExecuteNonQueryAsync();
         }
 
         /// <summary>
@@ -276,7 +316,7 @@ namespace appbox.Store
             var meta = isService ? Meta_Service_Assembly : Meta_View_Assembly;
             var model = isService ? ModelType.Service : ModelType.View;
             using var cmd = SqlStore.Default.MakeCommand();
-            cmd.Connection = txn.Connection;
+            cmd.Transaction = txn;
             BuildDeleteMetaCommand(cmd, meta, asmName);
             BuildInsertMetaCommand(cmd, meta, asmName, model, asmData, true);
             await cmd.ExecuteNonQueryAsync();
@@ -284,7 +324,11 @@ namespace appbox.Store
 
         internal static async ValueTask DeleteAssemblyAsync(bool isService, string asmName, DbTransaction txn)
         {
-            throw new NotImplementedException();
+            var meta = isService ? Meta_Service_Assembly : Meta_View_Assembly;
+            using var cmd = SqlStore.Default.MakeCommand();
+            cmd.Transaction = txn;
+            BuildDeleteMetaCommand(cmd, meta, asmName);
+            await cmd.ExecuteNonQueryAsync();
         }
 
         /// <summary>
@@ -299,36 +343,17 @@ namespace appbox.Store
             //if (Runtime.RuntimeContext.Current.RuntimeId == 0)
             //    throw new NotSupportedException("不支持服务端主进程加载");
 #endif
-            var res = await LoadAssemblyAsync(true, serviceName);
-            if (res == null)
-                return null;
-
-            var data = new byte[res.Size];
-            unsafe
-            {
-                fixed (byte* pd = data)
-                {
-                    Buffer.MemoryCopy(res.DataPtr.ToPointer(), pd, (int)res.Size, (int)res.Size);
-                }
-            }
-            res.Dispose();
-            return data;
+            return await LoadMetaDataAsync(Meta_Service_Assembly, serviceName);
         }
 
         internal static async ValueTask<string> LoadViewAssemblyAsync(string viewName)
         {
-            var res = await LoadAssemblyAsync(false, viewName);
+            var res = await LoadMetaDataAsync(Meta_View_Assembly, viewName);
             if (res == null)
                 return null;
 
-            ModelCodeUtil.DecodeViewRuntimeCode(res.DataPtr, (int)res.Size, out string runtimeCode);
-            res.Dispose();
+            ModelCodeUtil.DecodeViewRuntimeCode(res, out string runtimeCode);
             return runtimeCode;
-        }
-
-        private static ValueTask<INativeData> LoadAssemblyAsync(bool isService, string asmName)
-        {
-            throw new NotImplementedException();
         }
         #endregion
 
@@ -341,7 +366,7 @@ namespace appbox.Store
         internal static async ValueTask UpsertViewRoute(string viewName, string path, DbTransaction txn)
         {
             using var cmd = SqlStore.Default.MakeCommand();
-            cmd.Connection = txn.Connection;
+            cmd.Transaction = txn;
             BuildDeleteMetaCommand(cmd, Meta_View_Router, viewName);
             BuildInsertMetaCommand(cmd, Meta_View_Router, viewName, ModelType.View, System.Text.Encoding.UTF8.GetBytes(path), true);
             await cmd.ExecuteNonQueryAsync();
@@ -349,12 +374,32 @@ namespace appbox.Store
 
         internal static async ValueTask DeleteViewRoute(string viewName, DbTransaction txn)
         {
-            throw new NotImplementedException();
+            using var cmd = SqlStore.Default.MakeCommand();
+            cmd.Transaction = txn;
+            BuildDeleteMetaCommand(cmd, Meta_View_Router, viewName);
+            await cmd.ExecuteNonQueryAsync();
         }
 
         internal static async ValueTask<ValueTuple<string, string>[]> LoadViewRoutes()
         {
-            throw new NotImplementedException();
+            var db = SqlStore.Default;
+            var esc = db.NameEscaper;
+            using var conn = db.MakeConnection();
+            await conn.OpenAsync();
+            using var cmd = db.MakeCommand();
+            cmd.Connection = conn;
+            cmd.CommandText = $"Select id,data From {esc}sys.Meta{esc} Where meta={Meta_View_Router}";
+            Log.Debug(cmd.CommandText);
+            using var reader = await cmd.ExecuteReaderAsync();
+            var list = new List<ValueTuple<string, string>>();
+            while (await reader.ReadAsync())
+            {
+                var key = reader.GetString(0);
+                var valueData = (byte[])reader.GetValue(1);
+                var res = ValueTuple.Create(key, System.Text.Encoding.UTF8.GetString(valueData));
+                list.Add(res);
+            }
+            return list.ToArray();
         }
         #endregion
 
@@ -411,6 +456,20 @@ namespace appbox.Store
 
             var vp = db.MakeParameter();
             vp.ParameterName = $"{db.ParameterName}v";
+            vp.DbType = System.Data.DbType.Binary;
+            vp.Value = data;
+            cmd.Parameters.Add(vp);
+        }
+
+        private static void BuildUpdateMetaCommand(DbCommand cmd, byte metaType, string id, byte[] data)
+        {
+            var db = SqlStore.Default;
+            var esc = db.NameEscaper;
+            var pname = db.ParameterName;
+            cmd.CommandText = $"Update {esc}sys.Meta{esc} Set data=@v Where meta={metaType} And id='{id}'";
+
+            var vp = db.MakeParameter();
+            vp.ParameterName = $"{pname}v";
             vp.DbType = System.Data.DbType.Binary;
             vp.Value = data;
             cmd.Parameters.Add(vp);
