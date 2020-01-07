@@ -201,7 +201,7 @@ namespace appbox.Data
                                     if (reader.TokenType == JsonTokenType.Null)
                                         SetDateTimeNullable(memberModel.MemberId, null, true);
                                     else
-                                        SetDateTimeNullable(memberModel.MemberId, reader.GetDateTime(), true);
+                                        SetDateTimeNullable(memberModel.MemberId, reader.GetDateTime().ToLocalTime(), true);
                                     break;
                                 case EntityFieldType.Decimal:
                                     throw ExceptionHelper.NotImplemented();

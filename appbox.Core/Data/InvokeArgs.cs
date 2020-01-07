@@ -223,7 +223,7 @@ namespace appbox.Data
         public DateTime GetDateTime()
         {
             if (Count == FromWebSocket)
-                return ReadJsonArg().GetDateTime();
+                return ReadJsonArg().GetDateTime().ToLocalTime();
             if (Count == FromWebStream)
                 throw new NotImplementedException();
             return Current().DateTimeValue;
