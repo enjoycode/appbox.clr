@@ -23,6 +23,7 @@ namespace appbox.Server
         /// </summary>
         public int NodeBufferSize { get; private set; }
 
+#if Linux
         /// <summary>
         /// Event signaled when data has been written if the reading index has caught up to the writing index
         /// </summary>
@@ -32,6 +33,17 @@ namespace appbox.Server
         /// Event signaled when a node becomes available after reading if the writing index has caught up to the reading index
         /// </summary>
         protected PosixSemaphore NodeAvailable { get; set; }
+#else
+        /// <summary>
+        /// Event signaled when data has been written if the reading index has caught up to the writing index
+        /// </summary>
+        protected EventWaitHandle DataExists { get; set; }
+
+        /// <summary>
+        /// Event signaled when a node becomes available after reading if the writing index has caught up to the reading index
+        /// </summary>
+        protected EventWaitHandle NodeAvailable { get; set; }
+#endif
 
         /// <summary>
         /// The offset relative to <see cref="SharedBuffer.BufferStartPtr"/> where the node header starts within the buffer region of the shared memory
@@ -64,15 +76,15 @@ namespace appbox.Server
             }
         }
 
-        #endregion
+#endregion
 
-        #region Private field members
+#region Private field members
 
         private NodeHeader* _nodeHeader = null;
 
-        #endregion
+#endregion
 
-        #region Structures
+#region Structures
 
         /// <summary>
         /// Provides cursors for the circular buffer along with dimensions
@@ -156,9 +168,9 @@ namespace appbox.Server
             public int AmountWritten;
         }
 
-        #endregion
+#endregion
 
-        #region Constructors
+#region Constructors
 
         /// <summary>
         /// Creates and opens a new <see cref="CircularBuffer"/> instance with the specified name, node count and buffer size per node.
@@ -196,14 +208,14 @@ namespace appbox.Server
         private CircularBuffer(string name, int nodeCount, int nodeBufferSize, bool ownsSharedMemory)
             : base(name, Marshal.SizeOf(typeof(NodeHeader)) + (Marshal.SizeOf(typeof(Node)) * nodeCount) + (nodeCount * (long)nodeBufferSize), ownsSharedMemory)
         {
-            #region Argument validation
+#region Argument validation
             if (ownsSharedMemory && nodeCount < 2)
                 throw new ArgumentOutOfRangeException(nameof(nodeCount), nodeCount, "The node count must be a minimum of 2.");
 #if DEBUG
             else if (!ownsSharedMemory && (nodeCount != 0 || nodeBufferSize > 0))
                 System.Diagnostics.Debug.Write("Node count and nodeBufferSize are ignored when opening an existing shared memory circular buffer.", "Warning");
 #endif
-            #endregion
+#endregion
 
             if (IsOwnerOfSharedMemory)
             {
@@ -212,9 +224,9 @@ namespace appbox.Server
             }
         }
 
-        #endregion
+#endregion
 
-        #region Open / Close
+#region Open / Close
 
         /// <summary>
         /// Attempts to create the <see cref="EventWaitHandle"/> handles and initialise the node header and buffers.
@@ -223,8 +235,7 @@ namespace appbox.Server
         protected override bool DoOpen()
         {
             // Create signal events
-            //DataExists = new EventWaitHandle(false, EventResetMode.AutoReset, Name + "_evt_dataexists");
-            //NodeAvailable = new EventWaitHandle(false, EventResetMode.AutoReset, Name + "_evt_nodeavail");
+#if Linux
             if (IsOwnerOfSharedMemory)
             {
                 DataExists = PosixSemaphore.Create(Name + "_evt_dataexists");
@@ -235,6 +246,10 @@ namespace appbox.Server
                 DataExists = PosixSemaphore.Open(Name + "_evt_dataexists");
                 NodeAvailable = PosixSemaphore.Open(Name + "_evt_nodeavail");
             }
+#else
+            DataExists = new EventWaitHandle(false, EventResetMode.AutoReset, Name + "_evt_dataexists");
+            NodeAvailable = new EventWaitHandle(false, EventResetMode.AutoReset, Name + "_evt_nodeavail");
+#endif
 
             if (IsOwnerOfSharedMemory)
             {
@@ -327,9 +342,9 @@ namespace appbox.Server
             _nodeHeader = null;
         }
 
-        #endregion
+#endregion
 
-        #region Node Writing
+#region Node Writing
 
         /// <summary>
         /// Attempts to reserve a node from the linked-list for writing with the specified timeout.
@@ -400,9 +415,13 @@ namespace appbox.Server
                 // Signal the "data exists" event if read threads are waiting
                 if (blockIndex == _nodeHeader->ReadStart)
                 {
-                    //DataExists.Set();
-                    //Console.WriteLine($"DataExists: {blockIndex}");
+#if Linux
                     DataExists.Post();
+#else
+                    DataExists.Set();
+#endif
+                    //Console.WriteLine($"DataExists: {blockIndex}");
+
                 }
             }
         }
@@ -543,9 +562,9 @@ namespace appbox.Server
             return amount;
         }
 
-        #endregion
+#endregion
 
-        #region Node Reading
+#region Node Reading
 
         /// <summary>
         /// Returns a copy of the shared memory header
@@ -630,7 +649,11 @@ namespace appbox.Server
                     else
                     {
                         //TODO:考虑释放多个后续已归还的
+#if Linux
                         NodeAvailable.Post();
+#else
+                        NodeAvailable.Set();
+#endif
                     }
                 }
                 //if (node->Prev == _nodeHeader->WriteStart)
@@ -771,6 +794,6 @@ namespace appbox.Server
             return amount;
         }
 
-        #endregion
+#endregion
     }
 }
