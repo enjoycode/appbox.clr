@@ -55,8 +55,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="Native\EntityStoreApi.cs" />
-    <Compile Remove="Resources\Services\OrgUnitService.cs" />
     <Compile Remove="Resources\Services\MetricService.cs" />
+    <Compile Remove="Resources\Services\OrgUnitService_Future.cs" />
+    <Compile Remove="Resources\Services\OrgUnitService.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System.Runtime">
@@ -130,6 +131,8 @@
     <None Remove="Resources\Views\InvokeMetrics.html" />
     <None Remove="Resources\Views\InvokeMetrics.js" />
     <None Remove="Resources\Views\InvokeMetrics.json" />
+    <None Remove="Resources\Services\OrgUnitService_Future.dll" />
+    <None Remove="Resources\Services\OrgUnitService.dll" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\Views\PermissionTree.html" />
@@ -139,7 +142,7 @@
     <EmbeddedResource Include="Resources\Views\Home.js" />
     <EmbeddedResource Include="Resources\Views\Home.json" />
     <EmbeddedResource Include="Resources\Views\PermissionTree.json" />
-    <EmbeddedResource Include="Resources\Services\OrgUnitService.cs" />
+    <EmbeddedResource Include="Resources\Services\OrgUnitService_Future.cs" />
     <EmbeddedResource Include="Resources\Views\EnterpriseView.html" />
     <EmbeddedResource Include="Resources\Views\EnterpriseView.js" />
     <EmbeddedResource Include="Resources\Views\EnterpriseView.json" />
@@ -154,7 +157,7 @@
     <EmbeddedResource Include="Resources\Views\EmploeeView.js" />
     <EmbeddedResource Include="Resources\Views\EmploeeView.css" />
     <EmbeddedResource Include="Resources\Views\EmploeeView.json" />
-    <EmbeddedResource Include="Resources\Services\OrgUnitService.dll" />
+    <EmbeddedResource Include="Resources\Services\OrgUnitService_Future.dll" />
     <EmbeddedResource Include="Resources\Services\MetricService.cs" />
     <EmbeddedResource Include="Resources\Views\CpuUsages.html" />
     <EmbeddedResource Include="Resources\Views\CpuUsages.js" />
@@ -195,5 +198,7 @@
     <EmbeddedResource Include="Resources\Views\InvokeMetrics.html" />
     <EmbeddedResource Include="Resources\Views\InvokeMetrics.js" />
     <EmbeddedResource Include="Resources\Views\InvokeMetrics.json" />
+    <EmbeddedResource Include="Resources\Services\OrgUnitService.cs" />
+    <EmbeddedResource Include="Resources\Services\OrgUnitService.dll" />
   </ItemGroup>
 </Project>

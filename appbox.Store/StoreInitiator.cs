@@ -159,8 +159,9 @@ namespace appbox.Store
             await ModelStore.InsertModelAsync(staged, txn);
             await ModelStore.InsertModelAsync(checkout, txn);
 
-            await CreateServiceModel("OrgUnitService", 1, null, txn);
-            await CreateServiceModel("MetricService", 2, null, txn, new List<string> { "Newtonsoft.Json", "System.Private.Uri", "System.Net.Http" });
+            await CreateServiceModel("OrgUnitService", 1, null, true, txn);
+            await CreateServiceModel("MetricService", 2, null, false, txn,
+                new List<string> { "Newtonsoft.Json", "System.Private.Uri", "System.Net.Http" });
 
             await CreateViewModel("Home", 1, null, txn);
             await CreateViewModel("EnterpriseView", 2, viewOrgUnitsFolder.Id, txn);
@@ -488,6 +489,7 @@ namespace appbox.Store
         }
 
         private static async Task CreateServiceModel(string name, ulong idIndex, Guid? folderId,
+            bool forceFuture,
 #if FUTURE
             Transaction txn,
 #else
@@ -502,11 +504,14 @@ namespace appbox.Store
                 model.References.AddRange(references);
             await ModelStore.InsertModelAsync(model, txn);
 
-            var serviceCode = Resources.GetString($"Resources.Services.{name}.cs");
+            var codeRes = forceFuture ? $"Resources.Services.{name}_Future.cs" : $"Resources.Services.{name}.cs";
+            var asmRes = forceFuture ? $"Resources.Services.{name}_Future.dll" : $"Resources.Services.{name}.dll";
+
+            var serviceCode = Resources.GetString(codeRes);
             var codeData = ModelCodeUtil.EncodeServiceCode(serviceCode, null);
             await ModelStore.UpsertModelCodeAsync(model.Id, codeData, txn);
 
-            var asmData = Resources.GetBytes($"Resources.Services.{name}.dll");
+            var asmData = Resources.GetBytes(asmRes);
             await ModelStore.UpsertAssemblyAsync(true, $"sys.{name}", asmData, txn);
         }
 
