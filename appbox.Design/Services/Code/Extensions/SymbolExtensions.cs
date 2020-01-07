@@ -1058,7 +1058,8 @@ namespace appbox.Design
                 {
                     foreach (var constructor in attributeConstructors)
                     {
-                        if (attribute.AttributeConstructor == constructor)
+                        if (SymbolEqualityComparer.Default.Equals(attribute.AttributeConstructor, constructor))
+                        //if (attribute.AttributeConstructor == constructor)
                         {
                             var actualFlags = 0;
 

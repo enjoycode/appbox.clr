@@ -97,6 +97,8 @@ namespace appbox.Design
                 MetadataReferences.TasksLib,
                 MetadataReferences.TasksExtLib,
                 MetadataReferences.DataCommonLib,
+                MetadataReferences.ComponentModelPrimitivesLib,
+                //MetadataReferences.ComponentModelLib,
                 //MetadataReferences.SystemBuffersLib,
                 MetadataReferences.AppBoxCoreLib,
                 MetadataReferences.AppBoxStoreLib

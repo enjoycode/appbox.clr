@@ -196,6 +196,7 @@ namespace appbox.Design
                 MetadataReferences.SystemRuntimLib,
                 MetadataReferences.SystemRuntimExtLib,
                 MetadataReferences.DataCommonLib,
+                MetadataReferences.ComponentModelPrimitivesLib,
                 //MetadataReferences.SystemBuffersLib,
                 MetadataReferences.TasksLib,
                 MetadataReferences.TasksExtLib

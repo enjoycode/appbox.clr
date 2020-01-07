@@ -64,12 +64,11 @@
     <ProjectReference Include="..\appbox.Store\appbox.Store.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="2.9.0" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="2.9.0" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Compile Remove="Resources\DummyCode\*.cs" />
     <EmbeddedResource Include="Resources\DummyCode\*.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="3.4.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="3.4.0" />
   </ItemGroup>
 </Project>

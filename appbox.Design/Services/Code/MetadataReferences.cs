@@ -23,6 +23,8 @@ namespace appbox.Design
         internal static MetadataReference TasksLib => Get("System.Threading.Tasks.dll"); //Get("netstandard/System.Threading.Tasks.dll");
         internal static MetadataReference TasksExtLib => Get("System.Threading.Tasks.Extensions.dll");//Get("netstandard/System.Threading.Tasks.Extensions.dll");
         internal static MetadataReference DataCommonLib => Get("System.Data.Common.dll");
+        internal static MetadataReference ComponentModelPrimitivesLib => Get("System.ComponentModel.Primitives.dll");
+        //internal static MetadataReference ComponentModelLib => Get("System.ComponentModel.dll");
         internal static MetadataReference AppBoxCoreLib => Get("appbox.Core.dll");
         internal static MetadataReference AppBoxStoreLib => Get("appbox.Store.dll");
 
