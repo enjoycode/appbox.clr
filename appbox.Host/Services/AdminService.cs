@@ -86,7 +86,8 @@ namespace appbox.Services
             await Store.ModelStore.UpdateModelAsync(oldModel, txn, appid => RuntimeContext.Current.GetApplicationModelAsync(appid).Result);
             await txn.CommitAsync();
 #else
-            var txn = Store.SqlStore.Default.BeginTransaction();
+            using var conn = await Store.SqlStore.Default.OpenConnectionAsync();
+            using var txn = conn.BeginTransaction();
             await Store.ModelStore.UpdateModelAsync(oldModel, txn, appid => RuntimeContext.Current.GetApplicationModelAsync(appid).Result);
             txn.Commit();
 #endif

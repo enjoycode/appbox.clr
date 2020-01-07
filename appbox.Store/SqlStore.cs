@@ -102,8 +102,6 @@ namespace appbox.Store
         #endregion
 
         #region ====abstract Create Methods====
-        public abstract DbTransaction BeginTransaction();
-
         public abstract DbConnection MakeConnection();
 
         public abstract DbCommand MakeCommand();

@@ -24,7 +24,8 @@ namespace appbox.Design
 #if FUTURE
             var txn = await Transaction.BeginAsync();
 #else
-            var txn = SqlStore.Default.BeginTransaction();
+            using var conn = await SqlStore.Default.OpenConnectionAsync();
+            using var txn = conn.BeginTransaction();
 #endif
             try
             {

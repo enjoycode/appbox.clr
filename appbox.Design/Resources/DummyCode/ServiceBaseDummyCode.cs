@@ -115,6 +115,8 @@ public sealed class SqlStore
 {
 	private SqlStore() { }
 
+	public Task<DbConnection> OpenConnectionAsync() { return null; }
+
 	public Task SaveAsync(SqlEntityBase entity, DbTransaction txn = null) { return null; }
 
 	public Task<int> DeleteAsync(SqlEntityBase entity, DbTransaction txn = null) { return null; }

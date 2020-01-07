@@ -166,7 +166,8 @@ namespace appbox.Design
 #if FUTURE
             var txn = await Transaction.BeginAsync();
 #else
-            var txn = SqlStore.Default.BeginTransaction();
+            using var conn = await SqlStore.Default.OpenConnectionAsync();
+            var txn = conn.BeginTransaction();
 #endif
             //注意目前实现无法保证第三方数据库与内置模型存储的一致性,第三方数据库发生异常只能手动清理
             var otherStoreTxns = new Dictionary<ulong, DbTransaction>();
@@ -186,9 +187,9 @@ namespace appbox.Design
                 //先尝试递交第三方数据库的DDL事务
                 foreach (var sqlTxn in otherStoreTxns.Values)
                 {
-                    var conn = sqlTxn.Connection;
+                    var sqlConn = sqlTxn.Connection;
                     sqlTxn.Commit();
-                    conn.Dispose();
+                    sqlConn.Dispose();
                 }
                 //再递交系统数据库事务
 #if FUTURE
@@ -203,10 +204,10 @@ namespace appbox.Design
                 txn.Dispose();
                 foreach (var sqlTxn in otherStoreTxns.Values)
                 {
-                    var conn = sqlTxn.Connection;
+                    var sqlConn = sqlTxn.Connection;
                     sqlTxn.Dispose();
-                    if (conn != null)
-                        conn.Dispose();
+                    if (sqlConn != null)
+                        sqlConn.Dispose();
                 }
             }
 
@@ -310,7 +311,7 @@ namespace appbox.Design
                     case PersistentState.Deleted:
                         {
                             await ModelStore.DeleteModelAsync(model, txn, aid => hub.DesignTree.FindApplicationNode(aid).Model);
-                            
+
                             if (model.ModelType == ModelType.Entity)
                             {
                                 var em = (EntityModel)model;

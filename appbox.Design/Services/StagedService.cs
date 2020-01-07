@@ -159,7 +159,8 @@ namespace appbox.Design
                 q.T["ModelId"] == modelId &
                 q.T["DeveloperId"] == developerID);
 
-            var txn = SqlStore.Default.BeginTransaction();
+            using var conn = await SqlStore.Default.OpenConnectionAsync();
+            using var txn = conn.BeginTransaction();
 #endif
 
             var res = await q.ToListAsync();
