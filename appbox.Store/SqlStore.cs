@@ -210,6 +210,7 @@ namespace appbox.Store
             cmd.Transaction = txn;
             if (txn == null)
                 await cmd.Connection.OpenAsync();
+            Log.Debug(cmd.CommandText);
             //执行命令
             try
             {
@@ -248,6 +249,7 @@ namespace appbox.Store
             cmd.Transaction = txn;
             if (txn == null)
                 await cmd.Connection.OpenAsync();
+            Log.Debug(cmd.CommandText);
             //执行命令
             try
             {
@@ -286,6 +288,7 @@ namespace appbox.Store
             cmd.Transaction = txn;
             if (txn == null)
                 await cmd.Connection.OpenAsync();
+            Log.Debug(cmd.CommandText);
             //执行命令
             try
             {
@@ -313,6 +316,7 @@ namespace appbox.Store
             cmd.Transaction = txn;
             if (txn == null)
                 await cmd.Connection.OpenAsync();
+            Log.Debug(cmd.CommandText);
             //执行命令
             if (updateCommand.HasOutputItems && UseReaderForOutput) //返回字段通过DbReader读取
             {
@@ -371,6 +375,7 @@ namespace appbox.Store
             cmd.Transaction = txn;
             if (txn == null)
                 await cmd.Connection.OpenAsync();
+            Log.Debug(cmd.CommandText);
             //执行命令
             try
             {
@@ -477,27 +482,11 @@ namespace appbox.Store
         {
             var cmd = MakeCommand();
             var sb = StringBuilderCache.Acquire();
-            int pindex = 0;
             var tableName = model.GetSqlTableName(false, null);
 
             sb.Append($"Delete From {NameEscaper}{tableName}{NameEscaper} Where ");
             //根据主键生成条件
-            FieldWithOrder pk;
-            DataFieldModel mm;
-            for (int i = 0; i < model.SqlStoreOptions.PrimaryKeys.Count; i++)
-            {
-                pk = model.SqlStoreOptions.PrimaryKeys[i];
-                mm = (DataFieldModel)model.GetMember(pk.MemberId, true);
-
-                pindex++;
-                var para = MakeParameter();
-                para.ParameterName = $"V{pindex}";
-                para.Value = entity.GetMember(pk.MemberId).BoxedValue; //TODO: no boxing
-                cmd.Parameters.Add(para);
-
-                if (i != 0) sb.Append(" And");
-                sb.Append($" {NameEscaper}{mm.SqlColName}{NameEscaper}=@{para.ParameterName}");
-            }
+            BuildWhereForUpdateOrDelete(entity, model, cmd, sb);
 
             cmd.CommandText = StringBuilderCache.GetStringAndRelease(sb);
             return cmd;
@@ -560,9 +549,34 @@ namespace appbox.Store
                 }
             }
 
+            //根据主键生成条件
+            sb.Append(" Where");
+            BuildWhereForUpdateOrDelete(entity, model, cmd, sb);
+
             cmd.CommandText = StringBuilderCache.GetStringAndRelease(sb);
             if (!hasChangedMember) throw new InvalidOperationException("entity has no changed member");
             return cmd;
+        }
+
+        private void BuildWhereForUpdateOrDelete(Entity entity, EntityModel model, DbCommand cmd, System.Text.StringBuilder sb)
+        {
+            int pindex = 0;
+            FieldWithOrder pk;
+            DataFieldModel mm;
+            for (int i = 0; i < model.SqlStoreOptions.PrimaryKeys.Count; i++)
+            {
+                pk = model.SqlStoreOptions.PrimaryKeys[i];
+                mm = (DataFieldModel)model.GetMember(pk.MemberId, true);
+
+                pindex++;
+                var para = MakeParameter();
+                para.ParameterName = $"p{pindex}";
+                para.Value = entity.GetMember(pk.MemberId).BoxedValue; //TODO: no boxing
+                cmd.Parameters.Add(para);
+
+                if (i != 0) sb.Append(" And");
+                sb.Append($" {NameEscaper}{mm.SqlColName}{NameEscaper}=@{para.ParameterName}");
+            }
         }
 
         protected internal abstract DbCommand BuildDeleteCommand(SqlDeleteCommand deleteCommand);

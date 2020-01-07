@@ -159,7 +159,11 @@ namespace appbox.Store
             await ModelStore.InsertModelAsync(staged, txn);
             await ModelStore.InsertModelAsync(checkout, txn);
 
+#if FUTURE
             await CreateServiceModel("OrgUnitService", 1, null, true, txn);
+#else
+            await CreateServiceModel("OrgUnitService", 1, null, false, txn);
+#endif
             await CreateServiceModel("MetricService", 2, null, false, txn,
                 new List<string> { "Newtonsoft.Json", "System.Private.Uri", "System.Net.Http" });
 
