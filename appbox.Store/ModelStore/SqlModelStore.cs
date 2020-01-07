@@ -253,7 +253,7 @@ namespace appbox.Store
                 throw new InvalidOperationException("Can't save none root folder.");
 
             //TODO:暂先删除再插入
-            var id = folder.AppId.ToString(); //只需要AppId，RootFolder.Id=Guid.Empty
+            var id = $"{folder.AppId.ToString()}.{(byte)folder.TargetModelType}"; //RootFolder.Id=Guid.Empty
             using var cmd = SqlStore.Default.MakeCommand();
             cmd.Connection = txn.Connection;
             cmd.Transaction = txn;
