@@ -20,5 +20,10 @@ namespace appbox.Store
             T = new EntityExpression(entityModelID, this);
         }
 
+        public SqlDeleteCommand Where(Expression condition)
+        {
+            Filter = condition;
+            return this;
+        }
     }
 }

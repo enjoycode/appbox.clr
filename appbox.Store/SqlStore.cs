@@ -195,7 +195,7 @@ namespace appbox.Store
             }
         }
 
-        public async Task<int> InsertAsync(Entity entity, DbTransaction txn)
+        public async Task<int> InsertAsync(Entity entity, DbTransaction txn = null)
         {
             if (entity == null) throw new ArgumentNullException(nameof(entity));
             if (entity.PersistentState != PersistentState.Detached)
@@ -207,6 +207,7 @@ namespace appbox.Store
 
             var cmd = BuildInsertCommand(entity, model);
             cmd.Connection = txn != null ? txn.Connection : MakeConnection();
+            cmd.Transaction = txn;
             if (txn == null)
                 await cmd.Connection.OpenAsync();
             //执行命令
@@ -228,7 +229,7 @@ namespace appbox.Store
         /// <summary>
         /// 仅适用于更新具备主键的实体，否则使用SqlUpdateCommand明确字段及条件更新
         /// </summary>
-        public async Task<int> UpdateAsync(Entity entity, DbTransaction txn)
+        public async Task<int> UpdateAsync(Entity entity, DbTransaction txn = null)
         {
             if (entity == null) throw new ArgumentNullException(nameof(entity));
             if (entity.PersistentState == PersistentState.Detached)
@@ -244,6 +245,7 @@ namespace appbox.Store
 
             var cmd = BuildUpdateCommand(entity, model);
             cmd.Connection = txn != null ? txn.Connection : MakeConnection();
+            cmd.Transaction = txn;
             if (txn == null)
                 await cmd.Connection.OpenAsync();
             //执行命令
@@ -265,7 +267,7 @@ namespace appbox.Store
         /// <summary>
         /// 仅适用于删除具备主键的实体，否则使用SqlDeleteCommand明确指定条件删除
         /// </summary>
-        public async Task<int> DeleteAsync(Entity entity, DbTransaction txn)
+        public async Task<int> DeleteAsync(Entity entity, DbTransaction txn = null)
         {
             if (entity == null) throw new ArgumentNullException(nameof(entity));
             if (entity.PersistentState == PersistentState.Detached)
@@ -281,6 +283,7 @@ namespace appbox.Store
 
             var cmd = BuildDeleteCommand(entity, model);
             cmd.Connection = txn != null ? txn.Connection : MakeConnection();
+            cmd.Transaction = txn;
             if (txn == null)
                 await cmd.Connection.OpenAsync();
             //执行命令
@@ -307,6 +310,7 @@ namespace appbox.Store
 
             var cmd = BuidUpdateCommand(updateCommand);
             cmd.Connection = txn != null ? txn.Connection : MakeConnection();
+            cmd.Transaction = txn;
             if (txn == null)
                 await cmd.Connection.OpenAsync();
             //执行命令
@@ -364,6 +368,7 @@ namespace appbox.Store
 
             var cmd = BuildDeleteCommand(deleteCommand);
             cmd.Connection = txn != null ? txn.Connection : MakeConnection();
+            cmd.Transaction = txn;
             if (txn == null)
                 await cmd.Connection.OpenAsync();
             //执行命令
