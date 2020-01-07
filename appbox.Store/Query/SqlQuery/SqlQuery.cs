@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data.Common;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using appbox.Data;
 using appbox.Expressions;
 using appbox.Models;
+using appbox.Runtime;
 
 namespace appbox.Store
 {
@@ -68,7 +70,7 @@ namespace appbox.Store
 
         public FieldExpression TreeParentIDMember { get; private set; }
 
-        public EntitySetExpression TreeSubSetMember { get; private set; }
+        //public EntitySetExpression TreeSubSetMember { get; private set; }
 
         #endregion
 
@@ -211,9 +213,9 @@ namespace appbox.Store
             }
 
             //递交查询
-            var model = await Runtime.RuntimeContext.Current.GetModelAsync<EntityModel>(T.ModelID);
+            var model = await RuntimeContext.Current.GetModelAsync<EntityModel>(T.ModelID);
             var db = SqlStore.Get(model.SqlStoreOptions.StoreModelId);
-            var cmd = db.BuildQuery(this);
+            using var cmd = db.BuildQuery(this);
             using var conn = db.MakeConnection();
             await conn.OpenAsync();
             cmd.Connection = conn;
@@ -242,14 +244,26 @@ namespace appbox.Store
             Purpose = QueryPurpose.ToEntityList;
 
             //添加选择项
-            var model = await Runtime.RuntimeContext.Current.GetModelAsync<EntityModel>(T.ModelID);
+            var model = await RuntimeContext.Current.GetModelAsync<EntityModel>(T.ModelID);
             AddAllSelects(this, model, T, null);
             if (_rootIncluder != null)
                 await _rootIncluder.AddSelects(this, model);
 
             var db = SqlStore.Get(model.SqlStoreOptions.StoreModelId);
             var list = new EntityList(T.ModelID);
-            await ToListInternal(db, list, model);
+
+            using var cmd = db.BuildQuery(this);
+            using var conn = db.MakeConnection();
+            await conn.OpenAsync();
+            cmd.Connection = conn;
+            Log.Debug(cmd.CommandText);
+
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                list.Add(FillEntity(model, reader));
+            }
+
             if (_rootIncluder != null && list != null)
                 await _rootIncluder.LoadEntitySets(db, list, null); //TODO:fix txn
             return list;
@@ -258,34 +272,57 @@ namespace appbox.Store
         /// <summary>
         /// 返回树状结构的实体集合
         /// </summary>
-        /// <param name="treeSubSetMember">例:q.T["SubItems"]</param>
+        /// <param name="childrenMember">例:q.T["SubItems"]</param>
         /// <returns></returns>
-        public EntityList ToTreeList(MemberExpression treeSubSetMember)
+        public async Task<EntityList> ToTreeListAsync(MemberExpression childrenMember)
         {
-            throw new NotImplementedException();
-            //this.TreeSubSetMember = (EntitySetExpression)treeSubSetMember;
-            //EntityModel ownerModel = RuntimeContext.Default.EntityModelContainer.GetModel(this.TreeSubSetMember.Owner.ModelID);
-            //EntitySetModel setmodel = ownerModel[this.TreeSubSetMember.Name] as EntitySetModel;
-            //this.TreeParentIDMember = (FieldExpression)this.T[setmodel.RefIDMemberName];
+            //TODO:目前实现仅支持单一主键且为Guid的树状结构
+            Debug.Assert(ReferenceEquals(childrenMember.Owner, T));
+            var children = (EntitySetExpression)childrenMember;
+            EntityModel model = await RuntimeContext.Current.GetModelAsync<EntityModel>(T.ModelID);
+            EntitySetModel childrenModel = (EntitySetModel)model.GetMember(children.Name, true);
+            TreeParentIDMember = (FieldExpression)T[model.GetMember(childrenModel.RefMemberId, true).Name];
+            var parentMemberId = childrenModel.RefMemberId;
+            var pk = model.SqlStoreOptions.PrimaryKeys[0].MemberId;
 
-            ////加入自动排序
+            //TODO:加入自动排序
             //if (!string.IsNullOrEmpty(setmodel.RefRowNumberMemberName))
             //{
-            //    SortItem sort = new SortItem(T[setmodel.RefRowNumberMemberName], SortType.ASC);
-            //    this.SortItems.Insert(0, sort);
+            //    SqlSortItem sort = new SqlSortItem(T[setmodel.RefRowNumberMemberName], SortType.ASC);
+            //    SortItems.Insert(0, sort);
             //}
 
-            //this.Purpose = QueryPurpose.ToEntityTreeList;
-            //EntityList list = new EntityList(setmodel);
+            //如果没有设置任何条件，则设置默认条件为查询根级开始
+            if (Equals(null, Filter))
+                Filter = TreeParentIDMember == null;
 
-            ////如果没有设置任何条件，则设置默认条件为查询根级开始
-            //if (object.Equals(null, this.Filter))
-            //{
-            //    this.Filter = this.TreeParentIDMember == null;
-            //}
+            Purpose = QueryPurpose.ToEntityTreeList;
+            EntityList list = new EntityList(childrenModel);
+            var db = SqlStore.Get(model.SqlStoreOptions.StoreModelId);
+            var dic = new Dictionary<Guid, Entity>(); //TODO: fix pk
 
-            //this.ExecToListInternal(list);
-            //return list;
+            using var cmd = db.BuildQuery(this);
+            using var conn = db.MakeConnection();
+            await conn.OpenAsync();
+            cmd.Connection = conn;
+            Log.Debug(cmd.CommandText);
+
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                Entity obj = FillEntity(model, reader);
+                //设置obj本身的EntitySet成员为已加载，防止从数据库中再次加载
+                //    obj.InitEntitySetLoad(TreeSubSetMember.Name);
+
+                var parentId = obj.GetGuidNullable(parentMemberId);
+                if (parentId.HasValue && dic.TryGetValue(parentId.Value, out Entity parent))
+                    parent.GetEntitySet(childrenModel.MemberId).Add(obj);
+                else
+                    list.Add(obj);
+
+                dic.Add(obj.GetGuid(pk), obj);
+            }
+            return list;
         }
 
         /// <summary>
@@ -295,22 +332,24 @@ namespace appbox.Store
         /// <param name="parentMember">Parent member.</param>
         public async Task<TreeNodePath> ToTreeNodePathAsync(MemberExpression parentMember, Expression displayText)
         {
+            //TODO:目前实现仅支持单一主键且为Guid的树状结构
             //TODO:验证parentMember为EntityExpression,且非聚合引用，且引用目标为自身
-            //TODO:验证是否具备主键条件
-            var refMember = parentMember as EntityExpression;
-            if (Expression.IsNull(refMember))
+            var parent = parentMember as EntityExpression;
+            if (Expression.IsNull(parent))
                 throw new ArgumentException("parentMember must be EntityRef", nameof(parentMember));
 
-            var model = await Runtime.RuntimeContext.Current.GetModelAsync<EntityModel>(T.ModelID);
-            var refModel = (EntityRefModel)model.GetMember(refMember.Name, true);
-            if (refModel.IsAggregationRef)
+            var model = await RuntimeContext.Current.GetModelAsync<EntityModel>(T.ModelID);
+            var parentModel = (EntityRefModel)model.GetMember(parent.Name, true);
+            if (parentModel.IsAggregationRef)
                 throw new ArgumentException("can not be AggregationRef", nameof(parentMember));
-            if (refModel.RefModelIds[0] != model.Id)
+            if (parentModel.RefModelIds[0] != model.Id)
                 throw new ArgumentException("must be self-ref", nameof(parentMember));
+            var pkName = model.GetMember(model.SqlStoreOptions.PrimaryKeys[0].MemberId, true).Name;
+            var fkName = model.GetMember(parentModel.FKMemberIds[0], true).Name;
 
             Purpose = QueryPurpose.ToTreeNodePath;
-            AddSelectItem(new SqlSelectItemExpression(T["Id"])); //TODO: fix Id to pk
-            AddSelectItem(new SqlSelectItemExpression(T[parentMember.Name + "Id"], "ParentId")); //TODO:fix fk
+            AddSelectItem(new SqlSelectItemExpression(T[pkName]));
+            AddSelectItem(new SqlSelectItemExpression(T[fkName], "ParentId"));
             AddSelectItem(new SqlSelectItemExpression(displayText, "Text"));
 
             var db = SqlStore.Get(model.SqlStoreOptions.StoreModelId);
@@ -328,53 +367,6 @@ namespace appbox.Store
             }
 
             return new TreeNodePath(list);
-        }
-
-        private async Task ToListInternal(SqlStore db, IList<Entity> list, EntityModel model)
-        {
-            //Dictionary<Guid, Entity> dic = null;
-            //if (this.Purpose == QueryPurpose.ToEntityTreeList)
-            //    dic = new Dictionary<Guid, Entity>();
-
-            //递交查询
-            var cmd = db.BuildQuery(this);
-            using var conn = db.MakeConnection();
-            await conn.OpenAsync();
-            cmd.Connection = conn;
-            Log.Debug(cmd.CommandText);
-
-            using var reader = await cmd.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
-            {
-                Entity obj = FillEntity(model, reader);
-                //设置obj本身的EntitySet成员为已加载，防止从数据库中再次加载
-                //if (!Equals(null, TreeSubSetMember))
-                //    obj.InitEntitySetLoad(TreeSubSetMember.Name);
-
-                if (Purpose == QueryPurpose.ToEntityList)
-                {
-                    list.Add(obj);
-                }
-                else //树状结构查询
-                {
-                    throw new NotImplementedException();
-                    //if (obj.HasValue(this.TreeParentIDMember.Name))
-                    //{
-                    //    var parentRefID = obj.GetGuidValue(this.TreeParentIDMember.Name);
-                    //    Entity parent = null;
-                    //    if (dic.TryGetValue(parentRefID, out parent))
-                    //        parent.GetEntitySetValue(this.TreeSubSetMember.Name).Add(obj);
-                    //    else
-                    //        list.Add(obj);
-                    //}
-                    //else
-                    //{
-                    //    list.Add(obj);
-                    //}
-                    //dic.Add(obj.ID, obj);
-                }
-            }
-            //注意：查询出来的树状表已经排序过，修改于2013-5-31
         }
 
         /// <summary>

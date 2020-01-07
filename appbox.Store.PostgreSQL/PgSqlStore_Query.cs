@@ -16,10 +16,9 @@ namespace appbox.Store
             var cmd = new NpgsqlCommand();
             var ctx = new BuildQueryContext(cmd, query);
 
-            //if (query.Purpose == QueryPurpose.ToEntityTreeList)
-            //    BuildTreeQuery(query, ctx);
-            //else
-            if (query.Purpose == QueryPurpose.ToTreeNodePath)
+            if (query.Purpose == QueryPurpose.ToEntityTreeList)
+                BuildTreeQuery(query, ctx);
+            else if (query.Purpose == QueryPurpose.ToTreeNodePath)
                 BuildTreeNodePathQuery(query, ctx);
             else
                 BuildNormalQuery(query, ctx);
@@ -115,6 +114,102 @@ namespace appbox.Store
             BuildGroupBy(query, ctx);
 
             //结束上下文
+            ctx.EndBuildQuery(query);
+        }
+
+        //With RECURSIVE cte
+        //("ID","BaseID","BaseType","ParentID","ManagerID","SortNumber","Disabled","TreeLevel")
+        //As
+        //(Select t."ID", t."BaseID", t."BaseType", t."ParentID", t."ManagerID", t."SortNumber", t."Disabled",0 
+        //From "sys.OrgUnit" As t
+        //Where t."ParentID" ISNULL
+        //Union All
+        //Select t."ID", t."BaseID", t."BaseType", t."ParentID", t."ManagerID", t."SortNumber", t."Disabled","TreeLevel" + 1 
+        //From "sys.OrgUnit" As t Inner Join cte as d On t."ParentID" = d."ID")
+        //Select t."ID" "t.ID", t."BaseID" "t.BaseID", t."BaseType" "t.BaseType", t."ParentID" "t.ParentID", t."ManagerID" 
+        //"t.ManagerID", t."SortNumber" "t.SortNumber", t."Disabled" "t.Disabled" From cte t
+        //Order By t."TreeLevel", t."SortNumber"
+
+        private void BuildTreeQuery(ISqlSelectQuery query, BuildQueryContext ctx)
+        {
+            //注意目前实现仅支持单一主键
+
+            //设置上下文
+            ctx.BeginBuildQuery(query);
+
+            ctx.Append("With RECURSIVE cte (");
+            ctx.SetBuildStep(BuildQueryStep.BuildWithCTE);
+            foreach (var si in query.Selects.Values)
+            {
+                FieldExpression fsi = si.Expression as FieldExpression;
+                if (!Equals(null, fsi) && Equals(fsi.Owner.Owner, null))
+                {
+                    ctx.AppendFormat("\"{0}\",", ((FieldExpression)si.Expression).Name);
+                }
+            }
+            ctx.Append("\"TreeLevel\") As (Select ");
+            //Select Anchor
+            ctx.SetBuildStep(BuildQueryStep.BuildSelect);
+            BuildCTE_SelectItems(query, ctx);
+            ctx.Append("0 From ");
+            //From Anchor
+            ctx.SetBuildStep(BuildQueryStep.BuildFrom);
+            SqlQuery q = (SqlQuery)query;
+            var model = Runtime.RuntimeContext.Current.GetModelAsync<EntityModel>(q.T.ModelID).Result;
+            ctx.AppendFormat("\"{0}\" As {1}", model.GetSqlTableName(false, null), q.AliasName);
+            //Where Anchor
+            ctx.SetBuildStep(BuildQueryStep.BuildWhere);
+            if (!object.Equals(null, query.Filter))
+            {
+                ctx.Append(" Where ");
+                BuildExpression(query.Filter, ctx);
+            }
+            //End 1
+            ctx.EndBuildQuery(query);
+
+            //Union all
+            ctx.SetBuildStep(BuildQueryStep.BuildSelect);
+            ctx.Append(" Union All Select ");
+            //Select 2
+            //ctx.SetBuildStep(BuildQueryStep.BuildSelect);
+            BuildCTE_SelectItems(query, ctx);
+            ctx.Append("\"TreeLevel\" + 1 From ");
+            //From 2
+            ctx.SetBuildStep(BuildQueryStep.BuildFrom);
+            ctx.AppendFormat("\"{0}\" As {1}", model.GetSqlTableName(false, null), q.AliasName);
+            //Inner Join 
+            ctx.Append(" Inner Join cte as d On ");
+            BuildFieldExpression(q.TreeParentIDMember, ctx);
+            ctx.Append(" = d.\"Id\") Select "); //TODO:fix pk
+            //重新处理SelectItem
+            ctx.SetBuildStep(BuildQueryStep.BuildSelect);
+            foreach (var si in query.Selects.Values)
+            {
+                BuildSelectItem(si, ctx);
+                ctx.Append(",");
+            }
+            ctx.RemoveLastChar();
+            ctx.Append(" From cte t");
+            //构建自动联接Join，主要用于继承的
+            ctx.SetBuildStep(BuildQueryStep.BuildJoin);
+            ctx.BuildQueryAutoJoins(q); //再处理自动联接
+
+            //最后处理Order By 
+            ctx.SetBuildStep(BuildQueryStep.BuildOrderBy);
+            if (query.HasSortItems)
+            {
+                ctx.Append(" Order By t.\"TreeLevel\"");
+                for (int i = 0; i < query.SortItems.Count; i++)
+                {
+                    ctx.Append(",");
+                    SqlSortItem si = query.SortItems[i];
+                    BuildExpression(si.Expression, ctx);
+                    if (si.SortType == SortType.DESC)
+                        ctx.Append(" DESC");
+                }
+            }
+
+            //End 1
             ctx.EndBuildQuery(query);
         }
 

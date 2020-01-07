@@ -573,6 +573,13 @@ namespace appbox.Store
         #endregion
 
         #region ====由服务调用的简化方法====
+        public async Task<DbConnection> OpenConnectionAsync()
+        {
+            var conn = MakeConnection();
+            await conn.OpenAsync();
+            return conn;
+        }
+
         public async Task SaveAsync(Entity entity, DbTransaction txn = null)
         {
             switch (entity.PersistentState)
