@@ -281,9 +281,12 @@ namespace appbox.Store
             var children = (EntitySetExpression)childrenMember;
             EntityModel model = await RuntimeContext.Current.GetModelAsync<EntityModel>(T.ModelID);
             EntitySetModel childrenModel = (EntitySetModel)model.GetMember(children.Name, true);
-            TreeParentIDMember = (FieldExpression)T[model.GetMember(childrenModel.RefMemberId, true).Name];
-            var parentMemberId = childrenModel.RefMemberId;
+            EntityRefModel parentModel = (EntityRefModel)model.GetMember(childrenModel.RefMemberId, true);
+            DataFieldModel parentIdModel = (DataFieldModel)model.GetMember(parentModel.FKMemberIds[0], true);
+            TreeParentIDMember = (FieldExpression)T[parentIdModel.Name];
             var pk = model.SqlStoreOptions.PrimaryKeys[0].MemberId;
+
+            AddAllSelects(this, model, T, null);
 
             //TODO:加入自动排序
             //if (!string.IsNullOrEmpty(setmodel.RefRowNumberMemberName))
@@ -312,9 +315,9 @@ namespace appbox.Store
             {
                 Entity obj = FillEntity(model, reader);
                 //设置obj本身的EntitySet成员为已加载，防止从数据库中再次加载
-                //    obj.InitEntitySetLoad(TreeSubSetMember.Name);
+                obj.InitEntitySetForLoad(childrenModel);
 
-                var parentId = obj.GetGuidNullable(parentMemberId);
+                var parentId = obj.GetGuidNullable(parentIdModel.MemberId);
                 if (parentId.HasValue && dic.TryGetValue(parentId.Value, out Entity parent))
                     parent.GetEntitySet(childrenModel.MemberId).Add(obj);
                 else

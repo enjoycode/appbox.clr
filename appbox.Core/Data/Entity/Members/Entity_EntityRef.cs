@@ -139,9 +139,7 @@ namespace appbox.Data
                         ref EntityMember fkMember = ref GetMember(memberModel.FKMemberIds[i]);
                         //设置的实体的主键成员
                         ref EntityMember pkMember = ref value.GetMember(pks[i].MemberId);
-                        Debug.Assert(fkMember.Id == pkMember.Id);
-                        if ((!fkMember.HasValue)
-                            || !(fkMember.GuidValue == pkMember.GuidValue && fkMember.ObjectValue == pkMember.ObjectValue))
+                        if ((!fkMember.HasValue) || !EntityMember.IsValueSame(ref fkMember, ref pkMember))
                         {
                             fkMember.GuidValue = pkMember.GuidValue;
                             fkMember.ObjectValue = pkMember.ObjectValue;

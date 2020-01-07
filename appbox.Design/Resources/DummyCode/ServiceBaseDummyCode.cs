@@ -323,8 +323,8 @@ public class SqlQuery<TSource> : ISqlQueryJoin<TSource>, ISqlIncluder<TSource> w
 
 	public Task<IList<TSource>> ToListAsync() { return null; }
 
-	//[QueryMethod()]
-	//public EntityList<TSource> ToTreeList<TResult>(Func<TSource, TResult> selector) { return null; }
+	[QueryMethod()]
+	public Task<IList<TSource>> ToTreeListAsync<TResult>(Func<TSource, TResult> selector) { return null; }
 
 	[QueryMethod()]
 	public Task<IList<TResult>> ToListAsync<TResult>(Func<TSource, TResult> selector)

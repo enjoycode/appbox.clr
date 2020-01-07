@@ -108,6 +108,11 @@ namespace appbox.Data
             }
         }
 
+        public static bool IsValueSame(ref EntityMember a, ref EntityMember b)
+        {
+            return a.GuidValue == b.GuidValue && a.ObjectValue == b.ObjectValue;
+        }
+
         #region ====隐式转换,只转换值不包含MemberId====
         // 这样做是为了方便设计时将值隐式转换为相应的EntityMember, 只要用于虚拟Entity的构造及Load参数
         //TODO: others
@@ -142,6 +147,13 @@ namespace appbox.Data
         public static implicit operator EntityMember(byte v)
         {
             var r = new EntityMember() { ByteValue = v, ValueType = EntityFieldType.Byte };
+            r.Flag.HasValue = true;
+            return r;
+        }
+
+        public static implicit operator EntityMember(Guid v)
+        {
+            var r = new EntityMember() { GuidValue = v, ValueType = EntityFieldType.Guid };
             r.Flag.HasValue = true;
             return r;
         }

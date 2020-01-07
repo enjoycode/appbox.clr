@@ -165,7 +165,7 @@ namespace appbox.Store
                 BuildExpression(query.Filter, ctx);
             }
             //End 1
-            ctx.EndBuildQuery(query);
+            ctx.CurrentQueryInfo.EndBuidQuery();//ctx.EndBuildQuery(query);
 
             //Union all
             ctx.SetBuildStep(BuildQueryStep.BuildSelect);
@@ -210,7 +210,7 @@ namespace appbox.Store
             }
 
             //End 1
-            ctx.EndBuildQuery(query);
+            ctx.EndBuildQuery(query, true);
         }
 
         private void BuildTreeNodePathQuery(ISqlSelectQuery query, BuildQueryContext ctx)
