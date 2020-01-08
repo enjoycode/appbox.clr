@@ -176,10 +176,13 @@ namespace appbox.Server
                 if (IsOwnerOfSharedMemory)
                 {
                     // Create a new shared memory mapping
-                    //Mmf = MemoryMappedFile.CreateNew(Name, SharedMemorySize); //Linux not supported
+#if Windows
+                    Mmf = MemoryMappedFile.CreateNew(Name, SharedMemorySize); //Linux not supported
+#else
                     var path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), Name);
                     Mmf = MemoryMappedFile.CreateFromFile(path, System.IO.FileMode.OpenOrCreate, null, SharedMemorySize);
                     Log.Debug($"MemoryMappedFile create at: {path}");
+#endif
 
                     // Create a view to the entire region of the shared memory
                     View = Mmf.CreateViewAccessor(0, SharedMemorySize, MemoryMappedFileAccess.ReadWrite);
@@ -192,10 +195,13 @@ namespace appbox.Server
                 else
                 {
                     // Open an existing shared memory mapping
-                    //Mmf = MemoryMappedFile.OpenExisting(Name); //Linux not supported
+#if Windows
+                    Mmf = MemoryMappedFile.OpenExisting(Name); //Linux not supported
+#else
                     var path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), Name);
                     Mmf = MemoryMappedFile.CreateFromFile(path, System.IO.FileMode.Open, null);
                     Log.Debug($"MemoryMappedFile open at: {path}");
+#endif
 
                     // Retrieve the header from the shared memory in order to initialise the correct size
                     using (var headerView = Mmf.CreateViewAccessor(0, HeaderOffset + Marshal.SizeOf(typeof(SharedHeader)), MemoryMappedFileAccess.Read))
@@ -306,9 +312,9 @@ namespace appbox.Server
         {
         }
 
-        #endregion
+#endregion
 
-        #region Writing
+#region Writing
 
         /// <summary>
         /// Writes an instance of <typeparamref name="T"/> into the buffer
@@ -382,9 +388,9 @@ namespace appbox.Server
             writeFunc(new IntPtr(BufferStartPtr + bufferPosition));
         }
 
-        #endregion
+#endregion
 
-        #region Reading
+#region Reading
 
         /// <summary>
         /// Reads an instance of <typeparamref name="T"/> from the buffer
@@ -445,9 +451,9 @@ namespace appbox.Server
             readFunc(new IntPtr(BufferStartPtr + bufferPosition));
         }
 
-        #endregion
+#endregion
 
-        #region IDisposable
+#region IDisposable
 
         /// <summary>
         /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
@@ -469,7 +475,7 @@ namespace appbox.Server
             }
         }
 
-        #endregion
+#endregion
     }
 
     /// <summary>

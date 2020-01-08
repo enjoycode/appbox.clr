@@ -41,9 +41,12 @@ namespace appbox.Host
         {
             var process = new Process();
             process.StartInfo.UseShellExecute = false;
-            //if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+#if Windows
+            process.StartInfo.FileName = "appbox.AppContainer.exe";
+#else
             process.StartInfo.CreateNoWindow = true;
             process.StartInfo.FileName = "appbox.AppContainer";
+#endif
             process.StartInfo.Arguments = Runtime.RuntimeContext.PeerId.ToString();
             process.EnableRaisingEvents = true;
             process.Exited += OnChildProcessExited;
@@ -75,7 +78,7 @@ namespace appbox.Host
             var msg = new InvalidModelsCache(services, others);
             AppContainer.Channel.SendMessage(ref msg);
         }
-        #endregion
+#endregion
     }
 
 }

@@ -40,6 +40,10 @@ namespace appbox.Logging
         public void Write(LogLevel level, string file, int line, string method, string msg)
         {
             //TODO:暂先简单实现，待优化
+#if Windows
+            Console.WriteLine("[{0}{1:MM}{1:dd} {1:hh:mm:ss} {2}.{3}:{4}]: {5}",
+                GetLevelChar(level), DateTime.Now, file, method, line, msg);
+#else
             var now = DateTime.Now;
             var head = string.Format("[{0}{1:MM}{1:dd} {1:hh:mm:ss} {2}.{3}:{4}]: ",
                 GetLevelChar(level), now, file, method, line);
@@ -60,13 +64,12 @@ namespace appbox.Logging
             StringHelper.WriteTo(msg, b => buf[logIndex++] = b);
             buf[totalSize - 1] = 0x0A; //换行
 
-            using(var output = Console.OpenStandardOutput())
+            using (var output = Console.OpenStandardOutput())
             {
                 output.Write(buf, 0, totalSize);
             }
             ArrayPool<byte>.Shared.Return(buf);
-
-            //Console.WriteLine("#{0} [{1}] [{2}.{3}]: {4}", DateTime.Now, level, file, method, msg);
+#endif
         }
     }
 }
