@@ -157,6 +157,8 @@ namespace appbox.Store
                 counterData = BitConverter.GetBytes(seq);
                 BuildInsertMetaCommand(cmd2, meta, id, ModelType.Application, counterData, false);
             }
+            reader.Close();
+
             cmd2.Connection = txn.Connection;
             cmd2.Transaction = txn;
             await cmd2.ExecuteNonQueryAsync();
