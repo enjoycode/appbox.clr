@@ -28,6 +28,7 @@ namespace appbox.Models
         public IEntityStoreOptions StoreOptions { get; private set; }
         internal SysStoreOptions SysStoreOptions => StoreOptions as SysStoreOptions;
         internal SqlStoreOptions SqlStoreOptions => StoreOptions as SqlStoreOptions;
+        internal CqlStoreOptions CqlStoreOptions => StoreOptions as CqlStoreOptions;
         internal bool IsDTO => StoreOptions == null;
 
         #region ----ShortPath for Store----
@@ -57,12 +58,15 @@ namespace appbox.Models
         }
 
         /// <summary>
-        /// New EntityModel for sql store
+        /// New EntityModel for other store
         /// </summary>
-        internal EntityModel(ulong id, string name, ulong storeId) : base(id, name)
+        internal EntityModel(ulong id, string name, IEntityStoreOptions storeOptions) : base(id, name)
         {
+            if (storeOptions == null || storeOptions is SysStoreOptions)
+                throw new ArgumentException(nameof(storeOptions));
+
             Members = new List<EntityMemberModel>();
-            StoreOptions = new SqlStoreOptions(storeId);
+            StoreOptions = storeOptions;
         }
         #endregion
 

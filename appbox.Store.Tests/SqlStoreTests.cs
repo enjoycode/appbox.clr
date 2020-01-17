@@ -15,7 +15,7 @@ namespace appbox.Store.Tests
 
         private EntityModel MakeTestSqlModel()
         {
-            var model = new EntityModel(0x12345678ul, "Emploee", 0x1234ul);
+            var model = new EntityModel(0x12345678ul, "Emploee", new SqlStoreOptions(0x1234ul));
             var m_code = new DataFieldModel(model, "Code", EntityFieldType.Int32);
             model.AddSysMember(m_code, 1);
             var m_name = new DataFieldModel(model, "Name", EntityFieldType.String);

@@ -12,6 +12,29 @@ namespace appbox.Models
     /// /// </summary>
     public sealed class CqlStoreOptions : IEntityStoreOptions, IJsonSerializable, IBinSerializable
     {
+        /// <summary>
+        /// 映射的DataStoreModel的标识
+        /// </summary>
+        public ulong StoreModelId { get; private set; }
+
+        private DataStoreModel _dataStoreModel_cached;
+        /// <summary>
+        /// 仅用于缓存
+        /// </summary>
+        internal DataStoreModel DataStoreModel
+        {
+            get
+            {
+                if (_dataStoreModel_cached == null) //仅在运行时可能为null
+                    _dataStoreModel_cached = Runtime.RuntimeContext.Current.GetModelAsync<DataStoreModel>(StoreModelId).Result;
+                return _dataStoreModel_cached;
+            }
+            set
+            {
+                //仅用于设计时
+                _dataStoreModel_cached = value;
+            }
+        }
 
         public CqlPrimaryKey PrimaryKey { get; private set; } = new CqlPrimaryKey();
 
@@ -30,6 +53,15 @@ namespace appbox.Models
         {
             get { return _materializedViews != null && _materializedViews.Count > 0; }
         }
+
+        #region ====Ctor====
+        internal CqlStoreOptions() { }
+
+        internal CqlStoreOptions(ulong storeModelId)
+        {
+            StoreModelId = storeModelId;
+        }
+        #endregion
 
         #region ====设计时方法====
         internal void Validate()

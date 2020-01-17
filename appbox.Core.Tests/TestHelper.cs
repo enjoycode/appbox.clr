@@ -79,7 +79,7 @@ namespace appbox.Core.Tests
             SqlStoreModel = new DataStoreModel(DataStoreKind.Sql, "appbox.Store.PostgreSQL;appbox.Store.PgSqlStore", "DemoDB");
 
             ulong cityModelId = ((ulong)Consts.SYS_APP_ID << 32) | 25;
-            CityModel = new EntityModel(cityModelId, "City", SqlStoreModel.Id);
+            CityModel = new EntityModel(cityModelId, "City", new SqlStoreOptions(SqlStoreModel.Id));
             var cityCode = new DataFieldModel(CityModel, "Code", EntityFieldType.Int32);
             CityModel.AddMember(cityCode);
             var cityName = new DataFieldModel(CityModel, "Name", EntityFieldType.String);
@@ -89,7 +89,7 @@ namespace appbox.Core.Tests
             CityModel.SqlStoreOptions.SetPrimaryKeys(CityModel, cityPk);
 
             ulong customerModelId = ((ulong)Consts.SYS_APP_ID << 32) | 26;
-            CustomerModel = new EntityModel(customerModelId, "Customer", SqlStoreModel.Id);
+            CustomerModel = new EntityModel(customerModelId, "Customer", new SqlStoreOptions(SqlStoreModel.Id));
             var customerId = new DataFieldModel(CustomerModel, "Id", EntityFieldType.Int32);
             CustomerModel.AddMember(customerId);
             var customerName = new DataFieldModel(CustomerModel, "Name", EntityFieldType.String);
@@ -103,7 +103,7 @@ namespace appbox.Core.Tests
             CustomerModel.SqlStoreOptions.SetPrimaryKeys(CustomerModel, customerPk);
 
             ulong orderModelId = ((ulong)Consts.SYS_APP_ID << 32) | 27;
-            OrderModel = new EntityModel(orderModelId, "Order", SqlStoreModel.Id);
+            OrderModel = new EntityModel(orderModelId, "Order", new SqlStoreOptions(SqlStoreModel.Id));
             var orderId = new DataFieldModel(OrderModel, "Id", EntityFieldType.Int32);
             OrderModel.AddMember(orderId);
             var orderCustomerId = new DataFieldModel(OrderModel, "CustomerId", EntityFieldType.Int32, true);

@@ -261,7 +261,7 @@ namespace appbox.Store
 #if FUTURE
             var emploee = new EntityModel(Consts.SYS_EMPLOEE_MODEL_ID, Consts.EMPLOEE, EntityStoreType.StoreWithMvcc);
 #else
-            var emploee = new EntityModel(Consts.SYS_EMPLOEE_MODEL_ID, Consts.EMPLOEE, SqlStore.DefaultSqlStoreId);
+            var emploee = new EntityModel(Consts.SYS_EMPLOEE_MODEL_ID, Consts.EMPLOEE, new SqlStoreOptions(SqlStore.DefaultSqlStoreId));
             var id = new DataFieldModel(emploee, "Id", EntityFieldType.Guid);
             emploee.AddSysMember(id, PK_Member_Id);
             //add pk
@@ -313,7 +313,7 @@ namespace appbox.Store
 #if FUTURE
             var model = new EntityModel(Consts.SYS_ENTERPRISE_MODEL_ID, Consts.ENTERPRISE, EntityStoreType.StoreWithMvcc);
 #else
-            var model = new EntityModel(Consts.SYS_ENTERPRISE_MODEL_ID, Consts.ENTERPRISE, SqlStore.DefaultSqlStoreId);
+            var model = new EntityModel(Consts.SYS_ENTERPRISE_MODEL_ID, Consts.ENTERPRISE, new SqlStoreOptions(SqlStore.DefaultSqlStoreId));
             var id = new DataFieldModel(model, "Id", EntityFieldType.Guid);
             model.AddSysMember(id, PK_Member_Id);
             //add pk
@@ -338,7 +338,7 @@ namespace appbox.Store
 #if FUTURE
             var model = new EntityModel(Consts.SYS_WORKGROUP_MODEL_ID, Consts.WORKGROUP, EntityStoreType.StoreWithMvcc);
 #else
-            var model = new EntityModel(Consts.SYS_WORKGROUP_MODEL_ID, Consts.WORKGROUP, SqlStore.DefaultSqlStoreId);
+            var model = new EntityModel(Consts.SYS_WORKGROUP_MODEL_ID, Consts.WORKGROUP, new SqlStoreOptions(SqlStore.DefaultSqlStoreId));
             var id = new DataFieldModel(model, "Id", EntityFieldType.Guid);
             model.AddSysMember(id, PK_Member_Id);
             //add pk
@@ -362,7 +362,7 @@ namespace appbox.Store
             fkType = EntityFieldType.EntityId;
 #else
             fkType = EntityFieldType.Guid;
-            var model = new EntityModel(Consts.SYS_ORGUNIT_MODEL_ID, Consts.ORGUNIT, SqlStore.DefaultSqlStoreId);
+            var model = new EntityModel(Consts.SYS_ORGUNIT_MODEL_ID, Consts.ORGUNIT, new SqlStoreOptions(SqlStore.DefaultSqlStoreId));
             var id = new DataFieldModel(model, "Id", EntityFieldType.Guid);
             model.AddSysMember(id, PK_Member_Id);
             //add pk
@@ -402,7 +402,7 @@ namespace appbox.Store
 #if FUTURE
             var model = new EntityModel(Consts.SYS_STAGED_MODEL_ID, "StagedModel", EntityStoreType.StoreWithoutMvcc);
 #else
-            var model = new EntityModel(Consts.SYS_STAGED_MODEL_ID, "StagedModel", SqlStore.DefaultSqlStoreId);
+            var model = new EntityModel(Consts.SYS_STAGED_MODEL_ID, "StagedModel", new SqlStoreOptions(SqlStore.DefaultSqlStoreId));
 #endif
 
             var type = new DataFieldModel(model, "Type", EntityFieldType.Byte);
@@ -439,7 +439,7 @@ namespace appbox.Store
 #if FUTURE
             var model = new EntityModel(Consts.SYS_CHECKOUT_MODEL_ID, "Checkout", EntityStoreType.StoreWithoutMvcc);
 #else
-            var model = new EntityModel(Consts.SYS_CHECKOUT_MODEL_ID, "Checkout", SqlStore.DefaultSqlStoreId);
+            var model = new EntityModel(Consts.SYS_CHECKOUT_MODEL_ID, "Checkout", new SqlStoreOptions(SqlStore.DefaultSqlStoreId));
 #endif
 
             var nodeType = new DataFieldModel(model, "NodeType", EntityFieldType.Byte);
