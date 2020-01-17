@@ -69,6 +69,7 @@ namespace appbox.Design
             ds.StopDebugger();
         }
 
+#if FUTURE
         /// <summary>
         /// 将Host进程的存储回调消息转发给相应的调试子进程
         /// </summary>
@@ -88,5 +89,6 @@ namespace appbox.Design
 
             ds.Channel.SendMessage(ref msg);
         }
+#endif
     }
 }

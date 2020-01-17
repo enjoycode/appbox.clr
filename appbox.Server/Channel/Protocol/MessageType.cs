@@ -13,6 +13,7 @@ namespace appbox.Server
         InvokeRequire = 10,
         InvokeResponse,
 
+#if FUTURE
         NativeMessage, //特指StoreApi回复
         KVGetRequire,
         KVScanRequire,
@@ -24,6 +25,7 @@ namespace appbox.Server
         KVUpdateRequire,
         KVAddRefRequire,
         KVDeleteRequire,
+#endif
 
         MetricRequire,
         //注意255保留，用于退出读取Loop的特殊消息

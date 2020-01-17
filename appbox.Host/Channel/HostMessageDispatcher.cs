@@ -32,6 +32,7 @@ namespace appbox.Host
                     ProcessInvokeResponse(channel, first); break;
                 case MessageType.MetricRequire:
                     ProcessMetricRequire(channel, first); break;
+#if FUTURE
                 case MessageType.KVGetRequire:
                     ProcessReadIndexByGet(channel, first); break;
                 case MessageType.KVScanRequire:
@@ -52,6 +53,7 @@ namespace appbox.Host
                     ProcessKVDelete(channel, first); break;
                 case MessageType.KVAddRefRequire:
                     ProcessKVAddRef(channel, first); break;
+#endif
                 default:
                     channel.ReturnMessageChunks(first);
                     Log.Warn($"Unknow MessageType: {first->Type}");
@@ -87,6 +89,7 @@ namespace appbox.Host
             ServerMetrics.InvokeDuration.WithLabels(req.Service).Observe(req.Value);
         }
 
+#if FUTURE
         private unsafe void ProcessReadIndexByGet(IMessageChannel channel, MessageChunk* first)
         {
             var req = channel.Deserialize<KVGetRequire>(first);
@@ -160,5 +163,6 @@ namespace appbox.Host
             NativeApi.ExecKVAddRef(req.TxnPtr, req.WaitHandle, channel.RemoteRuntimeId, new IntPtr(&req));
             req.FreeData();
         }
+#endif
     }
 }

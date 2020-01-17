@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if FUTURE
+using System;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using appbox.Server;
@@ -113,3 +114,4 @@ namespace appbox.Store
         private RaftGroupNotExistsException() { }
     }
 }
+#endif

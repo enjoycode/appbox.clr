@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if FUTURE
+using System;
 using appbox.Server;
 
 namespace appbox.Server
@@ -61,3 +62,4 @@ namespace appbox.Server
         #endregion
     }
 }
+#endif

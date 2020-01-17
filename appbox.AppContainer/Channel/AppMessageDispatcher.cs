@@ -18,8 +18,10 @@ namespace appbox.AppContainer
                     ProcessInvalidModelsCache(channel, first); break;
                 case MessageType.InvokeRequire:
                     ProcessInvokeRequire(channel, new IntPtr(first)); break;
+#if FUTURE
                 case MessageType.NativeMessage:
                     ProcessStoreCB(channel, first); break;
+#endif
                 default:
                     channel.ReturnMessageChunks(first);
                     Log.Warn($"Unknow MessageType: {first->Type}");
@@ -101,6 +103,7 @@ namespace appbox.AppContainer
             }
         }
 
+#if FUTURE
         private unsafe void ProcessStoreCB(IMessageChannel channel, MessageChunk* first)
         {
             var msg = channel.Deserialize<NativeMessage>(first);
@@ -112,5 +115,6 @@ namespace appbox.AppContainer
             if (!ok)
                 Log.Warn("无法加入线程池");
         }
+#endif
     }
 }

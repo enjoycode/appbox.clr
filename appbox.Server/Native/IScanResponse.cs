@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if FUTURE
+using System;
 
 namespace appbox.Server
 {
@@ -13,3 +14,4 @@ namespace appbox.Server
         //void GetKVAtIndex(int index, out IntPtr kp, out int ks, out IntPtr vp, out int vs);
     }
 }
+#endif

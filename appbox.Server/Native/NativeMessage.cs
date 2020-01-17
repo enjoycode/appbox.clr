@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if FUTURE
+using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using appbox.Serialization;
@@ -222,3 +223,4 @@ namespace appbox.Server
     }
 
 }
+#endif

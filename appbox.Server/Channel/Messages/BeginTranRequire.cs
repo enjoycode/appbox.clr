@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if FUTURE
+using System;
 using appbox.Serialization;
 
 namespace appbox.Server
@@ -39,3 +40,4 @@ namespace appbox.Server
         }
     }
 }
+#endif

@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if FUTURE
+using System;
 using System.Runtime.InteropServices;
 using System.Security;
 
@@ -257,3 +258,4 @@ namespace appbox.Server
         }
     }
 }
+#endif

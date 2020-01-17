@@ -21,6 +21,7 @@ namespace appbox.Server
             BinSerializer.RegisterKnownType(new UserSerializer(PayloadType.InvokeResponse, typeof(InvokeResponse), () => new InvokeResponse()));
             BinSerializer.RegisterKnownType(new UserSerializer(PayloadType.InvalidModelsCache, typeof(InvalidModelsCache), () => new InvalidModelsCache()));
             BinSerializer.RegisterKnownType(new UserSerializer(PayloadType.MetricRequire, typeof(MetricRequire), () => new MetricRequire()));
+#if FUTURE
             BinSerializer.RegisterKnownType(new UserSerializer(PayloadType.KVGetRequire, typeof(KVGetRequire), () => new KVGetRequire()));
             BinSerializer.RegisterKnownType(new UserSerializer(PayloadType.KVScanRequire, typeof(KVScanRequire), () => new KVScanRequire()));
             BinSerializer.RegisterKnownType(new UserSerializer(PayloadType.BeginTranRequire, typeof(BeginTranRequire), () => new BeginTranRequire()));
@@ -30,8 +31,9 @@ namespace appbox.Server
             BinSerializer.RegisterKnownType(new UserSerializer(PayloadType.KVInsertRequire, typeof(KVInsertRequire), () => new KVInsertRequire()));
             BinSerializer.RegisterKnownType(new UserSerializer(PayloadType.KVDeleteRequire, typeof(KVDeleteRequire), () => new KVDeleteRequire()));
             BinSerializer.RegisterKnownType(new UserSerializer(PayloadType.KVAddRefRequire, typeof(KVAddRefRequire), () => new KVAddRefRequire()));
+#endif
         }
-        #endregion
+#endregion
 
         private int sendMsgIdIndex;
         /// <summary>
@@ -65,7 +67,7 @@ namespace appbox.Server
             _msgDispatcher = dispatcher;
         }
 
-        #region ====Receive Methods====
+#region ====Receive Methods====
         public void StartReceive()
         {
             Task.Factory.StartNew(() =>
@@ -221,9 +223,9 @@ namespace appbox.Server
                 cur = next;
             }
         }
-        #endregion
+#endregion
 
-        #region ====Send Methods====
+#region ====Send Methods====
         /// <summary>
         /// 序列化并发送消息，如果序列化异常标记消息为错误状态仍旧发送,接收端根据消息类型是请求还是响应作不同处理
         /// </summary>
@@ -266,9 +268,9 @@ namespace appbox.Server
             //注意：标记当前包为取消状态，并且发送至接收端，由接收端取消本包及之前的包
             Log.Debug("Not implemented.");
         }
-        #endregion
+#endregion
 
-        #region ====Debug Methods====
+#region ====Debug Methods====
         public string GetDebugInfo()
         {
             var sb = new System.Text.StringBuilder();
@@ -276,6 +278,6 @@ namespace appbox.Server
             _receiveQueue.BuildDebugInfo(sb);
             return sb.ToString();
         }
-        #endregion
+#endregion
     }
 }
