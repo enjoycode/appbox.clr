@@ -202,6 +202,7 @@ namespace appbox.Models
         public void WriteToJson(Utf8JsonWriter writer, WritedObjects objrefs)
         {
             writer.WriteString("StoreName", DataStoreModel.Name);
+            writer.WriteNumber("StoreKind", (int)DataStoreModel.Kind);
 
             writer.WritePropertyName(nameof(PrimaryKeys));
             if (HasPrimaryKeys)

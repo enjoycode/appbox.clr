@@ -104,12 +104,14 @@ namespace appbox.Models
 
         public void WriteObject(BinSerializer bs)
         {
-            bs.Write((uint)1);
+            bs.Write(1u);
             PrimaryKey.WriteObject(bs);
+
+            bs.Write(StoreModelId, 2u);
 
             if (HasMaterializedView)
             {
-                bs.Write((uint)5);
+                bs.Write(5u);
                 bs.Write(_materializedViews.Count);
                 for (int i = 0; i < _materializedViews.Count; i++)
                 {
@@ -117,7 +119,7 @@ namespace appbox.Models
                 }
             }
 
-            bs.Write((uint)0);
+            bs.Write(0u);
         }
 
         public void ReadObject(BinSerializer bs)
@@ -153,7 +155,10 @@ namespace appbox.Models
 
         public void WriteToJson(Utf8JsonWriter writer, WritedObjects objrefs)
         {
-            PrimaryKey.WriteToJson(writer);
+            writer.WriteString("StoreName", DataStoreModel.Name);
+            writer.WriteNumber("StoreKind", (int)DataStoreModel.Kind);
+
+            PrimaryKey.WriteToJson(writer); //不需要属性名
 
             if (HasMaterializedView)
             {

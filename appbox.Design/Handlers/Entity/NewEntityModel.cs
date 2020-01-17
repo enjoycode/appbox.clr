@@ -66,7 +66,7 @@ namespace appbox.Design
             {
                 var storeNode = hub.DesignTree.FindDataStoreNodeByName(storeName);
                 if (storeNode == null)
-                    throw new Exception($"Can't find sqlstore: {storeName}");
+                    throw new Exception($"Can't find store: {storeName}");
                 IEntityStoreOptions storeOptions;
                 if (storeNode.Model.Kind == DataStoreKind.Sql)
                     storeOptions = new SqlStoreOptions(storeNode.Model.Id);

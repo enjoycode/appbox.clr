@@ -32,12 +32,19 @@ namespace appbox.Design
             }
             else if (model.SqlStoreOptions != null)
             {
-                //set StoreName for SqlStoreOptions
                 var storeNode = (DataStoreNode)hub.DesignTree.FindNode(
                     DesignNodeType.DataStoreNode, model.SqlStoreOptions.StoreModelId.ToString());
                 if (storeNode == null)
                     throw new Exception($"Cannot find Store: {model.SqlStoreOptions.StoreModelId}");
                 model.SqlStoreOptions.DataStoreModel = storeNode.Model; //set cache
+            }
+            else if (model.CqlStoreOptions != null)
+            {
+                var storeNode = (DataStoreNode)hub.DesignTree.FindNode(
+                    DesignNodeType.DataStoreNode, model.CqlStoreOptions.StoreModelId.ToString());
+                if (storeNode == null)
+                    throw new Exception($"Cannot find Store: {model.CqlStoreOptions.StoreModelId}");
+                model.CqlStoreOptions.DataStoreModel = storeNode.Model; //set cache
             }
 
 #if FUTURE
