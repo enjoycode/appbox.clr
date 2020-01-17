@@ -22,3 +22,4 @@ appbox.Store.PostgreSQL/bin
 appbox.Store.Tests/bin
 appbox.Store.Tests/obj
 bin
+appbox.Store.Cassandra/obj

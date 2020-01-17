@@ -8,4 +8,5 @@
 [assembly: InternalsVisibleTo("appbox.Store")]
 [assembly: InternalsVisibleTo("appbox.AppContainer")]
 [assembly: InternalsVisibleTo("appbox.Store.PostgreSQL")]
+[assembly: InternalsVisibleTo("appbox.Store.Cassandra")]
 [assembly: InternalsVisibleTo("appbox.Store.Tests")]

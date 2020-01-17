@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Class1.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\appbox.Store\appbox.Store.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="CassandraCSharpDriver" Version="3.13.0" />
+  </ItemGroup>
+</Project>

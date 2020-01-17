@@ -44,6 +44,7 @@
     <Folder Include="Query\SqlQuery\" />
     <Folder Include="Query\Expressions\" />
     <Folder Include="ModelStore\" />
+    <Folder Include="Query\CqlQuery\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\appbox.Core\appbox.Core.csproj" />
