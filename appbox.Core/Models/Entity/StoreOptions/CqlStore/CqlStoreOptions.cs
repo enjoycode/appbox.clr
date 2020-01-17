@@ -130,7 +130,9 @@ namespace appbox.Models
                 propIndex = bs.ReadUInt32();
                 switch (propIndex)
                 {
-                    case 1: PrimaryKey.ReadObject(bs); break;
+                    case 1:
+                        PrimaryKey.ReadObject(bs); break;
+                    case 2: StoreModelId = bs.ReadUInt64(); break;
                     case 5:
                         {
                             int count = bs.ReadInt32();
@@ -160,10 +162,10 @@ namespace appbox.Models
 
             PrimaryKey.WriteToJson(writer); //不需要属性名
 
+            writer.WritePropertyName("MaterializedViews");
+            writer.WriteStartArray();
             if (HasMaterializedView)
             {
-                writer.WritePropertyName("MaterializedViews");
-                writer.WriteStartArray();
                 for (int i = 0; i < _materializedViews.Count; i++)
                 {
                     if (_materializedViews[i].PersistentState != PersistentState.Deleted)
@@ -173,8 +175,9 @@ namespace appbox.Models
                         writer.WriteEndObject();
                     }
                 }
-                writer.WriteEndArray();
             }
+
+            writer.WriteEndArray();
         }
         #endregion
 
