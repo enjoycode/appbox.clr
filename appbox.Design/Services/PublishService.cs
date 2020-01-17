@@ -264,6 +264,11 @@ namespace appbox.Design
                                     sqlTxn = await MakeOtherStoreTxn(em.SqlStoreOptions.StoreModelId, otherStoreTxns);
                                     await sqlStore.CreateTableAsync(em, sqlTxn, hub);
                                 }
+                                else if (em.CqlStoreOptions != null)
+                                {
+                                    var cqlStore = CqlStore.Get(em.CqlStoreOptions.StoreModelId);
+                                    await cqlStore.CreateTableAsync(em);
+                                }
                             }
                             else if (model.ModelType == ModelType.View) //TODO:暂在这里保存视图模型的路由
                             {
@@ -290,6 +295,11 @@ namespace appbox.Design
                                     var sqlStore = SqlStore.Get(em.SqlStoreOptions.StoreModelId);
                                     sqlTxn = await MakeOtherStoreTxn(em.SqlStoreOptions.StoreModelId, otherStoreTxns);
                                     await sqlStore.AlterTableAsync(em, sqlTxn, hub);
+                                }
+                                else if (em.CqlStoreOptions != null)
+                                {
+                                    var cqlStore = CqlStore.Get(em.CqlStoreOptions.StoreModelId);
+                                    await cqlStore.AlterTableAsync(em);
                                 }
                             }
                             else if (model.ModelType == ModelType.View)
@@ -322,6 +332,11 @@ namespace appbox.Design
                                     var sqlStore = SqlStore.Get(em.SqlStoreOptions.StoreModelId);
                                     sqlTxn = await MakeOtherStoreTxn(em.SqlStoreOptions.StoreModelId, otherStoreTxns);
                                     await sqlStore.DropTableAsync(em, sqlTxn, hub);
+                                }
+                                else if (em.CqlStoreOptions != null)
+                                {
+                                    var cqlStore = CqlStore.Get(em.CqlStoreOptions.StoreModelId);
+                                    await cqlStore.DropTableAsync(em);
                                 }
                             }
                             //判断模型类型删除相关代码及编译好的组件
