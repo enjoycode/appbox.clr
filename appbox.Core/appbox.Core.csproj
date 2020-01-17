@@ -70,6 +70,7 @@
     <Folder Include="Models\Entity\StoreOptions\SqlStore\" />
     <Folder Include="Expressions\Entity\" />
     <Folder Include="Design\" />
+    <Folder Include="Models\Entity\StoreOptions\CqlStore\" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
