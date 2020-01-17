@@ -17,7 +17,7 @@ namespace appbox.Store
         public CassandraStore(string settings)
         {
             var s = System.Text.Json.JsonSerializer.Deserialize<Settings>(settings);
-            cluster = Cluster.Builder().AddContactPoints(s.Seeds).Build();
+            cluster = Cluster.Builder().AddContactPoints(s.Seeds.Split(',')).Build();
             session = cluster.Connect(s.Keyspace);
         }
         #endregion
@@ -100,7 +100,7 @@ namespace appbox.Store
 
     struct Settings
     {
-        public string[] Seeds { get; set; }
+        public string Seeds { get; set; }
         public string Keyspace { get; set; }
     }
 }
