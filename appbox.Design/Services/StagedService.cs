@@ -210,7 +210,7 @@ namespace appbox.Design
 #else
             var q = new SqlQuery(Consts.SYS_STAGED_MODEL_ID);
             if (onlyModelsAndFolders)
-                q.Where(q.T["DeveloperId"] == developerID & q.T["Type"] == (byte)StagedType.Folder);
+                q.Where(q.T["DeveloperId"] == developerID & q.T["Type"] <= (byte)StagedType.Folder);
             else
                 q.Where(q.T["DeveloperId"] == developerID);
 #endif
@@ -288,10 +288,10 @@ namespace appbox.Design
     /// </summary>
     enum StagedType : byte
     {
-        Model = 0,      //模型序列化数据
+        Model = 0,          //模型序列化数据
         Folder,         //文件夹
         SourceCode,     //服务模型或视图模型的源代码 //TODO:考虑按类型分开
-        ViewRuntimeCode //仅用于视图模型前端编译好的运行时脚本代码
+        ViewRuntimeCode, //仅用于视图模型前端编译好的运行时脚本代码
     }
 
     sealed class StagedItems

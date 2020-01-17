@@ -112,6 +112,15 @@ namespace appbox.Store
             return result;
         }
 
+        internal static async ValueTask CreateApplicationAsync(ApplicationModel app)
+        {
+            using var conn = SqlStore.Default.MakeConnection();
+            await conn.OpenAsync();
+            using var txn = conn.BeginTransaction();
+            await CreateApplicationAsync(app, txn);
+            txn.Commit();
+        }
+
         internal static async ValueTask CreateApplicationAsync(ApplicationModel app, DbTransaction txn)
         {
             using var cmd = SqlStore.Default.MakeCommand();

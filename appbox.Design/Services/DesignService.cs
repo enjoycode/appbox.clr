@@ -19,6 +19,7 @@ namespace appbox.Design
             handlers = new Dictionary<CharsKey, IRequestHandler>
             {
                 { nameof(LoadDesignTree), new LoadDesignTree() },
+                { nameof(NewApplication), new NewApplication() },
                 //DataStore
                 { nameof(NewDataStore), new NewDataStore() },
                 { nameof(SaveDataStore), new SaveDataStore() },

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using appbox.Models;
 
 namespace appbox.Design
@@ -56,8 +57,7 @@ namespace appbox.Design
         {
             for (int i = 0; i < Nodes.Count; i++)
             {
-                var modelRootNode = Nodes[i] as ModelRootNode;
-                if (modelRootNode != null && modelRootNode.TargetType == modelType)
+                if (Nodes[i] is ModelRootNode modelRootNode && modelRootNode.TargetType == modelType)
                     return modelRootNode;
             }
             return null;
@@ -67,8 +67,7 @@ namespace appbox.Design
         {
             for (int i = 0; i < Nodes.Count; i++)
             {
-                var modelRootNode = Nodes[i] as ModelRootNode;
-                if (modelRootNode != null)
+                if (Nodes[i] is ModelRootNode modelRootNode)
                 {
                     var res = modelRootNode.FindFolderNode(folderID);
                     if (res != null)
@@ -76,13 +75,6 @@ namespace appbox.Design
                 }
             }
             return null;
-        }
-
-        internal void Save()
-        {
-            throw ExceptionHelper.NotImplemented();
-            //保存节点模型
-            //PendingNodeService.SaveNode(ModelType.Application, this.Model.OriginalID, this.Model, this.Model.PersistentState == PersistentState.Detached);
         }
 
         /// <summary>

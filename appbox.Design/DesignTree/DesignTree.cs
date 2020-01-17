@@ -47,13 +47,7 @@ namespace appbox.Design
 
             var amodels = await Store.ModelStore.LoadAllApplicationAsync();
             var applicationModels = new List<ApplicationModel>(amodels);
-            //加载新建的模型
-            // string[] paths = PathService.GetNewApplicationPaths();
-            // for (int i = 0; i < paths.Length; i++)
-            // {
-            //     ApplicationModel m = (ApplicationModel)FileCacheService.LoadFromCache(paths[i]);
-            //     applicationModels.Add(m);
-            // }
+            applicationModels.Sort((a, b) => a.Name.CompareTo(b.Name));
 
             var mfolders = await Store.ModelStore.LoadAllFolderAsync();
             var folders = new List<ModelFolder>(mfolders);
