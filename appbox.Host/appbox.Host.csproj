@@ -8,7 +8,12 @@
     <AspNetCoreHostingModel>InProcess</AspNetCoreHostingModel>
     <ReleaseVersion>1.0</ReleaseVersion>
     <SynchReleaseVersion>false</SynchReleaseVersion>
+    <!--Beauty-->
     <BeautyLibsDir>lib</BeautyLibsDir>
+    <DisableBeauty>False</DisableBeauty>
+    <DisablePatch>True</DisablePatch>
+    <ForceBeauty>False</ForceBeauty>
+    <BeautyLogLevel>Error</BeautyLogLevel>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(IsWindows)'=='true'">
@@ -50,7 +55,7 @@
       <Publish Condition="'%(PackageReference.Version)' == ''">true</Publish>
     </PackageReference>
     <PackageReference Include="Microsoft.AspNetCore.Razor.Design" Version="2.2.0" PrivateAssets="All" />
-    <PackageReference Include="nulastudio.NetCoreBeauty" Version="1.0.2" />
+    <PackageReference Include="nulastudio.NetCoreBeauty" Version="1.1.8" />
     <PackageReference Include="prometheus-net" Version="3.3.0" />
   </ItemGroup>
   <ItemGroup>
