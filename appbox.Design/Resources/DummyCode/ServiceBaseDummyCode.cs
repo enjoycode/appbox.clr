@@ -129,6 +129,11 @@ public sealed class SqlStore
 
 	public Task ExecCommandAsync<TSource>(SqlDeleteCommand<TSource> cmd) where TSource : SqlEntityBase { return null; }
 }
+
+public sealed class CqlStore
+{
+    private CqlStore() { }
+}
 #endregion
 
 #region ====Entity Query====

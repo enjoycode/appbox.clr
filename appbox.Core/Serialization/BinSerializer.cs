@@ -109,6 +109,7 @@ namespace appbox.Serialization
             //RegisterKnownType(new UserSerializer(PayloadType.ObjectArray, typeof(ObjectArray), () => new ObjectArray()));
             RegisterKnownType(new UserSerializer(PayloadType.SysStoreOptions, typeof(SysStoreOptions), () => new SysStoreOptions()));
             RegisterKnownType(new UserSerializer(PayloadType.SqlStoreOptions, typeof(SqlStoreOptions), () => new SqlStoreOptions()));
+            RegisterKnownType(new UserSerializer(PayloadType.CqlStoreOptions, typeof(CqlStoreOptions), () => new CqlStoreOptions()));
             RegisterKnownType(new UserSerializer(PayloadType.EntityIndexModel, typeof(EntityIndexModel), () => new EntityIndexModel()));
             RegisterKnownType(new UserSerializer(PayloadType.SqlIndexModel, typeof(SqlIndexModel), () => new SqlIndexModel()));
             //RegisterKnownType(new UserSerializer(PayloadType.AppPackage, typeof(AppPackage), () => new AppPackage()));
@@ -215,7 +216,7 @@ namespace appbox.Serialization
             return extKnownTypesIndexer[extKnownTypeID];
         }
 
-#region ----Static Serialize & Deserialize Methods----
+        #region ----Static Serialize & Deserialize Methods----
         /// <summary>
         /// 序列化对象为字节数组
         /// </summary>
@@ -296,11 +297,11 @@ namespace appbox.Serialization
 
             return result;
         }
-#endregion
+        #endregion
 
-#endregion
+        #endregion
 
-#region ====Fields====
+        #region ====Fields====
 
         private Stream _stream;
         public Stream Stream
@@ -313,9 +314,9 @@ namespace appbox.Serialization
         /// </summary>
         private List<object> _objRefItems;
 
-#endregion
+        #endregion
 
-#region ====Ctor & Init====
+        #region ====Ctor & Init====
         private BinSerializer() { }
 
         public BinSerializer(Stream stream)
@@ -327,16 +328,16 @@ namespace appbox.Serialization
         {
             _stream = stream;
         }
-#endregion
+        #endregion
 
-#region ====Serialize & Deserialize Methods====
+        #region ====Serialize & Deserialize Methods====
 
         public void Serialize(object obj, uint propIndex = 0)
         {
             if (propIndex != 0)
                 VariantHelper.WriteUInt32(propIndex, _stream);
 
-#region Null & DbNull
+            #region Null & DbNull
             if (obj == null)
             {
                 //todo:处理Nullable类型
@@ -348,7 +349,7 @@ namespace appbox.Serialization
                 _stream.WriteByte((byte)PayloadType.DBNull);
                 return;
             }
-#endregion
+            #endregion
 
             Type type = obj.GetType();
             TypeSerializer serializer = GetSerializer(type);
@@ -358,13 +359,13 @@ namespace appbox.Serialization
                 throw new SerializationException(SerializationError.CanNotFindSerializer, type.FullName);
             }
 
-#region 检查是否已经序列化过
+            #region 检查是否已经序列化过
             if (serializer.TargetType.IsClass && serializer.TargetType != typeof(string))
             {
                 if (CheckSerialized(obj))
                     return;
             }
-#endregion
+            #endregion
 
             //写入类型信息
             _stream.WriteByte((byte)serializer.PayloadType);
@@ -439,13 +440,13 @@ namespace appbox.Serialization
             }
         }
 
-#endregion
+        #endregion
 
-#region ====Write & Read Methods====
+        #region ====Write & Read Methods====
 
-#region ----基本值类型----
+        #region ----基本值类型----
 
-#region Boolean
+        #region Boolean
 
         public void Write(bool value, uint propIndex = 0)
         {
@@ -460,9 +461,9 @@ namespace appbox.Serialization
             return _stream.ReadByte() == 1;
         }
 
-#endregion
+        #endregion
 
-#region Byte
+        #region Byte
 
         public void Write(byte value, uint propIndex = 0)
         {
@@ -481,9 +482,9 @@ namespace appbox.Serialization
             return (byte)res;
         }
 
-#endregion
+        #endregion
 
-#region Char
+        #region Char
 
         public void Write(char value, uint propIndex = 0)
         {
@@ -498,9 +499,9 @@ namespace appbox.Serialization
             return (char)ReadUInt16();
         }
 
-#endregion
+        #endregion
 
-#region Decimal
+        #region Decimal
 
         public unsafe void Write(decimal value, uint propIndex = 0)
         {
@@ -525,9 +526,9 @@ namespace appbox.Serialization
             return d;
         }
 
-#endregion
+        #endregion
 
-#region Float
+        #region Float
 
         public unsafe void Write(float value, uint propIndex = 0)
         {
@@ -552,9 +553,9 @@ namespace appbox.Serialization
             return d;
         }
 
-#endregion
+        #endregion
 
-#region Double
+        #region Double
 
         public unsafe void Write(double value, uint propIndex = 0)
         {
@@ -579,9 +580,9 @@ namespace appbox.Serialization
             return d;
         }
 
-#endregion
+        #endregion
 
-#region Int16
+        #region Int16
 
         public unsafe void Write(Int16 value, uint propIndex = 0)
         {
@@ -602,9 +603,9 @@ namespace appbox.Serialization
             return v;
         }
 
-#endregion
+        #endregion
 
-#region UInt16
+        #region UInt16
 
         public unsafe void Write(UInt16 value, uint propIndex = 0)
         {
@@ -625,9 +626,9 @@ namespace appbox.Serialization
             return v;
         }
 
-#endregion
+        #endregion
 
-#region Int32
+        #region Int32
 
         public void Write(int value, uint propIndex = 0)
         {
@@ -642,9 +643,9 @@ namespace appbox.Serialization
             return VariantHelper.ReadInt32(_stream);
         }
 
-#endregion
+        #endregion
 
-#region UInt32
+        #region UInt32
 
         public unsafe void Write(uint value, uint propIndex = 0, bool useVariant = true)
         {
@@ -679,9 +680,9 @@ namespace appbox.Serialization
             return d;
         }
 
-#endregion
+        #endregion
 
-#region Int64
+        #region Int64
 
         public void Write(Int64 value, uint propIndex = 0)
         {
@@ -696,9 +697,9 @@ namespace appbox.Serialization
             return VariantHelper.ReadInt64(_stream);
         }
 
-#endregion
+        #endregion
 
-#region UInt64
+        #region UInt64
 
         public void Write(ulong value, uint propIndex = 0)
         {
@@ -713,9 +714,9 @@ namespace appbox.Serialization
             return VariantHelper.ReadUInt64(_stream);
         }
 
-#endregion
+        #endregion
 
-#region DateTime
+        #region DateTime
 
         public void Write(DateTime value, uint propIndex = 0)
         {
@@ -730,9 +731,9 @@ namespace appbox.Serialization
             return new DateTime(VariantHelper.ReadInt64(_stream), DateTimeKind.Utc).ToLocalTime();
         }
 
-#endregion
+        #endregion
 
-#region String
+        #region String
 
         public void Write(string value, uint propIndex = 0)
         {
@@ -747,9 +748,9 @@ namespace appbox.Serialization
             return StringSerializer.Read(this);
         }
 
-#endregion
+        #endregion
 
-#region Guid
+        #region Guid
 
         public void Write(Guid value, uint propIndex = 0)
         {
@@ -780,13 +781,13 @@ namespace appbox.Serialization
             return res;
         }
 
-#endregion
+        #endregion
 
-#endregion
+        #endregion
 
-#region ----Array Methods----
+        #region ----Array Methods----
 
-#region BooleanArray
+        #region BooleanArray
 
         public void Write(bool[] array, uint propIndex = 0)
         {
@@ -822,9 +823,9 @@ namespace appbox.Serialization
             return res;
         }
 
-#endregion
+        #endregion
 
-#region ByteArray
+        #region ByteArray
 
         public void Write(byte[] array, uint propIndex = 0)
         {
@@ -854,9 +855,9 @@ namespace appbox.Serialization
             return res;
         }
 
-#endregion
+        #endregion
 
-#region DecimalArray
+        #region DecimalArray
 
         public void Write(decimal[] array, uint propIndex = 0)
         {
@@ -892,9 +893,9 @@ namespace appbox.Serialization
             return res;
         }
 
-#endregion
+        #endregion
 
-#region FloatArray
+        #region FloatArray
 
         public void Write(float[] array, uint propIndex = 0)
         {
@@ -930,9 +931,9 @@ namespace appbox.Serialization
             return res;
         }
 
-#endregion
+        #endregion
 
-#region DoubleArray
+        #region DoubleArray
 
         public void Write(Double[] array, uint propIndex = 0)
         {
@@ -968,9 +969,9 @@ namespace appbox.Serialization
             return res;
         }
 
-#endregion
+        #endregion
 
-#region Int16Array
+        #region Int16Array
 
         public void Write(Int16[] array, uint propIndex = 0)
         {
@@ -1006,9 +1007,9 @@ namespace appbox.Serialization
             return res;
         }
 
-#endregion
+        #endregion
 
-#region UInt16Array
+        #region UInt16Array
 
         public void Write(UInt16[] array, uint propIndex = 0)
         {
@@ -1044,9 +1045,9 @@ namespace appbox.Serialization
             return res;
         }
 
-#endregion
+        #endregion
 
-#region Int32Array
+        #region Int32Array
 
         public void Write(Int32[] array, uint propIndex = 0)
         {
@@ -1082,9 +1083,9 @@ namespace appbox.Serialization
             return res;
         }
 
-#endregion
+        #endregion
 
-#region UInt32Array
+        #region UInt32Array
 
         public void Write(UInt32[] array, uint propIndex = 0)
         {
@@ -1120,9 +1121,9 @@ namespace appbox.Serialization
             return res;
         }
 
-#endregion
+        #endregion
 
-#region Int64Array
+        #region Int64Array
 
         public void Write(Int64[] array, uint propIndex = 0)
         {
@@ -1158,9 +1159,9 @@ namespace appbox.Serialization
             return res;
         }
 
-#endregion
+        #endregion
 
-#region UInt64Array
+        #region UInt64Array
 
         public void Write(ulong[] array, uint propIndex = 0)
         {
@@ -1196,9 +1197,9 @@ namespace appbox.Serialization
             return res;
         }
 
-#endregion
+        #endregion
 
-#region DateTimeArray
+        #region DateTimeArray
 
         public void Write(DateTime[] array, uint propIndex = 0)
         {
@@ -1234,9 +1235,9 @@ namespace appbox.Serialization
             return res;
         }
 
-#endregion
+        #endregion
 
-#region StringArray
+        #region StringArray
 
         public void Write(String[] array, uint propIndex = 0)
         {
@@ -1272,9 +1273,9 @@ namespace appbox.Serialization
             return res;
         }
 
-#endregion
+        #endregion
 
-#region GuidArray
+        #region GuidArray
 
         public void Write(Guid[] array, uint propIndex = 0)
         {
@@ -1310,9 +1311,9 @@ namespace appbox.Serialization
             return res;
         }
 
-#endregion
+        #endregion
 
-#region ObjectArray
+        #region ObjectArray
 
         public void Write(object[] array, uint propIndex = 0)
         {
@@ -1348,11 +1349,11 @@ namespace appbox.Serialization
             return res;
         }
 
-#endregion
+        #endregion
 
-#endregion
+        #endregion
 
-#region ----Collection Methods----
+        #region ----Collection Methods----
 
         public void WriteList<T>(IList<T> list, uint propIndex = 0)
         {
@@ -1425,9 +1426,9 @@ namespace appbox.Serialization
             return dic;
         }
 
-#endregion
+        #endregion
 
-#region ----实现了IBinSerializable接口的结构体----
+        #region ----实现了IBinSerializable接口的结构体----
         /// <summary>
         /// 写入实现了IBinSerializable接口的结构体类型
         /// </summary>
@@ -1449,10 +1450,10 @@ namespace appbox.Serialization
             res.ReadObject(this);
             return res;
         }
-#endregion
-#endregion
+        #endregion
+        #endregion
 
-#region ====Clear Methods====
+        #region ====Clear Methods====
 
         public void Clear()
         {
@@ -1460,9 +1461,9 @@ namespace appbox.Serialization
             _stream = null;
         }
 
-#endregion
+        #endregion
 
-#region ====Read & Write Type====
+        #region ====Read & Write Type====
 
         private ExtKnownTypeID ReadExtKnownTypeID()
         {
@@ -1566,9 +1567,9 @@ namespace appbox.Serialization
             }
         }
 
-#endregion
+        #endregion
 
-#region ====Private Helper Methods====
+        #region ====Private Helper Methods====
 
         private void AddToObjectRefs(object obj)
         {
@@ -1628,9 +1629,9 @@ namespace appbox.Serialization
             return false;
         }
 
-#endregion
+        #endregion
 
-#region ====Collection Write & Read Helper====
+        #region ====Collection Write & Read Helper====
 
         internal void WriteCollection(Type elementType, int count, Func<int, object> elementGetter)
         {
@@ -1698,7 +1699,7 @@ namespace appbox.Serialization
             }
         }
 
-#endregion
+        #endregion
 
     }
 }

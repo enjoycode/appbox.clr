@@ -41,8 +41,7 @@ namespace appbox.Store
         /// </summary>
         public static SqlStore Get(ulong storeId)
         {
-            SqlStore res;
-            if (!sqlStores.TryGetValue(storeId, out res))
+            if (!sqlStores.TryGetValue(storeId, out SqlStore res))
             {
                 lock (sqlStores)
                 {
