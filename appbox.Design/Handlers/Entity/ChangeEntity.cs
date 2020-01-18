@@ -125,8 +125,7 @@ namespace appbox.Design
                 if (entityModel.PersistentState != PersistentState.Detached)
                     throw new NotSupportedException("Can't change pk for none new EntityModel");
 
-                var array = JArray.Parse(value);
-                var pks = value == null ? new ushort[0] : array.Cast<ushort>().ToArray();
+                var pks = System.Text.Json.JsonSerializer.Deserialize<ushort[]>(value);
                 entityModel.CqlStoreOptions.PrimaryKey.PartitionKeys = pks;
                 OnCqlPKChanged(entityModel); //改变主键成员的AllowNull
             }
