@@ -22,12 +22,73 @@ namespace appbox.Store
         }
         #endregion
 
-        #region ====Execute Methods====
+        #region ====DML & Execute Methods====
+        public override async Task InsertAsync(Entity entity, bool ifNotExists = false)
+        {
+            var cmd = new SimpleStatement(CqlCommandBuilder.BuildInsertEntityCommand(entity, ifNotExists));
+            await session.ExecuteAsync(cmd);
+        }
+
+        public override async Task UpdateAsync(Entity entity, bool ifNotExists = false)
+        {
+            var cmd = new SimpleStatement(CqlCommandBuilder.BuildUpdateEntityCommand(entity, ifNotExists));
+            await session.ExecuteAsync(cmd);
+        }
+
+        public override async Task DeleteAsync(Entity entity, bool ifNotExists = false)
+        {
+            var cmd = new SimpleStatement(CqlCommandBuilder.BuildDeleteEntityCommand(entity, ifNotExists));
+            await session.ExecuteAsync(cmd);
+        }
+
         public override async Task<IRowSet> ExecuteAsync(string cql)
         {
             var cmd = new SimpleStatement(cql);
             var rawRS = await session.ExecuteAsync(cmd);
             return new RowSet(rawRS);
+        }
+
+        public override Task<IRowSet> ExecuteAsync(ref CqlBatch batch)
+        {
+            if (batch.Commands == null || batch.Commands.Count <= 0)
+                throw new ArgumentException("CqlBatch has none commands");
+
+            BatchStatement bst = new BatchStatement();
+            ICqlCommand cmd = null;
+            for (int i = 0; i < batch.Commands.Count; i++)
+            {
+                cmd = batch.Commands[i];
+                if (cmd is CqlCommand)
+                {
+                    var ecmd = (CqlCommand)cmd;
+                    switch (ecmd.Type)
+                    {
+                        case CqlCommandType.Insert:
+                            bst.Add(new SimpleStatement(CqlCommandBuilder.BuildInsertEntityCommand(ecmd.Entity, ecmd.CheckExists)));
+                            break;
+                        case CqlCommandType.Update:
+                            bst.Add(new SimpleStatement(CqlCommandBuilder.BuildUpdateEntityCommand(ecmd.Entity, ecmd.CheckExists)));
+                            break;
+                        case CqlCommandType.Delete:
+                            bst.Add(new SimpleStatement(CqlCommandBuilder.BuildDeleteEntityCommand(ecmd.Entity, ecmd.CheckExists)));
+                            break;
+                        default:
+                            throw new NotSupportedException("CassandraTableStore.Execut batch");
+                    }
+                }
+                else
+                {
+                    throw new NotImplementedException("CassandraTableStore.Execut batch");
+                }
+            }
+
+            return ExecuteBatchAsync(bst);
+        }
+
+        private async Task<IRowSet> ExecuteBatchAsync(BatchStatement bst)
+        {
+            var rs = await session.ExecuteAsync(bst);
+            return new RowSet(rs);
         }
         #endregion
 

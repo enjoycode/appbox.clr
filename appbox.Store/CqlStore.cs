@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
+using appbox.Data;
 using appbox.Models;
 using appbox.Runtime;
 
@@ -66,8 +67,16 @@ namespace appbox.Store
         }
         #endregion
 
-        #region ====Execute Methods====
+        #region ====DML & Execute Methods====
+        public abstract Task InsertAsync(Entity entity, bool ifNotExists = false);
+
+        public abstract Task UpdateAsync(Entity entity, bool ifNotExists = false);
+
+        public abstract Task DeleteAsync(Entity entity, bool ifNotExists = false);
+
         public abstract Task<IRowSet> ExecuteAsync(string cql);
+
+        public abstract Task<IRowSet> ExecuteAsync(ref CqlBatch batch);
         #endregion
 
         #region ====DDL Methods====
