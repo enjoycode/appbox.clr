@@ -38,8 +38,8 @@ namespace appbox.Store
                     if (!cqlStores.TryGetValue(storeId, out res))
                     {
                         //加载存储模型
-                        var model = ModelStore.LoadModelAsync(storeId).Result as DataStoreModel;
-                        if (model == null || model.Kind != DataStoreKind.Cql)
+                        if (!(ModelStore.LoadModelAsync(storeId).Result is DataStoreModel model)
+                            || model.Kind != DataStoreKind.Cql)
                             throw new Exception($"Can't get CqlStore[Id={storeId}]");
 
                         //根据Provider创建实例

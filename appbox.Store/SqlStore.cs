@@ -48,8 +48,8 @@ namespace appbox.Store
                     if (!sqlStores.TryGetValue(storeId, out res))
                     {
                         //加载存储模型
-                        var model = ModelStore.LoadModelAsync(storeId).Result as DataStoreModel;
-                        if (model == null || model.Kind != DataStoreKind.Sql)
+                        if (!(ModelStore.LoadModelAsync(storeId).Result is DataStoreModel model)
+                            || model.Kind != DataStoreKind.Sql)
                             throw new Exception($"Can't get SqlStore[Id={storeId}]");
 
                         //根据Provider创建实例

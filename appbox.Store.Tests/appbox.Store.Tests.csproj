@@ -27,5 +27,6 @@
   <ItemGroup>
     <ProjectReference Include="..\appbox.Store\appbox.Store.csproj" />
     <ProjectReference Include="..\appbox.Store.PostgreSQL\appbox.Store.PostgreSQL.csproj" />
+    <ProjectReference Include="..\appbox.Store.Cassandra\appbox.Store.Cassandra.csproj" />
   </ItemGroup>
 </Project>
