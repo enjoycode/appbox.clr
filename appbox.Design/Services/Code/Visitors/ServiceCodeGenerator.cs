@@ -33,7 +33,10 @@ namespace appbox.Design
                 { IncludeInterceptor.Name, new IncludeInterceptor() },
                 { LoadEntityInterceptor.Name, new LoadEntityInterceptor() },
                 { LoadEntitySetInterceptor.Name, new LoadEntitySetInterceptor() },
-                { DeleteEntityInterceptor.Name, new DeleteEntityInterceptor() }
+                { DeleteEntityInterceptor.Name, new DeleteEntityInterceptor() },
+                { CqlWhereInterceptor.Name, new CqlWhereInterceptor() },
+                { CqlToEntityListInterceptor.Name, new CqlToEntityListInterceptor() },
+                { CqlToListInterceptor.Name, new CqlToListInterceptor() }
             };
 
             memberAccessInterceptors = new Dictionary<string, IMemberAccessInterceptor<SyntaxNode>>
@@ -83,6 +86,7 @@ namespace appbox.Design
 
         #region ====Fields & Properties====
         private QueryMethodContext queryMethodCtx; //用于SqlQuery处理
+        internal string cqlFilterLambdaParameter = null; //用于VisitMemberAccess判断是否CqlQuery的Filter Lambda
 
         /// <summary>
         /// 公开的服务方法集合
@@ -197,6 +201,17 @@ namespace appbox.Design
                         //return SyntaxFactory.ParseExpression(sb.ToString()).WithTrailingTrivia(GetEndOfLineTrivia(node, false));
                         return SyntaxFactory.ParseExpression(StringBuilderCache.GetStringAndRelease(sb)).WithTriviaFrom(node);
                     }
+                }
+            }
+            else if (cqlFilterLambdaParameter != null)
+            {
+                if (node.Expression is IdentifierNameSyntax identifier
+                    && identifier.Identifier.ValueText == cqlFilterLambdaParameter)
+                {
+                    var sb = StringBuilderCache.Acquire();
+                    CqlLambdaHelper.BuildCqlLambdaGetValue(sb, cqlFilterLambdaParameter,
+                        -1, node.Name.Identifier.ValueText, node, SemanticModel);
+                    return SyntaxFactory.ParseExpression(StringBuilderCache.GetStringAndRelease(sb));
                 }
             }
 
@@ -500,7 +515,7 @@ namespace appbox.Design
             if (needPopQueryMethod)
             {
                 //注意：将ToScalar转换为ToScalar<T>
-                if (queryMethodCtx.Current.MethodName == TypeHelper.SqlQueryToScalarMethod) 
+                if (queryMethodCtx.Current.MethodName == TypeHelper.SqlQueryToScalarMethod)
                 {
                     var memberAccess = (MemberAccessExpressionSyntax)node.Expression;
                     var newGenericName = (SimpleNameSyntax)SyntaxFactory.ParseName($"ToScalar<{methodSymbol.TypeArguments[0]}>");
