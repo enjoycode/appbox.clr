@@ -54,6 +54,10 @@ namespace appbox.Models
             get { return _materializedViews != null && _materializedViews.Count > 0; }
         }
 
+        public bool HasIndexes => throw new NotImplementedException();
+
+        public IEnumerable<IndexModelBase> Indexes => throw new NotImplementedException();
+
         #region ====Ctor====
         internal CqlStoreOptions() { }
 
@@ -97,10 +101,6 @@ namespace appbox.Models
 
         #region ====序列化相关====
         public PayloadType JsonPayloadType => PayloadType.UnknownType;
-
-        public bool HasIndexes => throw new NotImplementedException();
-
-        public IEnumerable<IndexModelBase> Indexes => throw new NotImplementedException();
 
         public void WriteObject(BinSerializer bs)
         {

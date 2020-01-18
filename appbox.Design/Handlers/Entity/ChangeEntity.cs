@@ -42,7 +42,11 @@ namespace appbox.Design
                     break;
                 case "PartitionKeys":
                     ChangePartitionKeys(model, args.GetString());
-                    await hub.TypeSystem.UpdateModelDocumentAsync(modelNode);
+                    if (model.SysStoreOptions != null) //仅SysStore需要更新RoslynDocument
+                        await hub.TypeSystem.UpdateModelDocumentAsync(modelNode);
+                    break;
+                case "ClusteringColumns":
+                    ChangeClusteringColumns(model, args.GetString());
                     break;
                 case "AddIndex":
                     var res = AddIndex(model, args.GetString());
@@ -89,32 +93,89 @@ namespace appbox.Design
         }
 
         /// <summary>
-        /// 仅SysStore
+        /// SysStore or CqlStore
         /// </summary>
         private static void ChangePartitionKeys(EntityModel entityModel, string value)
         {
-            if (entityModel.SysStoreOptions == null)
-                throw new NotSupportedException("Change PartitionKeys for none sysstore entity.");
+            if (entityModel.SysStoreOptions != null)
+            {
+                var array = JArray.Parse(value);
+                if (array.Count == 0)
+                {
+                    entityModel.SysStoreOptions.SetPartitionKeys(entityModel, null);
+                }
+                else
+                {
+                    var newvalue = new PartitionKey[array.Count];
+                    for (int i = 0; i < array.Count; i++)
+                    {
+                        newvalue[i] = new PartitionKey()
+                        {
+                            MemberId = (ushort)array[i]["MemberId"],
+                            Rule = (PartitionKeyRule)((int)array[i]["Rule"]),
+                            RuleArgument = (int)array[i]["RuleArg"],
+                            OrderByDesc = (bool)array[i]["OrderByDesc"]
+                        };
+                    }
+                    entityModel.SysStoreOptions.SetPartitionKeys(entityModel, newvalue);
+                }
+            }
+            else if (entityModel.CqlStoreOptions != null)
+            {
+                if (entityModel.PersistentState != PersistentState.Detached)
+                    throw new NotSupportedException("Can't change pk for none new EntityModel");
+
+                var array = JArray.Parse(value);
+                var pks = value == null ? new ushort[0] : array.Cast<ushort>().ToArray();
+                entityModel.CqlStoreOptions.PrimaryKey.PartitionKeys = pks;
+                OnCqlPKChanged(entityModel); //改变主键成员的AllowNull
+            }
+            else
+            {
+                throw new NotSupportedException("Change PartitionKeys for none SysStore nor CqlStore entity.");
+            }
+        }
+
+        /// <summary>
+        /// 仅CqlStore
+        /// </summary>
+        private static void ChangeClusteringColumns(EntityModel entityModel, string value)
+        {
+            if (entityModel.PersistentState != PersistentState.Detached)
+                throw new NotSupportedException("Can't change pk for none new EntityModel");
 
             var array = JArray.Parse(value);
             if (array.Count == 0)
             {
-                entityModel.SysStoreOptions.SetPartitionKeys(entityModel, null);
+                entityModel.CqlStoreOptions.PrimaryKey.ClusteringColumns = null;
             }
             else
             {
-                var newvalue = new PartitionKey[array.Count];
+                var newvalue = new FieldWithOrder[array.Count];
                 for (int i = 0; i < array.Count; i++)
                 {
-                    newvalue[i] = new PartitionKey()
+                    newvalue[i] = new FieldWithOrder()
                     {
                         MemberId = (ushort)array[i]["MemberId"],
-                        Rule = (PartitionKeyRule)((int)array[i]["Rule"]),
-                        RuleArgument = (int)array[i]["RuleArg"],
                         OrderByDesc = (bool)array[i]["OrderByDesc"]
                     };
                 }
-                entityModel.SysStoreOptions.SetPartitionKeys(entityModel, newvalue);
+                entityModel.CqlStoreOptions.PrimaryKey.ClusteringColumns = newvalue;
+            }
+            OnCqlPKChanged(entityModel);//改变主键成员的AllowNull
+        }
+
+        /// <summary>
+        /// CqlStore的实体的主键改变后设置相应的AllowNull属性
+        /// </summary>
+        private static void OnCqlPKChanged(EntityModel model)
+        {
+            foreach (var member in model.Members)
+            {
+                if (model.CqlStoreOptions.PrimaryKey.IsPrimaryKey(member.MemberId))
+                    member.AllowNull = false;
+                else
+                    member.AllowNull = true;
             }
         }
 
