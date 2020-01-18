@@ -133,6 +133,14 @@ public sealed class SqlStore
 public sealed class CqlStore
 {
     private CqlStore() { }
+
+    public Task InsertAsync(CqlEntityBase entity, bool ifNotExists = false) { return null; }
+
+    public Task UpdateAsync(CqlEntityBase entity, bool ifNotExists = false) { return null; }
+
+    public Task DeleteAsync(CqlEntityBase entity, bool ifNotExists = false) { return null; }
+
+    public Task<IRowSet> ExecuteAsync(string cql) { return null; }
 }
 #endregion
 
@@ -464,6 +472,18 @@ public interface IRowSet : IEnumerable<IRow>
     List<T> ToList<T>(Func<IRow, T> selector);
 
     T ToScalar<T>();
+}
+
+[RealType("appbox.Store.CqlBatch")]
+public struct CqlBatch
+{
+    public void Insert(CqlEntityBase entity, bool ifNotExists = false) { }
+
+    public void Update(CqlEntityBase entity, bool ifNotExists = false) { }
+
+    public void Delete(CqlEntityBase entity, bool ifNotExists = false) { }
+
+    public Task<IRowSet> ExecuteAsync();
 }
 
 [RealType("appbox.Store.CqlQuery")]
