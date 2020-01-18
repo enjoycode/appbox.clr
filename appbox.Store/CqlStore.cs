@@ -66,6 +66,10 @@ namespace appbox.Store
         }
         #endregion
 
+        #region ====Execute Methods====
+        public abstract Task<IRowSet> ExecuteAsync(string cql);
+        #endregion
+
         #region ====DDL Methods====
         public abstract Task CreateTableAsync(EntityModel model);
 

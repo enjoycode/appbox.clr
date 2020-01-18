@@ -22,6 +22,15 @@ namespace appbox.Store
         }
         #endregion
 
+        #region ====Execute Methods====
+        public override async Task<IRowSet> ExecuteAsync(string cql)
+        {
+            var cmd = new SimpleStatement(cql);
+            var rawRS = await session.ExecuteAsync(cmd);
+            return new RowSet(rawRS);
+        }
+        #endregion
+
         #region ====DDL Methods====
         public override async Task CreateTableAsync(EntityModel model)
         {

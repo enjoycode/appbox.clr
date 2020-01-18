@@ -41,6 +41,11 @@ namespace appbox.Design
                 var q = new SqlQuery(model.Id);
                 return await q.Take(20).ToListAsync();
             }
+            if (model.CqlStoreOptions != null)
+            {
+                var q = new CqlQuery(model.Id) { Limit = 20 };
+                return await q.ToListAsync();
+            }
             throw new NotSupportedException();
         }
     }
