@@ -77,7 +77,7 @@ namespace appbox.Models
         }
 
         /// <summary>
-        /// 是否Sql存储的主键
+        /// 是否Sql或Cql存储的主键
         /// </summary>
         internal bool IsPrimaryKey
         {
@@ -90,6 +90,10 @@ namespace appbox.Models
                         if (Owner.SqlStoreOptions.PrimaryKeys[i].MemberId == MemberId)
                             return true;
                     }
+                }
+                else if (Owner.CqlStoreOptions != null)
+                {
+                    return Owner.CqlStoreOptions.PrimaryKey.IsPrimaryKey(MemberId);
                 }
                 return false;
             }

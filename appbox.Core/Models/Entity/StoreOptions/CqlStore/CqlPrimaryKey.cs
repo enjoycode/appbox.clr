@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using appbox.Serialization;
 
@@ -29,6 +30,26 @@ namespace appbox.Models
                 }
             }
             return false;
+        }
+
+        /// <summary>
+        /// 获取PartitionKeys+ClusteringColumns数组
+        /// </summary>
+        internal ushort[] GetAllPKs()
+        {
+            var list = new List<ushort>();
+            if (PartitionKeys != null)
+            {
+                list.AddRange(PartitionKeys);
+            }
+            if (ClusteringColumns != null)
+            {
+                for (int i = 0; i < ClusteringColumns.Length; i++)
+                {
+                    list.Add(ClusteringColumns[i].MemberId);
+                }
+            }
+            return list.ToArray();
         }
 
         internal void Validate()

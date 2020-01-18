@@ -90,6 +90,8 @@ namespace appbox.Design
                 sb.Append(" : sys.SysEntityBase");
             else if (model.SqlStoreOptions != null)
                 sb.Append(" : sys.SqlEntityBase");
+            else if (model.CqlStoreOptions != null)
+                sb.Append(" : sys.CqlEntityBase");
             else
                 sb.Append(" : sys.EntityBase");
             sb.Append(" {\n");
@@ -155,6 +157,28 @@ namespace appbox.Design
                     ctorsb.Append($"{typeString} {mm.Name}");
                 }
                 sb.Append(") {return null;}\n");
+                ctorsb.Append("){}");
+                sb.Append(StringBuilderCache.GetStringAndRelease(ctorsb));
+            }
+            //如果是CqlStore生成主键参数构造, 同时生成静态LoadAsync方法
+            if (model.CqlStoreOptions != null)
+            {
+                var ctorsb = StringBuilderCache.Acquire();
+                ctorsb.Append($"public {model.Name}(");
+                //sb.AppendFormat("[{0}(\"LoadEntity\")]\n", TypeHelper.InvocationInterceptorAttribute);
+                //sb.Append($"public static System.Threading.Tasks.Task<{model.Name}> LoadAsync(");
+                var pks = model.CqlStoreOptions.PrimaryKey.GetAllPKs();
+                for (int i = 0; i < pks.Length; i++)
+                {
+                    var mm = model.GetMember(pks[i], true);
+                    string typeString = "object";
+                    bool readOnly = false;
+                    GetEntityMemberTypeStringAndReadOnly(mm, ref typeString, ref readOnly, designTree);
+                    if (i != 0) { sb.Append(","); ctorsb.Append(","); }
+                    //sb.Append($"{typeString} {mm.Name}"); //TODO:mm.Name转为小驼峰
+                    ctorsb.Append($"{typeString} {mm.Name}");
+                }
+                //sb.Append(") {return null;}\n");
                 ctorsb.Append("){}");
                 sb.Append(StringBuilderCache.GetStringAndRelease(ctorsb));
             }

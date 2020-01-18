@@ -17,12 +17,14 @@ rm bin/lib/appbox.*.*
 
 echo "====Build AppContainer===="
 cd ../appbox.AppContainer
+rm -rf bin/$1/netcoreapp2.2/linux-x64/publish
 dotnet publish -c $1 -r linux-x64
 cp -arf bin/$1/netcoreapp2.2/linux-x64/publish/* ../build/bin/
 cd ../build
 
 echo "====Build Host===="
 cd ../appbox.Host
+rm -rf bin/$1/netcoreapp2.2/linux-x64/publish
 dotnet publish -c $1 -r linux-x64
 cp -arf bin/$1/netcoreapp2.2/linux-x64/publish/* ../build/bin/
 
