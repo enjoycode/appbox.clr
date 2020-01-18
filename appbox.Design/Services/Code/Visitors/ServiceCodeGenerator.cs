@@ -131,9 +131,12 @@ namespace appbox.Design
                 var res = (ObjectCreationExpressionSyntax)SyntaxFactory.ParseExpression($"new {TypeHelper.RuntimeType_Entity}({entityModelId})");
                 if (node.ArgumentList != null && node.ArgumentList.Arguments.Count > 0)
                 {
-                    var arg = (ArgumentSyntax)node.ArgumentList.Arguments[0].Accept(this);
-                    var argList = res.ArgumentList.AddArguments(arg);
-                    res = res.WithArgumentList(argList);
+                    for (int i = 0; i < node.ArgumentList.Arguments.Count; i++)
+                    {
+                        var arg = (ArgumentSyntax)node.ArgumentList.Arguments[i].Accept(this);
+                        var argList = res.ArgumentList.AddArguments(arg);
+                        res = res.WithArgumentList(argList);
+                    }
                 }
                 return res;
             }
