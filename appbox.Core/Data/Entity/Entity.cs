@@ -109,9 +109,21 @@ namespace appbox.Data
                     m.Flag.HasValue = true;
                 }
             }
+            else if (Model.CqlStoreOptions != null)
+            {
+                InitMembers(Model);
+                var keys = Model.CqlStoreOptions.PrimaryKey.GetAllPKs();
+                for (int i = 0; i < keys.Length; i++)
+                {
+                    ref EntityMember m = ref GetMember(keys[i]);
+                    m.GuidValue = pks[i].GuidValue;
+                    m.ObjectValue = pks[i].ObjectValue;
+                    m.Flag.HasValue = true;
+                }
+            }
             else
             {
-                throw new InvalidOperationException();
+                throw new InvalidOperationException($"New Entity[{Model.Name}] with pks");
             }
         }
 
