@@ -35,7 +35,7 @@ namespace appbox.Design
         //internal const string Type_IImageSource = "sys.IImageSource";
 
         internal const string Type_SqlStore = "SqlStore";
-        //internal const string Type_TableStore = "sys.Data.TableStore";
+        internal const string Type_CqlStore = "CqlStore";
         //internal const string Type_BlobStore = "sys.Data.BlobStore";
         #endregion
 
@@ -274,10 +274,8 @@ namespace appbox.Design
             if (typeSymbol != null)
             {
                 var typeString = typeSymbol.ToString();
-                if (typeString == Type_SqlStore)
-                    return "SqlStore";
-                //if (typeString == Type_TableStore)
-                //    return "TableStore";
+                if (typeString == Type_SqlStore || typeString == Type_CqlStore)
+                    return typeString;
                 //if (typeString == Type_BlobStore)
                 //    return "BlobStore";
             }
