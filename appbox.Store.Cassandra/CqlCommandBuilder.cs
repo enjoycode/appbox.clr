@@ -24,7 +24,7 @@ namespace appbox.Store
                 ref EntityMember m = ref entity.Members[i];
                 if (m.HasValue || m.HasChanged)
                 {
-                    if (i == 0)
+                    if (i != 0)
                     {
                         sb.Append(',');
                         vsb.Append(',');
@@ -75,7 +75,7 @@ namespace appbox.Store
                 ref EntityMember m = ref entity.Members[i];
                 if (m.HasChanged && !pk.IsPrimaryKey(m.Id))
                 {
-                    if (i == 0) sb.Append(',');
+                    if (i != 0) sb.Append(',');
 
                     switch (m.MemberType)
                     {
