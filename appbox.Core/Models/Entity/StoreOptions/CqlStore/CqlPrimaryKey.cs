@@ -19,16 +19,10 @@ namespace appbox.Models
         /// </summary>
         public bool IsPrimaryKey(ushort mid)
         {
-            if (PartitionKeys.Contains(mid))
+            if (PartitionKeys != null && PartitionKeys.Contains(mid))
                 return true;
-            if (ClusteringColumns != null)
-            {
-                for (int i = 0; i < ClusteringColumns.Length; i++)
-                {
-                    if (ClusteringColumns[i].MemberId == mid)
-                        return true;
-                }
-            }
+            if (ClusteringColumns != null && ClusteringColumns.Any(t => t.MemberId == mid))
+                return true;
             return false;
         }
 
@@ -39,16 +33,9 @@ namespace appbox.Models
         {
             var list = new List<ushort>();
             if (PartitionKeys != null)
-            {
                 list.AddRange(PartitionKeys);
-            }
             if (ClusteringColumns != null)
-            {
-                for (int i = 0; i < ClusteringColumns.Length; i++)
-                {
-                    list.Add(ClusteringColumns[i].MemberId);
-                }
-            }
+                list.AddRange(ClusteringColumns.Select(t => t.MemberId).ToArray());
             return list.ToArray();
         }
 
