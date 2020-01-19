@@ -25,6 +25,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "appbox.Store.Cassandra", "a
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "appbox.Client", "appbox.Client\appbox.Client.csproj", "{C7E173C0-CB08-419A-BDDB-8506F6466448}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "appbox.Client.Test", "appbox.Client.Test\appbox.Client.Test.csproj", "{7D4F0E22-0804-470D-96D3-4472B2ECD224}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -129,6 +131,14 @@ Global
 		{C7E173C0-CB08-419A-BDDB-8506F6466448}.DebugFuture|Any CPU.Build.0 = Debug|Any CPU
 		{C7E173C0-CB08-419A-BDDB-8506F6466448}.ReleaseFuture|Any CPU.ActiveCfg = Release|Any CPU
 		{C7E173C0-CB08-419A-BDDB-8506F6466448}.ReleaseFuture|Any CPU.Build.0 = Release|Any CPU
+		{7D4F0E22-0804-470D-96D3-4472B2ECD224}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7D4F0E22-0804-470D-96D3-4472B2ECD224}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7D4F0E22-0804-470D-96D3-4472B2ECD224}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7D4F0E22-0804-470D-96D3-4472B2ECD224}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7D4F0E22-0804-470D-96D3-4472B2ECD224}.DebugFuture|Any CPU.ActiveCfg = Debug|Any CPU
+		{7D4F0E22-0804-470D-96D3-4472B2ECD224}.DebugFuture|Any CPU.Build.0 = Debug|Any CPU
+		{7D4F0E22-0804-470D-96D3-4472B2ECD224}.ReleaseFuture|Any CPU.ActiveCfg = Release|Any CPU
+		{7D4F0E22-0804-470D-96D3-4472B2ECD224}.ReleaseFuture|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
 		Policies = $0

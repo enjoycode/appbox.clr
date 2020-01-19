@@ -9,5 +9,17 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Channel\" />
+    <Folder Include="Caching\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\appbox.Core\Caching\ObjectPool.cs">
+      <Link>Caching\ObjectPool.cs</Link>
+    </Compile>
+    <Compile Include="..\appbox.Core\Caching\BytesSegment.cs">
+      <Link>Caching\BytesSegment.cs</Link>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" Version="4.7.0" />
   </ItemGroup>
 </Project>

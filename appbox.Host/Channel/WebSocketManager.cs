@@ -19,6 +19,7 @@ namespace appbox.Server.Channel
             //验证是否是已登录用户
             var webSession = context.Session.LoadWebSession();
             Log.Debug($"接受WebSocket连接, {webSocket.GetType()} Session = {webSession}");
+            //TODO:没有Session即没有登录先则直接关闭连接
 
             //加入至列表
             var client = new WebSocketClient(webSocket, webSession);
