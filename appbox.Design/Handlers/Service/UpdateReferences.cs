@@ -15,7 +15,7 @@ namespace appbox.Design
         public Task<object> Handle(DesignHub hub, InvokeArgs args)
         {
             var modelID = args.GetString();
-            var array = (ObjectArray)args.GetObject();
+            var array = args.GetObjectArray();
             var newDeps = array != null ? array.Cast<string>().ToArray() : new string[0];
 
             var modelNode = hub.DesignTree.FindModelNode(ModelType.Service, ulong.Parse(modelID));

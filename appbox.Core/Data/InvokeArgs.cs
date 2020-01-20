@@ -147,7 +147,7 @@ namespace appbox.Data
                 throw new Exception("Can't read from utf8 bytes");
 
             //首次读到参数数组开始，再读一次
-            if (jr.TokenType == JsonTokenType.StartArray && !JsonState.HasValue) 
+            if (jr.TokenType == JsonTokenType.StartArray && !JsonState.HasValue)
             {
                 if (!jr.Read()) throw new Exception("Can't read from utf8 bytes");
             }
@@ -157,7 +157,7 @@ namespace appbox.Data
             {
                 AdvancePosition(ref jr);
             }
-            
+
             return jr;
         }
 
@@ -254,7 +254,17 @@ namespace appbox.Data
 
         public ObjectArray GetObjectArray()
         {
-            if (Count == FromWebSocket || Count == FromWebStream)
+            if (Count == FromWebSocket)
+            {
+                var jr = ReadJsonArg();
+                if (jr.TokenType != JsonTokenType.StartArray)
+                    throw new Exception("must be StartArray");
+                var list = new ObjectArray();
+                jr.ReadList(list, null);
+                AdvancePosition(ref jr); //注意移到位置及状态
+                return list;
+            }
+            if (Count == FromWebStream)
                 throw new NotImplementedException();
             return (ObjectArray)Current().ObjectValue;
         }
