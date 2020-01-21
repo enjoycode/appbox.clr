@@ -92,6 +92,8 @@ namespace appbox.Design
             {
                 MetadataReferences.CoreLib,
                 MetadataReferences.NetstandardLib,
+                //MetadataReferences.SystemCoreLib,
+                MetadataReferences.SystemLinqLib,
                 MetadataReferences.SystemRuntimLib,
                 MetadataReferences.SystemRuntimExtLib,
                 MetadataReferences.TasksLib,

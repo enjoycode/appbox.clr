@@ -17,6 +17,8 @@ namespace appbox.Design
 
         internal static MetadataReference CoreLib => Get("System.Private.CoreLib.dll"); //Get("netstandard/mscorlib.dll");
         internal static MetadataReference NetstandardLib => Get("netstandard.dll"); //Get("netstandard/netstandard.dll");
+        //internal static MetadataReference SystemCoreLib => Get("System.Core.dll");
+        internal static MetadataReference SystemLinqLib => Get("System.Linq.dll");
         internal static MetadataReference SystemRuntimLib => Get("System.Runtime.dll"); //Get("netstandard/System.Runtime.dll");
         internal static MetadataReference SystemRuntimExtLib => Get("System.Runtime.Extensions.dll"); //Get("netstandard/System.Runtime.Extensions.dll");
         //internal static MetadataReference SystemBuffersLib => Get("System.Buffers.dll");
