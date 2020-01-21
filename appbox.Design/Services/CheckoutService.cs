@@ -61,6 +61,7 @@ namespace appbox.Design
                 var storedModel = await ModelStore.LoadModelAsync(ulong.Parse(checkoutInfos[0].TargetID));
                 if (storedModel.Version != checkoutInfos[0].Version)
                 {
+                    storedModel.AcceptChanges(); //TODO:check hit
                     result.ModelWithNewVersion = storedModel;
                 }
             }

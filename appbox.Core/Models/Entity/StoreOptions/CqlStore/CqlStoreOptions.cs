@@ -54,7 +54,7 @@ namespace appbox.Models
             get { return _materializedViews != null && _materializedViews.Count > 0; }
         }
 
-        public bool HasIndexes => throw new NotImplementedException();
+        public bool HasIndexes => false; //TODO: fix
 
         public IEnumerable<IndexModelBase> Indexes => throw new NotImplementedException();
 

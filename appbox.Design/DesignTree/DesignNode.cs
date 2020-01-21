@@ -111,8 +111,7 @@ namespace appbox.Design
                 //签出成功则将请求的签出信息添加至当前的已签出列表
                 DesignTree.AddCheckoutInfos(infos);
                 //如果签出的是单个模型，且具备更新的版本，则更新
-                ModelNode modelNode = this as ModelNode;
-                if (modelNode != null && result.ModelWithNewVersion != null)
+                if (this is ModelNode modelNode && result.ModelWithNewVersion != null)
                 {
                     modelNode.Model = result.ModelWithNewVersion; //替换旧模型
                     await DesignTree.DesignHub.TypeSystem.UpdateModelDocumentAsync(modelNode); //更新为新模型的RoslynDocument
