@@ -25,3 +25,4 @@ bin
 appbox.Store.Cassandra/obj
 appbox.Client/obj
 appbox.Client.Test/obj
+build/bin_win
