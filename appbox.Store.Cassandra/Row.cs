@@ -52,7 +52,7 @@ namespace appbox.Store
                                     case EntityFieldType.Guid:
                                         entity.SetGuid(dfm.MemberId, rawRow.GetValue<Guid>(dfm.Name)); break;
                                     case EntityFieldType.Byte:
-                                        entity.SetByte(dfm.MemberId, rawRow.GetValue<byte>(dfm.Name)); break;
+                                        entity.SetByte(dfm.MemberId, unchecked((byte)rawRow.GetValue<sbyte>(dfm.Name))); break;
                                     case EntityFieldType.Binary:
                                         entity.SetBytes(dfm.MemberId, rawRow.GetValue<byte[]>(dfm.Name)); break;
                                     case EntityFieldType.Float:
