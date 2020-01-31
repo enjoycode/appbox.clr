@@ -69,8 +69,16 @@ namespace appbox.Data
                                     writer.WriteStringValue(m.GuidValue); break;
                                 case EntityFieldType.EntityId:
                                     writer.WriteStringValue((Guid)((EntityId)m.ObjectValue)); break;
+                                case EntityFieldType.Int16:
+                                    writer.WriteNumberValue(m.Int16Value); break;
+                                case EntityFieldType.UInt16:
+                                    writer.WriteNumberValue(m.UInt16Value); break;
                                 case EntityFieldType.Int32:
                                     writer.WriteNumberValue(m.Int32Value); break;
+                                case EntityFieldType.UInt32:
+                                    writer.WriteNumberValue(m.UInt32Value); break;
+                                case EntityFieldType.Int64:
+                                    writer.WriteNumberValue(m.Int64Value); break;
                                 case EntityFieldType.UInt64:
                                     writer.WriteStringValue(m.UInt64Value.ToString()); break; //暂序列化为字符串
                                 case EntityFieldType.String:
@@ -212,7 +220,17 @@ namespace appbox.Data
                                         SetFloatNullable(memberModel.MemberId, reader.GetSingle(), true);
                                     break;
                                 case EntityFieldType.Double:
-                                    throw ExceptionHelper.NotImplemented();
+                                    if (reader.TokenType == JsonTokenType.Null)
+                                        SetDoubleNullable(memberModel.MemberId, null, true);
+                                    else
+                                        SetDoubleNullable(memberModel.MemberId, reader.GetDouble(), true);
+                                    break;
+                                case EntityFieldType.Int16:
+                                    if (reader.TokenType == JsonTokenType.Null)
+                                        SetInt16Nullable(memberModel.MemberId, null, true);
+                                    else
+                                        SetInt16Nullable(memberModel.MemberId, reader.GetInt16(), true);
+                                    break;
                                 case EntityFieldType.Enum:
                                 case EntityFieldType.Int32:
                                     if (reader.TokenType == JsonTokenType.Null)
