@@ -40,6 +40,8 @@ namespace appbox.Store
                                     case EntityFieldType.DateTime:
                                         entity.SetDateTime(dfm.MemberId,
                                             rawRow.GetValue<DateTimeOffset>(dfm.Name).LocalDateTime); break;
+                                    case EntityFieldType.Int16:
+                                        entity.SetInt16(dfm.MemberId, rawRow.GetValue<short>(dfm.Name)); break;
                                     case EntityFieldType.Enum:
                                     case EntityFieldType.Int32:
                                         entity.SetInt32(dfm.MemberId, rawRow.GetValue<int>(dfm.Name)); break;
