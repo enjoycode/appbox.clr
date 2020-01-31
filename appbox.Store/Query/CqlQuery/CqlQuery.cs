@@ -98,6 +98,8 @@ namespace appbox.Store
         public async Task<IList<Entity>> ToListAsync()
         {
             builder.Insert(0, "SELECT *");
+            if (Limit > 0)
+                builder.Append($" LIMIT {Limit}");
             if (AllowFiltering)
                 builder.Append(" ALLOW FILTERING");
 
@@ -112,6 +114,8 @@ namespace appbox.Store
         public async Task<IList<Entity>> ToListByFilterAsync(Func<IRow, bool> filter, int skip = 0, int take = 0)
         {
             builder.Insert(0, "SELECT *");
+            if (Limit > 0)
+                builder.Append($" LIMIT {Limit}");
             if (AllowFiltering)
                 builder.Append(" ALLOW FILTERING");
 
@@ -149,6 +153,8 @@ namespace appbox.Store
         {
             builder.Insert(0, fields);
             builder.Insert(0, "SELECT ");
+            if (Limit > 0)
+                builder.Append($" LIMIT {Limit}");
             if (AllowFiltering)
                 builder.Append(" ALLOW FILTERING");
 
@@ -164,6 +170,8 @@ namespace appbox.Store
         {
             builder.Insert(0, fields);
             builder.Insert(0, "SELECT ");
+            if (Limit > 0)
+                builder.Append($" LIMIT {Limit}");
             if (AllowFiltering)
                 builder.Append(" ALLOW FILTERING");
 
