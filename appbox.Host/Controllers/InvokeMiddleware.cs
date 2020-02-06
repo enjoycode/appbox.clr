@@ -57,7 +57,7 @@ namespace appbox.Host
             {
                 res = AnyValue.From(ex);
                 BytesSegment.ReturnAll(frame); //读消息头异常归还缓存块
-                Log.Warn($"收到无效的Api调用请求: {ex.Message}");
+                Log.Warn($"收到无效的Api调用请求: {ex.Message}\n{ex.StackTrace}");
             }
 
             //2. 设置当前会话并调用服务

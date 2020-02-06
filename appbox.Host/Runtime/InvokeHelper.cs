@@ -57,8 +57,11 @@ namespace appbox.Server.Channel
                 throw RequireFormatException;
             //注意预先判断参数数组是否为空
             int arrtyStartIndex = (int)jr.TokenStartIndex; //注意返回指向参数数组开始,非jr.BytesConsumed
-            if (jr.Read() && jr.TokenType == JsonTokenType.EndArray)
+            if (first.Buffer[arrtyStartIndex + 1] == (byte)']')
                 return -1;
+            //不要使用以下判断，可能分成多包造成读错误
+            //if (jr.Read() && jr.TokenType == JsonTokenType.EndArray)
+            //    return -1;
             return arrtyStartIndex;
         }
 
