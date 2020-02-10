@@ -14,22 +14,36 @@ namespace OmniSharp.Roslyn.CSharp.Services
     {
         private const string GetSymbolsAsync = nameof(GetSymbolsAsync);
         private const string InsertionText = nameof(InsertionText);
+        private const string ObjectCreationCompletionProvider = "Microsoft.CodeAnalysis.CSharp.Completion.Providers.ObjectCreationCompletionProvider";
         private const string NamedParameterCompletionProvider = "Microsoft.CodeAnalysis.CSharp.Completion.Providers.NamedParameterCompletionProvider";
         private const string OverrideCompletionProvider = "Microsoft.CodeAnalysis.CSharp.Completion.Providers.OverrideCompletionProvider";
         private const string ParitalMethodCompletionProvider = "Microsoft.CodeAnalysis.CSharp.Completion.Providers.PartialMethodCompletionProvider";
         private const string Provider = nameof(Provider);
+        private const string ProviderName = nameof(ProviderName);
         private const string SymbolCompletionItem = "Microsoft.CodeAnalysis.Completion.Providers.SymbolCompletionItem";
         private const string SymbolCompletionProvider = "Microsoft.CodeAnalysis.CSharp.Completion.Providers.SymbolCompletionProvider";
         private const string SymbolKind = nameof(SymbolKind);
         private const string SymbolName = nameof(SymbolName);
         private const string Symbols = nameof(Symbols);
 
+        private static readonly PropertyInfo _getProviderName;
         private static MethodInfo _getSymbolsAsync;
 
         static CompletionItemExtensions()
         {
             var symbolCompletionItemType = typeof(CompletionItem).GetTypeInfo().Assembly.GetType(SymbolCompletionItem);
             _getSymbolsAsync = symbolCompletionItemType.GetMethod(GetSymbolsAsync, BindingFlags.Public | BindingFlags.Static);
+            _getProviderName = typeof(CompletionItem).GetProperty(ProviderName, BindingFlags.NonPublic | BindingFlags.Instance);
+        }
+
+        private static string GetProviderName(CompletionItem item)
+        {
+            return (string)_getProviderName.GetValue(item);
+        }
+
+        public static bool IsObjectCreationCompletionItem(this CompletionItem item)
+        {
+            return GetProviderName(item) == ObjectCreationCompletionProvider;
         }
 
         public static async Task<IEnumerable<ISymbol>> GetCompletionSymbolsAsync(this CompletionItem completionItem, IEnumerable<ISymbol> recommendedSymbols, Document document)

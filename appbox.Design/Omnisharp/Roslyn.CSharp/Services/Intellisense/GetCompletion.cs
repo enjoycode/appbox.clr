@@ -75,8 +75,6 @@ namespace OmniSharp.Roslyn.CSharp.Services
         public string Snippet { get; set; }
         public string Kind { get; set; }
 
-        public string JsonObjID => string.Empty;
-
         public PayloadType JsonPayloadType => PayloadType.UnknownType;
 
         public void WriteToJson(Utf8JsonWriter writer, WritedObjects objrefs)
@@ -150,6 +148,12 @@ namespace OmniSharp.Roslyn.CSharp.Services
             var completionList = await service.GetCompletionsAsync(document, position);
             if (completionList != null)
             {
+                // Only trigger on space if Roslyn has object creation items
+                //if (request.TriggerCharacter == " " && !completionList.Items.Any(i => i.IsObjectCreationCompletionItem()))
+                //{
+                //    return completions;
+                //}
+
                 // get recommened symbols to match them up later with SymbolCompletionProvider
                 var semanticModel = await document.GetSemanticModelAsync();
                 var recommendedSymbols = await Recommender.GetRecommendedSymbolsAtPositionAsync(semanticModel, position, hub.TypeSystem.Workspace);
