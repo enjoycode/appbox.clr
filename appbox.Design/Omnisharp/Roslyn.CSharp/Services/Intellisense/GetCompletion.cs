@@ -129,7 +129,7 @@ namespace OmniSharp.Roslyn.CSharp.Services
     {
         public async Task<object> Handle(DesignHub hub, InvokeArgs args)
         {
-            int type = args.GetInt32();
+            int type = args.GetInt32(); //TODO: remove it
             string fileName = args.GetString();
             int line = args.GetInt32() - 1; //注意：前端传过来的值需要-1
             int column = args.GetInt32() - 1;
@@ -140,7 +140,7 @@ namespace OmniSharp.Roslyn.CSharp.Services
 
             var document = hub.TypeSystem.Workspace.GetOpenedDocumentByName(fileName);
             if (document == null)
-                throw new Exception(string.Format("Cannot find opened document: {0}", fileName));
+                throw new Exception($"Cannot find opened document: {fileName}");
 
             var sourceText = await document.GetTextAsync();
             var position = sourceText.Lines.GetPosition(new LinePosition(line, column));

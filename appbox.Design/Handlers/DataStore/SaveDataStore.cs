@@ -12,8 +12,7 @@ namespace appbox.Design
             var nodeId = args.GetString();
             var settings = args.GetString();
 
-            var node = hub.DesignTree.FindNode(DesignNodeType.DataStoreNode, nodeId) as DataStoreNode;
-            if (node == null)
+            if (!(hub.DesignTree.FindNode(DesignNodeType.DataStoreNode, nodeId) is DataStoreNode node))
                 throw new Exception("Can't find node: " + nodeId);
 
             node.Model.Settings = settings;

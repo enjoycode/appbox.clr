@@ -63,6 +63,7 @@ namespace appbox.Design
                 { nameof(CheckCode), new CheckCode() },
                 { nameof(FormatDocument), new FormatDocument() },
                 { nameof(GetHover), new GetHover() },
+                { nameof(SignatureHelp), new SignatureHelp() },
                 //Blob
                 { nameof(GetBlobObjects), new GetBlobObjects() }
             };

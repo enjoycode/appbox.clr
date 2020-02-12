@@ -58,6 +58,7 @@
     <Folder Include="Handlers\Folder\" />
     <Folder Include="Services\Code\Debugging\" />
     <Folder Include="Handlers\DataStore\" />
+    <Folder Include="Omnisharp\Roslyn.CSharp\Services\Signatures\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\appbox.Core\appbox.Core.csproj" />
