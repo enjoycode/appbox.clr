@@ -64,6 +64,7 @@ namespace appbox.Design
                 { nameof(FormatDocument), new FormatDocument() },
                 { nameof(GetHover), new GetHover() },
                 { nameof(SignatureHelp), new SignatureHelp() },
+                { nameof(GetDocSymbol), new GetDocSymbol() },
                 //Blob
                 { nameof(GetBlobObjects), new GetBlobObjects() }
             };

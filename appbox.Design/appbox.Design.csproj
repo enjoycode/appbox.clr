@@ -59,6 +59,8 @@
     <Folder Include="Services\Code\Debugging\" />
     <Folder Include="Handlers\DataStore\" />
     <Folder Include="Omnisharp\Roslyn.CSharp\Services\Signatures\" />
+    <Folder Include="Omnisharp\Roslyn.CSharp\Services\Structure\" />
+    <Folder Include="Omnisharp\Abstractions\Models\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\appbox.Core\appbox.Core.csproj" />
@@ -67,6 +69,7 @@
   <ItemGroup>
     <Compile Remove="Resources\DummyCode\*.cs" />
     <EmbeddedResource Include="Resources\DummyCode\*.cs" />
+    <Compile Remove="Omnisharp\Roslyn\Utilities\ISymbolExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="3.4.0" />
