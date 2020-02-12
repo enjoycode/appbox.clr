@@ -104,8 +104,6 @@ namespace appbox.Design
             public int EndColumn;
             public object[] Contents;
 
-            public string JsonObjID => string.Empty;
-
             public PayloadType JsonPayloadType => PayloadType.UnknownType;
 
             public void ReadFromJson(ref Utf8JsonReader reader, ReadedObjects objrefs) => throw new NotSupportedException();
