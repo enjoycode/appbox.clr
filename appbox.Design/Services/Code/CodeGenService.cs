@@ -7,6 +7,7 @@ using OmniSharp;
 using appbox.Models;
 using System.Linq;
 using appbox.Caching;
+using appbox.Design.ServiceInterceptors;
 
 namespace appbox.Design
 {
@@ -144,7 +145,8 @@ namespace appbox.Design
             {
                 var ctorsb = StringBuilderCache.Acquire();
                 ctorsb.Append($"public {model.Name}(");
-                sb.AppendFormat("[{0}(\"LoadEntity\")]\n", TypeHelper.InvocationInterceptorAttribute);
+                sb.AppendFormat("[{0}(\"{1}\")]\n",
+                    TypeHelper.InvocationInterceptorAttribute, LoadEntityInterceptor.Name);
                 sb.Append($"public static System.Threading.Tasks.Task<{model.Name}> LoadAsync(");
                 for (int i = 0; i < model.SqlStoreOptions.PrimaryKeys.Count; i++)
                 {
@@ -485,17 +487,18 @@ namespace appbox.Design
 
                 if (isPublic)
                 {
-                    sb.AppendFormat("[{1}()]public static {2} {0}(",
-                                    method.Identifier.ValueText,
-                                    TypeHelper.AsyncServiceProxyAttribute,
-                                    method.ReturnType);
+                    sb.AppendFormat("[{0}(\"{1}\")]public static {2} {3}(",
+                                    TypeHelper.InvocationInterceptorAttribute,
+                                    CallServiceInterceptor.Name,
+                                    method.ReturnType,
+                                    method.Identifier.ValueText);
 
                     for (int i = 0; i < method.ParameterList.Parameters.Count; i++)
                     {
                         if (i != 0) sb.Append(',');
                         sb.Append(method.ParameterList.Parameters[i].ToString());
                     }
-                    sb.Append(") {throw new Exception();}");
+                    sb.Append("){throw new Exception();}");
                 }
             }
 

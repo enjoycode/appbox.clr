@@ -47,12 +47,6 @@ namespace System.Reflection
     {
         public RealTypeAttribute(string realTypeFullName) { }
     }
-
-    [AttributeUsage(AttributeTargets.Method)]
-    public class SyncServiceProxyAttribute : Attribute { }
-
-    [AttributeUsage(AttributeTargets.Method)]
-    public class AsyncServiceProxyAttribute : Attribute { }
     #endregion
 }
 

@@ -130,7 +130,11 @@ namespace appbox.Core.Tests
             _entityModels.Add(model.Id, model);
         }
 
+#if FUTURE
         public string AppPath => "/Users/lushuaijun/Projects/AppBoxFuture/appbox/cmake-build-debug";
+#else
+        public string AppPath => "/Users/lushuaijun/Projects/AppBoxFuture/appbox.clr/build/bin";
+#endif
 
         public bool IsMainDomain => throw new NotImplementedException();
 

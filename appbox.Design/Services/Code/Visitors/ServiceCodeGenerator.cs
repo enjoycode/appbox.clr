@@ -27,6 +27,7 @@ namespace appbox.Design
         {
             invocationInterceptors = new Dictionary<string, IInvocationInterceptor<SyntaxNode>>
             {
+                { CallServiceInterceptor.Name, new CallServiceInterceptor() },
                 { PartitionPredicateInterceptor.Name, new PartitionPredicateInterceptor() },
                 { IndexPredicateInterceptor.Name, new IndexPredicateInterceptor() },
                 { ToTreeListInterceptor.Name, new ToTreeListInterceptor() },
@@ -265,6 +266,7 @@ namespace appbox.Design
                             var memberId = GetEntityMemberId(expSymbol);
 
                             var oldTarget = (ExpressionSyntax)Visit(node.Expression);
+                            //TODO: cache methodName
                             var methodName = (SimpleNameSyntax)SyntaxFactory.ParseName(TypeHelper.GenEntityMemberGetterOrSetter(valueTypeSymbol, true));
                             var getValueMethod = SyntaxFactory.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, oldTarget, methodName);
                             var arg1 = SyntaxFactory.Argument(SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression,

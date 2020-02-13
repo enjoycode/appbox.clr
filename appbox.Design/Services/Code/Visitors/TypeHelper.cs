@@ -24,8 +24,6 @@ namespace appbox.Design
         internal const string EnumModelAttribute = "System.Reflection.EnumModelAttribute";
         internal const string ResourceModelAttribute = "System.Reflection.ResourceModelAttribute";
         internal const string RealTypeAttribute = "System.Reflection.RealTypeAttribute";
-        internal const string SyncServiceProxyAttribute = "System.Reflection.SyncServiceProxyAttribute";
-        internal const string AsyncServiceProxyAttribute = "System.Reflection.AsyncServiceProxyAttribute";
         internal const string InvokePermissionAttribute = "sys.InvokePermissionAttribute";
 
         internal const string Type_EntityBase = "sys.EntityBase";
@@ -140,44 +138,6 @@ namespace appbox.Design
                 foreach (var item in attributes)
                 {
                     if (item.AttributeClass.ToString() == "ui.GuiFuncAttribute")
-                    {
-                        return true;
-                    }
-                }
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// 是否同步调用服务的代理方法
-        /// </summary>
-        internal static bool IsSyncProxyMethod(IMethodSymbol typeSymbol)
-        {
-            if (typeSymbol != null)
-            {
-                var attributes = typeSymbol.GetAttributes();
-                foreach (var item in attributes)
-                {
-                    if (item.AttributeClass.ToString() == SyncServiceProxyAttribute)
-                    {
-                        return true;
-                    }
-                }
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// 是否异步调用服务的代理方法
-        /// </summary>
-        internal static bool IsAsyncProxyMethod(IMethodSymbol typeSymbol)
-        {
-            if (typeSymbol != null)
-            {
-                var attributes = typeSymbol.GetAttributes();
-                foreach (var item in attributes)
-                {
-                    if (item.AttributeClass.ToString() == AsyncServiceProxyAttribute)
                     {
                         return true;
                     }

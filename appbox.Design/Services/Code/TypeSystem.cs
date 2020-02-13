@@ -115,7 +115,6 @@ namespace appbox.Design
                       .AddMetadataReference(ServiceBaseProjectId, MetadataReferences.TasksExtLib)
                       .AddMetadataReference(ServiceBaseProjectId, MetadataReferences.DataCommonLib)
                       .AddProjectReference(ServiceBaseProjectId, new ProjectReference(ModelProjectId))
-                      .AddProjectReference(ServiceBaseProjectId, new ProjectReference(AsyncServiceProxyProjectId))
                       .AddDocument(ServiceBaseDummyCodeDocumentId, "ServiceBaseDummyCode.cs", CodeGenService.GenServiceBaseDummyCode())
 
                       .AddProject(workflowProjectInfo)
@@ -175,8 +174,9 @@ namespace appbox.Design
                 .AddProject(serviceProjectInfo)
                 .AddMetadataReferences(prjid, deps)
                 .AddProjectReference(prjid, new ProjectReference(ModelProjectId))
-                .AddProjectReference(prjid, new ProjectReference(ServiceBaseProjectId));
-            //.AddProjectReference(prjid, new ProjectReference(WorkflowModelProjectId));
+                .AddProjectReference(prjid, new ProjectReference(ServiceBaseProjectId))
+                .AddProjectReference(prjid, new ProjectReference(AsyncServiceProxyProjectId));
+                //.AddProjectReference(prjid, new ProjectReference(WorkflowModelProjectId));
 
             if (!Workspace.TryApplyChanges(newSolution))
                 Log.Warn("Cannot create service project.");

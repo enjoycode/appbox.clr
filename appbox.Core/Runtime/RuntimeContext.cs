@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Threading.Tasks;
+using appbox.Data;
 using appbox.Security;
 using appbox.Models;
 
@@ -52,6 +54,94 @@ namespace appbox.Runtime
 
             return false;
         }
+
+        #region ====Shortpath for service invoke====
+        //仅用于服务模型虚拟代码转换为运行时代码的调用
+
+        public static async ValueTask<bool> InvokeBooleanAsync(string service, InvokeArgs args)
+        {
+            var res = await Current.InvokeAsync(service, args);
+            return res.BooleanValue;
+        }
+
+        public static async ValueTask<byte> InvokeByteAsync(string service, InvokeArgs args)
+        {
+            var res = await Current.InvokeAsync(service, args);
+            return res.ByteValue;
+        }
+
+        public static async ValueTask<ushort> InvokeUInt16Async(string service, InvokeArgs args)
+        {
+            var res = await Current.InvokeAsync(service, args);
+            return res.UInt16Value;
+        }
+
+        public static async ValueTask<short> InvokeInt16Async(string service, InvokeArgs args)
+        {
+            var res = await Current.InvokeAsync(service, args);
+            return res.Int16Value;
+        }
+
+        public static async ValueTask<uint> InvokeUInt32Async(string service, InvokeArgs args)
+        {
+            var res = await Current.InvokeAsync(service, args);
+            return res.UInt32Value;
+        }
+
+        public static async ValueTask<int> InvokeInt32Async(string service, InvokeArgs args)
+        {
+            var res = await Current.InvokeAsync(service, args);
+            return res.Int32Value;
+        }
+
+        public static async ValueTask<ulong> InvokeUInt64Async(string service, InvokeArgs args)
+        {
+            var res = await Current.InvokeAsync(service, args);
+            return res.UInt64Value;
+        }
+
+        public static async ValueTask<long> InvokeInt64Async(string service, InvokeArgs args)
+        {
+            var res = await Current.InvokeAsync(service, args);
+            return res.Int64Value;
+        }
+
+        public static async ValueTask<float> InvokeFloatAsync(string service, InvokeArgs args)
+        {
+            var res = await Current.InvokeAsync(service, args);
+            return res.FloatValue;
+        }
+
+        public static async ValueTask<double> InvokeDoubleAsync(string service, InvokeArgs args)
+        {
+            var res = await Current.InvokeAsync(service, args);
+            return res.DoubleValue;
+        }
+
+        public static async ValueTask<DateTime> InvokeDateTimeAsync(string service, InvokeArgs args)
+        {
+            var res = await Current.InvokeAsync(service, args);
+            return res.DateTimeValue;
+        }
+
+        public static async ValueTask<Guid> InvokeGuidAsync(string service, InvokeArgs args)
+        {
+            var res = await Current.InvokeAsync(service, args);
+            return res.GuidValue;
+        }
+
+        public static async ValueTask<decimal> InvokeDecimalAsync(string service, InvokeArgs args)
+        {
+            var res = await Current.InvokeAsync(service, args);
+            return res.DecimalValue;
+        }
+
+        public static async ValueTask<TResult> InvokeAsync<TResult>(string service, InvokeArgs args)
+        {
+            var res = await Current.InvokeAsync(service, args);
+            return (TResult)res.ObjectValue;
+        }
+        #endregion
 
     }
 }

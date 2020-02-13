@@ -8,11 +8,13 @@ using appbox.Serialization;
 namespace appbox.Data
 {
     /// <summary>
-    /// 封装服务调用的参数列表,减少装拆箱
+    /// 封装服务调用的参数列表,用于类型擦除及减少装拆箱
     /// </summary>
     /// <remarks>目前最多支持5个参数</remarks>
     public struct InvokeArgs
     {
+        public const int MAX_COUNT = 5;
+
         private AnyValue Arg1;
         private AnyValue Arg2;
         private AnyValue Arg3;

@@ -75,9 +75,69 @@ namespace appbox.Data
         #region ====FromXXX Methods, 仅用于生成虚拟服务代码的IService接口====
         public readonly static AnyValue Empty = new AnyValue { Type = AnyValueType.Empty };
 
+        public static AnyValue From(bool v)
+        {
+            return new AnyValue { BooleanValue = v, Type = AnyValueType.Boolean };
+        }
+
+        public static AnyValue From(byte v)
+        {
+            return new AnyValue { ByteValue = v, Type = AnyValueType.Byte };
+        }
+
+        public static AnyValue From(ushort v)
+        {
+            return new AnyValue { UInt16Value = v, Type = AnyValueType.UInt16 };
+        }
+
+        public static AnyValue From(short v)
+        {
+            return new AnyValue { Int16Value = v, Type = AnyValueType.Int16 };
+        }
+
+        public static AnyValue From(uint v)
+        {
+            return new AnyValue { UInt32Value = v, Type = AnyValueType.UInt32 };
+        }
+
         public static AnyValue From(int v)
         {
             return new AnyValue { Int32Value = v, Type = AnyValueType.Int32 };
+        }
+
+        public static AnyValue From(ulong v)
+        {
+            return new AnyValue { UInt64Value = v, Type = AnyValueType.UInt64 };
+        }
+
+        public static AnyValue From(long v)
+        {
+            return new AnyValue { Int64Value = v, Type = AnyValueType.Int64 };
+        }
+
+        public static AnyValue From(float v)
+        {
+            return new AnyValue { FloatValue = v, Type = AnyValueType.Float };
+        }
+
+        public static AnyValue From(double v)
+        {
+            return new AnyValue { DoubleValue = v, Type = AnyValueType.Double };
+        }
+
+        public static AnyValue From(DateTime v)
+        {
+            return new AnyValue { DateTimeValue = v, Type = AnyValueType.DateTime };
+        }
+
+        public static AnyValue From(decimal v)
+        {
+            return new AnyValue { DecimalValue = v, Type = AnyValueType.Decimal };
+        }
+
+        public static AnyValue From(Guid v)
+        {
+            return new AnyValue { GuidValue = v, Type = AnyValueType.Guid };
         }
 
         public static AnyValue From(string v)

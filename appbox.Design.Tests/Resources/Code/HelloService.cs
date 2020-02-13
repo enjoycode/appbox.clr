@@ -101,12 +101,22 @@ namespace sys.ServiceLogic
 		//	return await Entities.City.LoadAsync(214000);
 		//}
 
-		public async Task<object> SayHello()
+		//public async Task<object> SayHello()
+		//{
+		//	var q = new SqlQuery<Entities.Order>();
+		//	q.Include(order => order.Customer)
+		//		.ThenInclude(customer => customer.City);
+		//	return await q.ToListAsync();
+		//}
+
+        //调用其他服务
+        public async Task<object> CallService()
 		{
-			var q = new SqlQuery<Entities.Order>();
-			q.Include(order => order.Customer)
-				.ThenInclude(customer => customer.City);
-			return await q.ToListAsync();
+			await Services.TestService.Test("Rick");
+			var res1 = await sys.Services.TestService.Test1("hello");
+			var res2 = await sys.Services.TestService.Test2(128);
+			var res3 = await sys.Services.TestService.Test3(DateTime.Now);
+			return $"{res1} {res2} {res3}";
 		}
 
 	}

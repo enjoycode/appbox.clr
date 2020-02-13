@@ -38,6 +38,7 @@
   <ItemGroup>
     <Compile Remove="Resources\Code\HelloService.cs" />
     <Compile Remove="Resources\Code\SqlORM示例.cs" />
+    <Compile Remove="Resources\Code\TestService.cs" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\appbox.Core.Tests\TestHelper.cs">
@@ -54,6 +55,7 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\Code\HelloService.cs" />
+    <EmbeddedResource Include="Resources\Code\TestService.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\Code\SqlORM示例.cs" />
