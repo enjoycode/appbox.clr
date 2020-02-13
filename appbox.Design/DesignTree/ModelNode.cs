@@ -33,7 +33,6 @@ namespace appbox.Design
 
         #region ----服务模型节点专用----
         internal ProjectId ServiceProjectId { get; private set; }
-        //internal DocumentId SyncProxyDocumentId { get; private set; }
         internal DocumentId AsyncProxyDocumentId { get; private set; }
         #endregion
         #endregion
@@ -56,7 +55,6 @@ namespace appbox.Design
                     RoslynDocumentId = DocumentId.CreateNewId(ServiceProjectId);
                     nodeType = DesignNodeType.ServiceModelNode;
 
-                    //SyncProxyDocumentId = DocumentId.CreateNewId(hub.TypeSystem.SyncServiceProxyProjectId);
                     AsyncProxyDocumentId = DocumentId.CreateNewId(hub.TypeSystem.AsyncServiceProxyProjectId);
                     break;
                 case ModelType.View:

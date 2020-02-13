@@ -31,29 +31,19 @@ namespace appbox.Design
         internal readonly ProjectId ModelProjectId;
 
         /// <summary>
-        /// 同步系统服务的项目标识，由ServiceBaseProject及SyncServiceProxyProject引用
-        /// </summary>
-        internal readonly ProjectId SyncSysServiceProjectId;
-
-        /// <summary>
         /// 服务模型基础项目，具备BaseSyncServiceDummyCode.cs
         /// </summary>
         internal readonly ProjectId ServiceBaseProjectId;
-
-        /// <summary>
-        /// 同步服务代理项目标识号，用于普通表达式的引用
-        /// </summary>
-        internal readonly ProjectId SyncServiceProxyProjectId;
 
         /// <summary>
         /// 异步服务代理项目标识号，用于UI的EventAction引用
         /// </summary>
         internal readonly ProjectId AsyncServiceProxyProjectId;
 
-        /// <summary>
-        /// 常规表达式的项目标识，引用SyncServiceProxyProject
-        /// </summary>
-        internal readonly ProjectId ExpressionProjectId;
+        ///// <summary>
+        ///// 常规表达式的项目标识，引用SyncServiceProxyProject
+        ///// </summary>
+        //internal readonly ProjectId ExpressionProjectId;
 
         /// <summary>
         /// 工作流专用项目，由服务项目及工作流相关Activity的表达式项目引用
@@ -68,7 +58,6 @@ namespace appbox.Design
         internal readonly DocumentId BaseWFDummyCodeDocumentId;
 
         internal readonly DocumentId ServiceBaseDummyCodeDocumentId;
-        internal readonly DocumentId SyncSysServiceDummyCodeDocumentId;
         #endregion
 
         #region ====Ctor====
@@ -79,17 +68,14 @@ namespace appbox.Design
 
             //虚拟项目
             ModelProjectId = ProjectId.CreateNewId();
-            SyncSysServiceProjectId = ProjectId.CreateNewId();
             WorkflowModelProjectId = ProjectId.CreateNewId();
             ServiceBaseProjectId = ProjectId.CreateNewId();
-            SyncServiceProxyProjectId = ProjectId.CreateNewId();
             AsyncServiceProxyProjectId = ProjectId.CreateNewId();
-            ExpressionProjectId = ProjectId.CreateNewId();
+            //ExpressionProjectId = ProjectId.CreateNewId();
 
             //各基本虚拟代码
             BaseDummyCodeDocumentId = DocumentId.CreateNewId(ModelProjectId);
             ServiceBaseDummyCodeDocumentId = DocumentId.CreateNewId(ServiceBaseProjectId);
-            SyncSysServiceDummyCodeDocumentId = DocumentId.CreateNewId(SyncSysServiceProjectId);
             BaseWFDummyCodeDocumentId = DocumentId.CreateNewId(WorkflowModelProjectId);
 
             var dllCompilationOptions = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary);
@@ -100,39 +86,26 @@ namespace appbox.Design
             var workflowProjectInfo = ProjectInfo.Create(WorkflowModelProjectId, VersionStamp.Create(),
                                                       "WorkflowProject", "WorkflowProject", LanguageNames.CSharp, null, null,
                                                       dllCompilationOptions);
-            var syncSysServiceProjectInfo = ProjectInfo.Create(SyncSysServiceProjectId, VersionStamp.Create(),
-                                                      "SyncSysServiceProject", "SyncSysServiceProject", LanguageNames.CSharp, null, null,
-                                                      dllCompilationOptions);
             var serviceBaseProjectInfo = ProjectInfo.Create(ServiceBaseProjectId, VersionStamp.Create(),
                                                       "ServiceBaseProject", "ServiceBaseProject", LanguageNames.CSharp, null, null,
-                                                      dllCompilationOptions);
-            var syncServiceProjectInfo = ProjectInfo.Create(SyncServiceProxyProjectId, VersionStamp.Create(),
-                                                      "SyncServiceProxyProject", "SyncServiceProxyProject", LanguageNames.CSharp, null, null,
                                                       dllCompilationOptions);
             var asyncServiceProjectInfo = ProjectInfo.Create(AsyncServiceProxyProjectId, VersionStamp.Create(),
                                                       "AsyncServiceProxyProject", "AsyncServiceProxyProject", LanguageNames.CSharp, null, null,
                                                       dllCompilationOptions);
-            var expressionProjectInfo = ProjectInfo.Create(ExpressionProjectId, VersionStamp.Create(),
-                                                      "ExpressionProject", "ExpressionProject", LanguageNames.CSharp, null, null,
-                                                      dllCompilationOptions);
+            //var expressionProjectInfo = ProjectInfo.Create(ExpressionProjectId, VersionStamp.Create(),
+            //                                          "ExpressionProject", "ExpressionProject", LanguageNames.CSharp, null, null,
+            //                                          dllCompilationOptions);
 
             var newSolution = Workspace.CurrentSolution
                       .AddProject(modelProjectInfo)
                       .AddMetadataReference(ModelProjectId, MetadataReferences.CoreLib)
                       .AddMetadataReference(ModelProjectId, MetadataReferences.NetstandardLib)
-                      //.AddMetadataReference(ModelProjectId, GetMetadataReference("System.dll"))
-                      //.AddMetadataReference(ModelProjectId, GetMetadataReference("System.Runtime.dll"))
-                      //.AddMetadataReference(ModelProjectId, GetMetadataReference("System.Data.dll"))
-                      //.AddMetadataReference(ModelProjectId, GetMetadataReference("System.Data.Common.dll"))
-                      //.AddMetadataReference(ModelProjectId, GetMetadataReference("System.ComponentModel.TypeConverter.dll"))
                       .AddDocument(BaseDummyCodeDocumentId, "BaseDummyCode.cs", CodeGenService.GenBaseDummyCode())
 
-                      .AddProject(syncSysServiceProjectInfo)
-                      .AddMetadataReference(SyncSysServiceProjectId, MetadataReferences.CoreLib)
-                      .AddMetadataReference(SyncSysServiceProjectId, MetadataReferences.NetstandardLib)
-                      //.AddMetadataReference(SyncSysServiceProjectId, GetMetadataReference("System.Data.dll"))
-                      .AddProjectReference(SyncSysServiceProjectId, new ProjectReference(ModelProjectId))
-                      .AddDocument(SyncSysServiceDummyCodeDocumentId, "SyncSysServiceDummyCode.cs", CodeGenService.GenSyncSysServiceDummyCode())
+                      .AddProject(asyncServiceProjectInfo)
+                      .AddMetadataReference(AsyncServiceProxyProjectId, MetadataReferences.CoreLib)
+                      .AddMetadataReference(AsyncServiceProxyProjectId, MetadataReferences.NetstandardLib)
+                      .AddProjectReference(AsyncServiceProxyProjectId, new ProjectReference(ModelProjectId))
 
                       .AddProject(serviceBaseProjectInfo)
                       .AddMetadataReference(ServiceBaseProjectId, MetadataReferences.CoreLib)
@@ -142,34 +115,21 @@ namespace appbox.Design
                       .AddMetadataReference(ServiceBaseProjectId, MetadataReferences.TasksExtLib)
                       .AddMetadataReference(ServiceBaseProjectId, MetadataReferences.DataCommonLib)
                       .AddProjectReference(ServiceBaseProjectId, new ProjectReference(ModelProjectId))
-                      //.AddProjectReference(ServiceBaseProjectId, new ProjectReference(SyncSysServiceProjectId))
+                      .AddProjectReference(ServiceBaseProjectId, new ProjectReference(AsyncServiceProxyProjectId))
                       .AddDocument(ServiceBaseDummyCodeDocumentId, "ServiceBaseDummyCode.cs", CodeGenService.GenServiceBaseDummyCode())
-
-                      .AddProject(syncServiceProjectInfo)
-                      .AddMetadataReference(SyncServiceProxyProjectId, MetadataReferences.CoreLib)
-                      .AddMetadataReference(SyncServiceProxyProjectId, MetadataReferences.NetstandardLib)
-                      //.AddMetadataReference(SyncServiceProxyProjectId, GetMetadataReference("System.Data.dll"))
-                      .AddProjectReference(SyncServiceProxyProjectId, new ProjectReference(ModelProjectId))
-                      .AddProjectReference(SyncServiceProxyProjectId, new ProjectReference(SyncSysServiceProjectId))
-
-                      .AddProject(asyncServiceProjectInfo)
-                      .AddMetadataReference(AsyncServiceProxyProjectId, MetadataReferences.CoreLib)
-                      .AddMetadataReference(AsyncServiceProxyProjectId, MetadataReferences.NetstandardLib)
-                      //.AddMetadataReference(AsyncServiceProxyProjectId, GetMetadataReference("System.Data.dll"))
-                      .AddProjectReference(AsyncServiceProxyProjectId, new ProjectReference(ModelProjectId))
 
                       .AddProject(workflowProjectInfo)
                       .AddMetadataReference(WorkflowModelProjectId, MetadataReferences.CoreLib)
                       .AddMetadataReference(WorkflowModelProjectId, MetadataReferences.NetstandardLib)
                       .AddProjectReference(WorkflowModelProjectId, new ProjectReference(ModelProjectId))
                       .AddDocument(BaseWFDummyCodeDocumentId, "BaseWFDummyCode.cs", CodeGenService.GenBaseWFDummyCode())
-
-                      .AddProject(expressionProjectInfo)
-                      .AddMetadataReference(ExpressionProjectId, MetadataReferences.CoreLib)
-                      .AddMetadataReference(ExpressionProjectId, MetadataReferences.NetstandardLib)
-                      //.AddMetadataReference(ExpressionProjectId, GetMetadataReference("System.dll"))
-                      .AddProjectReference(ExpressionProjectId, new ProjectReference(ModelProjectId))
-                      .AddProjectReference(ExpressionProjectId, new ProjectReference(SyncServiceProxyProjectId));
+           ;
+            //.AddProject(expressionProjectInfo)
+            //.AddMetadataReference(ExpressionProjectId, MetadataReferences.CoreLib)
+            //.AddMetadataReference(ExpressionProjectId, MetadataReferences.NetstandardLib)
+            ////.AddMetadataReference(ExpressionProjectId, GetMetadataReference("System.dll"))
+            //.AddProjectReference(ExpressionProjectId, new ProjectReference(ModelProjectId))
+            //.AddProjectReference(ExpressionProjectId, new ProjectReference(SyncServiceProxyProjectId));
 
             if (!Workspace.TryApplyChanges(newSolution))
                 Log.Warn("Cannot create default workspace.");
@@ -214,19 +174,8 @@ namespace appbox.Design
             var newSolution = Workspace.CurrentSolution
                 .AddProject(serviceProjectInfo)
                 .AddMetadataReferences(prjid, deps)
-                // .AddMetadataReference(prjid, GetMetadataReference("System.Private.Xml.dll"))
-                // .AddMetadataReference(prjid, GetMetadataReference("System.Private.Xml.Linq.dll"))
-                // .AddMetadataReference(prjid, GetMetadataReference("System.Private.Uri.dll"))
-                // .AddMetadataReference(prjid, GetMetadataReference("System.Net.Primitives.dll"))
-                // .AddMetadataReference(prjid, GetMetadataReference("System.Net.Http.dll"))
-                // .AddMetadataReference(prjid, GetMetadataReference("System.Security.Cryptography.Primitives.dll"))
-                // .AddMetadataReference(prjid, GetMetadataReference("System.Security.Cryptography.Algorithms.dll"))
-                // .AddMetadataReference(prjid, GetMetadataReference("System.Security.Cryptography.Csp.dll"))
-                // .AddMetadataReference(prjid, GetMetadataReference("Newtonsoft.Json.dll"))
                 .AddProjectReference(prjid, new ProjectReference(ModelProjectId))
                 .AddProjectReference(prjid, new ProjectReference(ServiceBaseProjectId));
-            //.AddProjectReference(prjid, new ProjectReference(SyncSysServiceProjectId))
-            //.AddProjectReference(prjid, new ProjectReference(SyncServiceProxyProjectId))
             //.AddProjectReference(prjid, new ProjectReference(WorkflowModelProjectId));
 
             if (!Workspace.TryApplyChanges(newSolution))
@@ -265,9 +214,8 @@ namespace appbox.Design
         /// </summary>
         internal void CreateStoreDocument(DataStoreNode node)
         {
-            Solution newSolution = null;
             var docName = $"sys.DataStore.{node.Model.Name}.cs";
-            newSolution = Workspace.CurrentSolution.AddDocument(node.RoslynDocumentId, docName,
+            var newSolution = Workspace.CurrentSolution.AddDocument(node.RoslynDocumentId, docName,
                             CodeGenService.GenDataStoreDummyCode(node.Model));
 
             if (!Workspace.TryApplyChanges(newSolution))
@@ -321,16 +269,11 @@ namespace appbox.Design
                         }
                         newSolution = Workspace.CurrentSolution.AddDocument(docId, docName, sourceCode);
 
-                        //TODO: 服务模型创建代理
-                        //try
-                        //{
-                        //    typeSystem.CreateServiceProxyDocument(RoslynDocumentId,
-                        //    SyncProxyDocumentId, AsyncProxyDocumentId, (ServiceModel)Model);
-                        //}
-                        //catch (Exception ex)
-                        //{
-                        //    Log.Warn($"创建服务虚拟代理失败: {ex.Message}{Environment.NewLine}{ex.StackTrace}");
-                        //}
+                        //服务模型创建代理
+                        var proxyDocName = $"{appName}.{model.Name}.AsnycProxy.cs";
+                        var srcdoc = newSolution.GetDocument(docId);
+                        var proxyCode = await CodeGenService.GenProxyCode(srcdoc, appName, (ServiceModel)model);
+                        newSolution = newSolution.AddDocument(node.AsyncProxyDocumentId, proxyDocName, proxyCode);
                     }
                     break;
                 case ModelType.Permission:
@@ -386,10 +329,13 @@ namespace appbox.Design
                     {
                         var sourceCode = await Store.ModelStore.LoadServiceCodeAsync(model.Id);
                         newSolution = Workspace.CurrentSolution.WithDocumentText(docId, SourceText.From(sourceCode));
+
+                        // 服务模型还需要更新代理类
+                        var srcdoc = newSolution.GetDocument(docId);
+                        var proxyCode = await CodeGenService.GenProxyCode(srcdoc, appName, (ServiceModel)model);
+                        newSolution = newSolution
+                                .WithDocumentText(node.AsyncProxyDocumentId, SourceText.From(proxyCode));
                     }
-                    // TODO: 服务模型还需要更新代理类
-                    //typeSystem.UpdateServiceProxyDocument(RoslynDocumentId, SyncProxyDocumentId,
-                    //AsyncProxyDocumentId, (ServiceModel)Model);
                     break;
             }
 
@@ -398,39 +344,6 @@ namespace appbox.Design
                 if (!Workspace.TryApplyChanges(newSolution))
                     Log.Warn("Cannot update roslyn document for: " + model.Name);
             }
-        }
-
-        /// <summary>
-        /// 目前由模型树添加节点时处理
-        /// </summary>
-        internal void CreateServiceProxyDocument(DocumentId serviceDocId, DocumentId syncProxyDocId,
-                                                 DocumentId asyncProxyDocId, ServiceModel model)
-        {
-            throw ExceptionHelper.NotImplemented();
-            //var docName1 = string.Format("{0}.{1}.SyncProxy.cs", model.AppID, model.Name);
-            //var docName2 = string.Format("{0}.{1}.AsnycProxy.cs", model.AppID, model.Name);
-
-            //var proxyCodes = CodeGenService.GenProxyCode(this.Workspace, model, serviceDocId).Result;
-
-            //var newSolution = Workspace.CurrentSolution
-            //                                  .AddDocument(syncProxyDocId, docName1, proxyCodes[0])
-            //                                  .AddDocument(asyncProxyDocId, docName2, proxyCodes[1]);
-            //if (!Workspace.TryApplyChanges(newSolution))
-            //Log.Warn("Cannot add service proxy roslyn document for: " + model.ID);
-        }
-
-        /// <summary>
-        /// 由服务模型保存时调用或服务模型签出更新时调用
-        /// </summary>
-        internal void UpdateServiceProxyDocument(DocumentId serviceDocId, DocumentId syncProxyDocId,
-                                                 DocumentId asyncProxyDocId, ServiceModel model)
-        {
-            var proxyCodes = CodeGenService.GenProxyCode(this.Workspace, model, serviceDocId).Result;
-            var newSolution = Workspace.CurrentSolution
-                                .WithDocumentText(syncProxyDocId, SourceText.From(proxyCodes[0]))
-                                .WithDocumentText(asyncProxyDocId, SourceText.From(proxyCodes[1]));
-            if (!Workspace.TryApplyChanges(newSolution))
-                Log.Warn($"Cannot update service proxy roslyn document for: {model.Name}");
         }
 
         /// <summary>

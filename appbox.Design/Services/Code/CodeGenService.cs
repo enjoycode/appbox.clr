@@ -446,69 +446,61 @@ namespace appbox.Design
         #endregion
 
         #region ====Generate Service Proxy Code====
-        internal static Task<string[]> GenProxyCode(OmniSharpWorkspace workspace, ServiceModel model, DocumentId serviceDocId)
+        /// <summary>
+        /// 生成服务模型的异步代理，用于服务间相互调用
+        /// </summary>
+        internal static async Task<string> GenProxyCode(Document document, string appName, ServiceModel model)
         {
-            throw ExceptionHelper.NotImplemented();
-            //var doc = workspace.CurrentSolution.GetDocument(serviceDocId);
-            //var rootNode = await doc.GetSyntaxRootAsync();
+            var rootNode = await document.GetSyntaxRootAsync();
 
-            ////先导入using
-            //var sb1 = new StringBuilder();
-            //var usings = rootNode.DescendantNodes().OfType<UsingDirectiveSyntax>().ToArray();
-            //for (int i = 0; i < usings.Length; i++)
-            //{
-            //    sb1.Append(usings[i]);
-            //}
+            //先导入using
+            var sb = StringBuilderCache.Acquire();
+            var usings = rootNode.DescendantNodes().OfType<UsingDirectiveSyntax>().ToArray();
+            for (int i = 0; i < usings.Length; i++)
+            {
+                sb.Append(usings[i]);
+            }
 
-            //sb1.Append("namespace ");
-            //sb1.AppendFormat("{0}.Services", model.AppID);
-            //sb1.Append("{ public static class ");
-            //sb1.Append(model.Name);
-            //sb1.Append("{ ");
-            //var sb2 = new StringBuilder(sb1.ToString());
+            sb.Append("namespace ");
+            sb.AppendFormat("{0}.Services", appName);
+            sb.Append("{ public static class ");
+            sb.Append(model.Name);
+            sb.Append("{ ");
 
-            //var methods = rootNode
-            //            .DescendantNodes().OfType<ClassDeclarationSyntax>().First()
-            //            .DescendantNodes().OfType<MethodDeclarationSyntax>().ToList();
+            var methods = rootNode
+                        .DescendantNodes().OfType<ClassDeclarationSyntax>().First()
+                        .DescendantNodes().OfType<MethodDeclarationSyntax>().ToList();
 
-            //foreach (var method in methods)
-            //{
-            //    bool isPublic = false;
-            //    foreach (var modifier in method.Modifiers)
-            //    {
-            //        if (modifier.ValueText == "public")
-            //        {
-            //            isPublic = true;
-            //            break;
-            //        }
-            //    }
+            foreach (var method in methods)
+            {
+                bool isPublic = false;
+                foreach (var modifier in method.Modifiers)
+                {
+                    if (modifier.ValueText == "public")
+                    {
+                        isPublic = true;
+                        break;
+                    }
+                }
 
-            //    if (isPublic)
-            //    {
-            //        sb1.AppendFormat("[{3}()]public static {0} {1}{2} {{throw new Exception();}}",
-            //                         method.ReturnType, method.Identifier.ValueText
-            //                         , method.ParameterList.ToString(), TypeHelper.SyncServiceProxyAttribute);
+                if (isPublic)
+                {
+                    sb.AppendFormat("[{1}()]public static {2} {0}(",
+                                    method.Identifier.ValueText,
+                                    TypeHelper.AsyncServiceProxyAttribute,
+                                    method.ReturnType);
 
-            //        sb2.AppendFormat("[{1}()]public static void {0}Async(", method.Identifier.ValueText
-            //                         , TypeHelper.AsyncServiceProxyAttribute);
+                    for (int i = 0; i < method.ParameterList.Parameters.Count; i++)
+                    {
+                        if (i != 0) sb.Append(',');
+                        sb.Append(method.ParameterList.Parameters[i].ToString());
+                    }
+                    sb.Append(") {throw new Exception();}");
+                }
+            }
 
-            //        for (int i = 0; i < method.ParameterList.Parameters.Count; i++)
-            //        {
-            //            sb2.Append(method.ParameterList.Parameters[i].ToString());
-            //            sb2.Append(",");
-            //        }
-            //        //追加回调参数
-            //        if (method.ReturnType.ToString() == "void")
-            //            sb2.Append("Action<string> callback");
-            //        else
-            //            sb2.AppendFormat("Action<string, {0}> callback", method.ReturnType);
-            //        sb2.Append(") {throw new Exception();}");
-            //    }
-            //}
-
-            //sb1.Append("}}");
-            //sb2.Append("}}");
-            //return new string[] { sb1.ToString(), sb2.ToString() };
+            sb.Append("}}");
+            return StringBuilderCache.GetStringAndRelease(sb);
         }
         #endregion
     }
