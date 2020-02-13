@@ -41,7 +41,10 @@ namespace appbox.Design.ServiceInterceptors
                 return "appbox.Runtime.RuntimeContext.Current.InvokeAsync";
 
             //有返回类型需要转换为对应的运行时方法
-            var typeName = returnType.TypeArguments[0].ToString();
+            //注意：需要先转换为运行时类型
+            var runtimeType = TypeHelper.ConvertToRuntimeType(returnType.TypeArguments[0]);
+            var typeName = runtimeType == null ?
+                returnType.TypeArguments[0].ToString() : runtimeType.ToString();
             return typeName switch
             {
                 "bool" => "appbox.Runtime.RuntimeContext.InvokeBooleanAsync",
@@ -64,7 +67,14 @@ namespace appbox.Design.ServiceInterceptors
         private static ArgumentListSyntax MakeInvokeArgs(InvocationExpressionSyntax node,
             CSharpSyntaxVisitor<SyntaxNode> visitor, ArgumentListSyntax srcArgs)
         {
-            if (node.ArgumentList.Arguments.Count == 0) return srcArgs;
+            if (node.ArgumentList.Arguments.Count == 0) //暂无参数转换为InvokeArgs.Empty
+            {
+                return srcArgs.AddArguments(
+                        SyntaxFactory.Argument(
+                                SyntaxFactory.ParseExpression("appbox.Data.InvokeArgs.Empty")
+                            )
+                    );
+            }
 
             var argsFromMethod = SyntaxFactory.ParseExpression("appbox.Data.InvokeArgs.From");
             var args = SyntaxFactory.ArgumentList();

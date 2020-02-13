@@ -14,6 +14,7 @@ namespace appbox.Data
     public struct InvokeArgs
     {
         public const int MAX_COUNT = 5;
+        public static readonly InvokeArgs Empty = new InvokeArgs { Count = 0 };
 
         private AnyValue Arg1;
         private AnyValue Arg2;
@@ -33,11 +34,9 @@ namespace appbox.Data
         private const byte FromWebStream = 255; //仅存在于Host进程
 
         #region ====From Methods, 仅用于简化服务端编码====
-        public static InvokeArgs Empty() { return new InvokeArgs { Count = 0 }; }
-
         public static InvokeArgs From(BytesSegment last, int offset)
         {
-            if (offset == -1) return Empty();
+            if (offset == -1) return Empty;
 
             if (last.Next != null)
                 throw new ArgumentException(nameof(last));

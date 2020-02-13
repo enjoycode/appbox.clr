@@ -112,11 +112,13 @@ namespace sys.ServiceLogic
         //调用其他服务
         public async Task<object> CallService()
 		{
-			await Services.TestService.Test("Rick");
-			var res1 = await sys.Services.TestService.Test1("hello");
-			var res2 = await sys.Services.TestService.Test2(128);
-			var res3 = await sys.Services.TestService.Test3(DateTime.Now);
-			return $"{res1} {res2} {res3}";
+			//await Services.TestService.Test("Rick");
+			//var res1 = await sys.Services.TestService.Test1("hello");
+			//var res2 = await sys.Services.TestService.Test2(128);
+			//var res3 = await sys.Services.TestService.Test3(DateTime.Now);
+			//return $"{res1} {res2} {res3}";
+			var res = await sys.Services.TestService.Test4();
+			return res[0].Name;
 		}
 
 	}

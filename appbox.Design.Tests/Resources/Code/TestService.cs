@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace sys.ServiceLogic
@@ -24,5 +25,10 @@ namespace sys.ServiceLogic
         {
             throw new NotImplementedException();
         }
+
+        public Task<IList<Entities.OrgUnit>> Test4()
+		{
+            throw new NotImplementedException();
+		}
     }
 }

@@ -255,6 +255,7 @@ namespace appbox.Design
         /// </returns>
         internal static TypeSyntax ConvertToRuntimeType(ISymbol symbol)
         {
+            //TODO: shortpath for内置类型
             string realTypeName;
             if (symbol is IArrayTypeSymbol arrayTypeSymbol)
             {

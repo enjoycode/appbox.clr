@@ -105,7 +105,7 @@ namespace appbox.Server
             var method = servicePath.AsMemory(lastDot + 1);
 
             var instance = await services.TryGetAsync(service);
-            if (instance == null)
+            if (instance == null) //TODO:判断系统服务，是则转发至主进程
                 throw new Exception($"Cannot find service:{service}");
 
             var stopWatch = System.Diagnostics.Stopwatch.StartNew();

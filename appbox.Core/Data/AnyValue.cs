@@ -11,6 +11,8 @@ namespace appbox.Data
     [StructLayout(LayoutKind.Explicit, Pack = 4)]
     public struct AnyValue
     {
+        public readonly static AnyValue Empty = new AnyValue { Type = AnyValueType.Empty };
+
         #region ====内存结构===
         [FieldOffset(0)]
         internal Guid GuidValue;
@@ -73,8 +75,6 @@ namespace appbox.Data
         #endregion
 
         #region ====FromXXX Methods, 仅用于生成虚拟服务代码的IService接口====
-        public readonly static AnyValue Empty = new AnyValue { Type = AnyValueType.Empty };
-
         public static AnyValue From(bool v)
         {
             return new AnyValue { BooleanValue = v, Type = AnyValueType.Boolean };
