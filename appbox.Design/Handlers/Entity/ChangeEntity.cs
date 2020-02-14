@@ -81,12 +81,34 @@ namespace appbox.Design
                 var newvalue = new List<FieldWithOrder>(array.Count);
                 for (int i = 0; i < array.Count; i++)
                 {
-                    var key = new FieldWithOrder
+                    //注意如果选择的是EntityRef，则加入所有外键成员作为主键
+                    var memberId = (ushort)array[i]["MemberId"];
+                    var memberModel = entityModel.GetMember(memberId, true);
+                    if (memberModel.Type == EntityMemberType.DataField)
                     {
-                        MemberId = (ushort)array[i]["MemberId"],
-                        OrderByDesc = (bool)array[i]["OrderByDesc"]
-                    };
-                    newvalue.Add(key);
+                        newvalue.Add(new FieldWithOrder
+                        {
+                            MemberId = memberId,
+                            OrderByDesc = (bool)array[i]["OrderByDesc"]
+                        });
+                    }
+                    else if (memberModel.Type == EntityMemberType.EntityRef)
+                    {
+                        var refMemberModel = (EntityRefModel)memberModel;
+                        foreach (var fk in refMemberModel.FKMemberIds)
+                        {
+                            newvalue.Add(new FieldWithOrder
+                            {
+                                MemberId = fk,
+                                OrderByDesc = (bool)array[i]["OrderByDesc"] //TODO:是否应跟引用目标实体主键一致或相反
+                            });
+                        }
+                    }
+                    else
+                    {
+                        throw new NotSupportedException($"Member[{memberModel.Name}] with type:[{memberModel.Type}] can't be primary key");
+                    }
+
                 }
                 entityModel.SqlStoreOptions.SetPrimaryKeys(entityModel, newvalue);
             }
