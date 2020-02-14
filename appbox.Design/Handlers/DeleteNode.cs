@@ -54,7 +54,15 @@ namespace appbox.Design
             var usages = await RefactoringService.FindModelReferencesAsync(hub,
                 model.ModelType, node.AppNode.Model.Name, model.Name);
             if (usages != null && usages.Count > 0)
+            {
+#if DEBUG
+                foreach (var item in usages)
+                {
+                    Log.Warn($"ModelType:{item.ModelType} ID:{item.ModelID} Location:{item.Location}");
+                }
+#endif
                 throw new Exception("Has usages, Can't delete it.");
+            }
 
             // 判断当前模型是否已持久化到数据库中
             if (model.PersistentState == PersistentState.Detached)

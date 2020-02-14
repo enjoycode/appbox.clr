@@ -154,11 +154,14 @@ namespace appbox.Design
                 {
                     var docName = loc.Document.Name;
                     var sr = docName.Split('.');
-                    var modelType = ModelType.Service; //todo:**** 目前只有服务节点
                     //SymbolFinder已排除自身定义的引用项，需要排除实体定义的引用项
-                    var reference = new CodeReference(modelType, $"{sr[0]}.{sr[2]}",
-                        loc.Location.SourceSpan.Start, loc.Location.SourceSpan.Length);
-                    list.Add(reference);
+                    if (sr[1] != "Entities")
+                    {
+                        var modelType = ModelType.Service; //TODO:**** 目前只有服务节点
+                        var reference = new CodeReference(modelType, $"{sr[0]}.{sr[2]}",
+                            loc.Location.SourceSpan.Start, loc.Location.SourceSpan.Length);
+                        list.Add(reference);
+                    }
                 }
             }
         }
