@@ -58,10 +58,12 @@ namespace appbox.Design
             {
                 throw new NotImplementedException("Create DTO is not implemented.");
             }
+#if FUTURE
             else if (storeName == "Default")
             {
                 entityModel = new EntityModel(modelId, name, EntityStoreType.StoreWithMvcc, orderByDesc); //TODO: fix without mvcc
             }
+#endif
             else
             {
                 var storeNode = hub.DesignTree.FindDataStoreNodeByName(storeName);
