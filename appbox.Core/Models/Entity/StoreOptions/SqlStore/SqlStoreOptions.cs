@@ -39,6 +39,10 @@ namespace appbox.Models
                 _dataStoreModel_cached = value;
             }
         }
+        /// <summary>
+        /// 仅用于缓存，因向前端序列化需要用到
+        /// </summary>
+        internal EntityModel Owner { get; set; }
 
         /// <summary>
         /// 主键成员
@@ -206,9 +210,32 @@ namespace appbox.Models
 
             writer.WritePropertyName(nameof(PrimaryKeys));
             if (HasPrimaryKeys)
-                writer.Serialize(PrimaryKeys, objrefs);
+            {
+                //注意: 需要将主键成员中是EntityRef's的外键成员转换为EntityRef成员Id,以方便前端显示
+                //eg: OrderId => Order，否则前端会找不到OrderId成员无法显示相应的名称
+                var pks = new List<FieldWithOrder>(PrimaryKeys);
+                var refs = new List<FieldWithOrder>();
+                for (int i = pks.Count - 1; i >= 0; i--)
+                {
+                    var memberModel = (DataFieldModel)Owner.GetMember(pks[i].MemberId, true);
+                    var refMemberModel = memberModel.GetEntityRefModelByForeignKey();
+                    if (refMemberModel != null && refs.FindIndex(t => t.MemberId == refMemberModel.MemberId) < 0)
+                    {
+                        refs.Insert(0, new FieldWithOrder
+                        {
+                            MemberId = refMemberModel.MemberId,
+                            OrderByDesc = pks[i].OrderByDesc
+                        });
+                        pks.RemoveAt(i);
+                    }
+                }
+                pks.AddRange(refs);
+                writer.Serialize(pks, objrefs);
+            }
             else //null发送[]方便前端
+            {
                 writer.WriteEmptyArray();
+            }
 
             writer.WritePropertyName(nameof(Indexes));
             if (!HasIndexes)

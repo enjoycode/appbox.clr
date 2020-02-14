@@ -37,6 +37,7 @@ namespace appbox.Design
                 if (storeNode == null)
                     throw new Exception($"Cannot find Store: {model.SqlStoreOptions.StoreModelId}");
                 model.SqlStoreOptions.DataStoreModel = storeNode.Model; //set cache
+                model.SqlStoreOptions.Owner = model; //TODO: 暂丑陋的设置，因序列化至前端需要
             }
             else if (model.CqlStoreOptions != null)
             {

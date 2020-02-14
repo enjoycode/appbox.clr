@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using appbox.Data;
 using appbox.Serialization;
 using System.Text.Json;
@@ -179,6 +180,24 @@ namespace appbox.Models
                 IsDataTypeChanged = true;
                 OnPropertyChanged();
             }
+        }
+
+        /// <summary>
+        /// 如果当前是外键成员，则获取对应的EntityRefModel
+        /// eg: OrderId成员对应的Order成员
+        /// </summary>
+        /// <returns>null if none fk</returns>
+        internal EntityRefModel GetEntityRefModelByForeignKey()
+        {
+            if (!IsForeignKey) return null;
+            foreach (var m in Owner.Members)
+            {
+                if (m is EntityRefModel rm && rm.FKMemberIds.Contains(MemberId))
+                {
+                    return rm;
+                }
+            }
+            throw new Exception($"Can't find EntityRef by fk [{Owner.Name}.{Name}]");
         }
         #endregion
 
