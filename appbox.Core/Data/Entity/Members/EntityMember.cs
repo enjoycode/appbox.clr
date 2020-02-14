@@ -115,7 +115,27 @@ namespace appbox.Data
 
         #region ====隐式转换,只转换值不包含MemberId====
         // 这样做是为了方便设计时将值隐式转换为相应的EntityMember, 只要用于虚拟Entity的构造及Load参数
-        //TODO: others
+        public static implicit operator EntityMember(string v)
+        {
+            var r = new EntityMember() { ObjectValue = v, ValueType = EntityFieldType.String };
+            r.Flag.HasValue = true;
+            return r;
+        }
+
+        public static implicit operator EntityMember(float v)
+        {
+            var r = new EntityMember() { FloatValue = v, ValueType = EntityFieldType.Float };
+            r.Flag.HasValue = true;
+            return r;
+        }
+
+        public static implicit operator EntityMember(double v)
+        {
+            var r = new EntityMember() { DoubleValue = v, ValueType = EntityFieldType.Double };
+            r.Flag.HasValue = true;
+            return r;
+        }
+
         public static implicit operator EntityMember(DateTime v)
         {
             var r = new EntityMember() { DateTimeValue = v, ValueType = EntityFieldType.DateTime };
@@ -130,9 +150,23 @@ namespace appbox.Data
             return r;
         }
 
+        public static implicit operator EntityMember(uint v)
+        {
+            var r = new EntityMember() { UInt32Value = v, ValueType = EntityFieldType.UInt32 };
+            r.Flag.HasValue = true;
+            return r;
+        }
+
         public static implicit operator EntityMember(int v)
         {
             var r = new EntityMember() { Int32Value = v, ValueType = EntityFieldType.Int32 };
+            r.Flag.HasValue = true;
+            return r;
+        }
+
+        public static implicit operator EntityMember(short v)
+        {
+            var r = new EntityMember() { Int16Value = v, ValueType = EntityFieldType.Int16 };
             r.Flag.HasValue = true;
             return r;
         }
@@ -154,6 +188,13 @@ namespace appbox.Data
         public static implicit operator EntityMember(Guid v)
         {
             var r = new EntityMember() { GuidValue = v, ValueType = EntityFieldType.Guid };
+            r.Flag.HasValue = true;
+            return r;
+        }
+
+        public static implicit operator EntityMember(decimal v)
+        {
+            var r = new EntityMember() { DecimalValue = v, ValueType = EntityFieldType.Decimal };
             r.Flag.HasValue = true;
             return r;
         }
