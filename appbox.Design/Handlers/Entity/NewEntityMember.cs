@@ -63,13 +63,27 @@ namespace appbox.Design
             df.AllowNull = allowNull;
             model.AddMember(df);
             if (!allowNull) //注意：必须在model.AddMember之后，否则mid为0
-                df.SetDefaultValue(args.GetString());
+            {
+                var defautString = args.GetString();
+                if (!string.IsNullOrEmpty(defautString))
+                {
+                    try
+                    {
+                        df.SetDefaultValue(defautString);
+                    }
+                    catch (Exception ex) //不向前端抛错误，只警告
+                    {
+                        Log.Warn($"Set default value error: {ex.Message}");
+                    }
+                }
+            }
 
             return df;
         }
 
         private EntityMemberModel NewEntityRef(DesignHub hub, EntityModel model, string name, ref InvokeArgs args)
         {
+            bool allowNull = args.GetBoolean();
             string refIdStr = args.GetString();
             var isReverse = args.GetBoolean(); // EntityRef 标记是否是反向引用
             if (string.IsNullOrWhiteSpace(refIdStr))
@@ -127,7 +141,7 @@ namespace appbox.Design
                     if (model.Members.FindIndex(t => t.Name == fkName) >= 0)
                         throw new Exception($"Name has exists: {fkName}");
                     var fk = new DataFieldModel(model, fkName, pkMemberModel.DataType, true);
-                    fk.AllowNull = true;
+                    fk.AllowNull = allowNull;
                     model.AddMember(fk);
                     fkMemberIds[i] = fk.MemberId;
                 }
@@ -138,7 +152,7 @@ namespace appbox.Design
                     throw new Exception($"Name has exists: {name}Id");
                 // 添加外键Id列, eg: Customer -> CustomerId
                 var fkId = new DataFieldModel(model, $"{name}Id", EntityFieldType.EntityId, true);
-                fkId.AllowNull = true;
+                fkId.AllowNull = allowNull;
                 model.AddMember(fkId);
                 fkMemberIds[0] = fkId.MemberId;
             }
@@ -147,7 +161,7 @@ namespace appbox.Design
             if (refIds.Length > 1)
             {
                 var fkType = new DataFieldModel(model, $"{name}Type", EntityFieldType.UInt64, true);
-                fkType.AllowNull = true;
+                fkType.AllowNull = allowNull;
                 model.AddMember(fkType);
                 erf = new EntityRefModel(model, name, refIds.Cast<ulong>().ToList(), fkMemberIds, fkType.MemberId);
             }
@@ -155,7 +169,7 @@ namespace appbox.Design
             {
                 erf = new EntityRefModel(model, name, ulong.Parse(refIds[0]), fkMemberIds); //TODO:入参指明是否外键约束
             }
-            erf.AllowNull = true;
+            erf.AllowNull = allowNull;
             model.AddMember(erf);
             return erf;
         }
