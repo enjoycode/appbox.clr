@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using appbox.Data;
 using appbox.Models;
@@ -51,17 +52,23 @@ namespace appbox.Design
                 throw new Exception("Can't delete system model.");
             var model = node.Model;
             // 查找引用项
-            var usages = await RefactoringService.FindModelReferencesAsync(hub,
-                model.ModelType, node.AppNode.Model.Name, model.Name);
+            var usages = await RefactoringService.FindModelReferencesAsync(hub, model.ModelType,
+                                                            node.AppNode.Model.Name, model.Name);
             if (usages != null && usages.Count > 0)
             {
-#if DEBUG
-                foreach (var item in usages)
+                //注意排除自身引用
+                var thisModelId = $"{node.AppNode.Model.Name}.{model.Name}";
+                usages = usages.Where(u => !(u.ModelType == model.ModelType && u.ModelID == thisModelId)).ToArray();
+                if (usages.Count > 0)
                 {
-                    Log.Warn($"ModelType:{item.ModelType} ID:{item.ModelID} Location:{item.Location}");
-                }
+#if DEBUG
+                    foreach (var item in usages)
+                    {
+                        Log.Warn($"ModelType:{item.ModelType} ID:{item.ModelID} Location:{item.Location}");
+                    }
 #endif
-                throw new Exception("Has usages, Can't delete it.");
+                    throw new Exception("Has usages, Can't delete it.");
+                }
             }
 
             // 判断当前模型是否已持久化到数据库中
@@ -79,10 +86,8 @@ namespace appbox.Design
             // 删除 Roslyn相关
             if (node.RoslynDocumentId != null)
                 hub.TypeSystem.RemoveDocument(node.RoslynDocumentId);
-            //if (node.SyncProxyDocumentId != null)
-            //    hub.TypeSystem.RemoveDocument(node.SyncProxyDocumentId);
-            //if (node.AsyncProxyDocumentId != null)
-            //    hub.TypeSystem.RemoveDocument(node.AsyncProxyDocumentId);
+            if (node.AsyncProxyDocumentId != null)
+                hub.TypeSystem.RemoveDocument(node.AsyncProxyDocumentId);
             if (node.ServiceProjectId != null) //注意：服务模型移除整个虚拟项目
                 hub.TypeSystem.RemoveServiceProject(node.ServiceProjectId);
 

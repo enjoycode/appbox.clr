@@ -136,9 +136,8 @@ namespace appbox.Design
         //}
 
         /// <summary>
-        /// 添加代码引用，只从有代码编辑的模型节点（如ServiceModel)
+        /// 添加代码引用
         /// </summary>
-        /// <param name="list">List.</param>
         /// <param name="typeSymbol">目标类型</param>
         /// <param name="memberSymbol">目标成员类型，可为空.</param>
         private static async Task AddCodeReferencesAsync(DesignHub hub, List<Reference> list,
@@ -154,14 +153,10 @@ namespace appbox.Design
                 {
                     var docName = loc.Document.Name;
                     var sr = docName.Split('.');
-                    //SymbolFinder已排除自身定义的引用项，需要排除实体定义的引用项
-                    if (sr[1] != "Entities")
-                    {
-                        var modelType = ModelType.Service; //TODO:**** 目前只有服务节点
-                        var reference = new CodeReference(modelType, $"{sr[0]}.{sr[2]}",
-                            loc.Location.SourceSpan.Start, loc.Location.SourceSpan.Length);
-                        list.Add(reference);
-                    }
+                    var modelType = CodeHelper.GetModelTypeFromPluralString(sr[1]);
+                    var reference = new CodeReference(modelType, $"{sr[0]}.{sr[2]}",
+                        loc.Location.SourceSpan.Start, loc.Location.SourceSpan.Length);
+                    list.Add(reference);
                 }
             }
         }

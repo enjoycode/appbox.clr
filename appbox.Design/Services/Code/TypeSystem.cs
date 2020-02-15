@@ -376,6 +376,7 @@ namespace appbox.Design
         #region ====Get Symbol Methods for Refactoring====
         private Document GetModelDocument(ModelType modelType, string appName, string modelName)
         {
+            //TODO:考虑从设计树查找相应的DocumentId
             var docName = $"{appName}.{CodeHelper.GetPluralStringOfModelType(modelType)}.{modelName}.cs";
             return Workspace.CurrentSolution.GetProject(ModelProjectId).Documents.SingleOrDefault(t => t.Name == docName);
         }
