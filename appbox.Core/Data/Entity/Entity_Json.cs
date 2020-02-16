@@ -4,6 +4,7 @@ using System.IO;
 using appbox.Models;
 using appbox.Serialization;
 using System.Text.Json;
+using System.Collections.Generic;
 
 namespace appbox.Data
 {
@@ -114,75 +115,55 @@ namespace appbox.Data
         {
             //注意：json反序列化实体成员一律视为已变更
             var model = Model;
-            EntityMemberModel memberModel = null;
-            string propName = null;
+            EntityMemberModel memberModel;
+            string propName;
             while (reader.Read())
             {
                 if (reader.TokenType == JsonTokenType.EndObject)
                     return;
-
+                // read property name
                 propName = reader.GetString();
                 memberModel = model.GetMember(propName, false);
-                if (memberModel == null) //表示附加成员或EntitySet已删除集合
+                if (memberModel == null) //表示附加成员
                 {
                     //TODO: impl it
                     Log.Warn($"Entity json反序化读取附加成员暂未实现: {propName}");
                     reader.Skip();
                 }
-                if (!reader.Read())//read property value
+                //read property value
+                if (!reader.Read())
                     throw new Exception($"Read property[{propName}] value error");
 
                 switch (memberModel.Type)
                 {
                     case EntityMemberType.EntityRef:
                         {
-                            //TODO:考虑继承的Base实例是否需要处理，暂直接丢弃
                             var obj = reader.Deserialize(objrefs);
                             SetEntityRef(memberModel.MemberId, (Entity)obj);
                         }
                         break;
                     case EntityMemberType.EntitySet:
-                        throw ExceptionHelper.NotImplemented();
-                    //{
-                    //    //如果非新建状态的实体，则先加载子集并加入ReadedObjects字典表内
-                    //    if (PersistentState == PersistentState.Detached)
-                    //        this.InitEntitySetLoad(member.Name);
-                    //    EntityList oldList = this.GetEntitySetValue(member.Name); //非新建的加载子集
-                    //    for (int i = 0; i < oldList.Count; i++) //加入已读字典表防止JsonSerializer再次新建
-                    //        objrefs.Add($"{(byte)oldList[i].PersistentState}{oldList[i].ModelID}{oldList[i].ID}", oldList[i]);
-
-                    //    //再反序列化前端传回的ObjectArray数组
-                    //    var newList = (ObjectArray)reader.Deserialize(objrefs);
-                    //    //最后处理移除被前端删除的对象以及前端添加的对象
-                    //    if (newList == null)
-                    //    {
-                    //        oldList.Clear(); //清除旧的所有
-                    //    }
-                    //    else
-                    //    {
-                    //        for (int i = oldList.Count - 1; i >= 0; i--)
-                    //        {
-                    //            bool foundInNewList = false;
-                    //            for (int j = 0; j < newList.Count; j++)
-                    //            {
-                    //                if (((Entity)newList[j]).ID == oldList[i].ID)
-                    //                {
-                    //                    foundInNewList = true;
-                    //                    break;
-                    //                }
-                    //            }
-                    //            if (!foundInNewList)
-                    //                oldList.RemoveAt(i);
-                    //        }
-                    //        for (int i = 0; i < newList.Count; i++)
-                    //        {
-                    //            Entity entity = (Entity)newList[i];
-                    //            if (entity.PersistentState == PersistentState.Detached)
-                    //                oldList.Add(entity);
-                    //        }
-                    //    }
-                    //}
-                    //break;
+                        {
+                            //先设置为已加载状态
+                            InitEntitySetForLoad((EntitySetModel)memberModel);
+                            var oldList = GetEntitySet(memberModel.MemberId);
+                            var newList = new List<object>();
+                            //反序列化列表
+                            if (reader.TokenType == JsonTokenType.StartArray)
+                            {
+                                reader.ReadList(newList, objrefs);
+                                for (int i = 0; i < newList.Count; i++)
+                                {
+                                    var entity = (Entity)newList[i];
+                                    //已被前端标为删除的加入已删除列表
+                                    if (entity.PersistentState == PersistentState.Deleted)
+                                        oldList.DeletedItems.Add(entity);
+                                    else
+                                        oldList.Add(entity);
+                                }
+                            }
+                        }
+                        break;
                     case EntityMemberType.DataField:
                         {
                             //TODO:other type
@@ -266,6 +247,7 @@ namespace appbox.Data
                         break;
                     default:
                         reader.Skip(); //TODO:暂忽略所有其他类型
+                        Log.Warn($"Read member[{model.Name}.{propName}] with type[{memberModel.Type}] is not supported.");
                         break;
                 }
             }
