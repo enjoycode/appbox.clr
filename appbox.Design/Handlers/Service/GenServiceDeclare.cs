@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using appbox.Data;
 using appbox.Models;
-using appbox.Serialization;
-using System.Text.Json;
 using OmniSharp.Mef;
 
 namespace appbox.Design
@@ -29,7 +26,7 @@ namespace appbox.Design
                 serviceNodes = new ModelNode[] { node };
             }
 
-            List<ServiceDeclare> list = new List<ServiceDeclare>();
+            List<TypeScriptDeclare> list = new List<TypeScriptDeclare>();
             foreach (var node in serviceNodes)
             {
                 //获取RoslyDocument
@@ -39,32 +36,17 @@ namespace appbox.Design
                 //TODO: 检测虚拟代码错误
                 var codegen = new ServiceDeclareGenerator(hub, appName, semanticModel, (ServiceModel)node.Model);
                 codegen.Visit(semanticModel.SyntaxTree.GetRoot());
-                list.Add(new ServiceDeclare { Name = $"{appName}.Services.{node.Model.Name}", Declare = codegen.GetDeclare() });
+                list.Add(new TypeScriptDeclare { Name = $"{appName}.Services.{node.Model.Name}", Declare = codegen.GetDeclare() });
             }
 
             if (string.IsNullOrEmpty(modelId)) //初次加载时添加系统服务声明
             {
                 var adminServiceDeclare = "declare namespace sys.Services.AdminService {function LoadPermissionNodes():Promise<object[]>;function SavePermission(id:string, orgunits:string[]):Promise<void>;}";
-                list.Add(new ServiceDeclare { Name = "sys.Services.AdminService", Declare = adminServiceDeclare });
+                list.Add(new TypeScriptDeclare { Name = "sys.Services.AdminService", Declare = adminServiceDeclare });
             }
 
             return list;
         }
     }
 
-    struct ServiceDeclare : IJsonSerializable
-    {
-        public string Name;
-        public string Declare;
-
-        public PayloadType JsonPayloadType => PayloadType.UnknownType;
-
-        public void ReadFromJson(ref Utf8JsonReader reader, ReadedObjects objrefs) => throw new NotSupportedException();
-
-        public void WriteToJson(Utf8JsonWriter writer, WritedObjects objrefs)
-        {
-            writer.WriteString(nameof(Name), Name);
-            writer.WriteString(nameof(Declare), Declare);
-        }
-    }
 }

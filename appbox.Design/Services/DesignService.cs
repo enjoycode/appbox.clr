@@ -41,6 +41,7 @@ namespace appbox.Design
                 { nameof(ChangeEntity), new ChangeEntity() },
                 { nameof(ChangeEntityMember), new ChangeEntityMember() },
                 { nameof(GetEntityRefModels), new GetEntityRefModels() },
+                { nameof(GenEntityDeclare), new GenEntityDeclare() },
                 //Service
                 { nameof(NewServiceModel), new NewServiceModel() },
                 { nameof(OpenServiceModel), new OpenServiceModel() },
