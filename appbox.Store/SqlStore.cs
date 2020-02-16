@@ -194,6 +194,22 @@ namespace appbox.Store
             }
         }
 
+        /// <summary>
+        /// 目前主要用于前端新建的实体未设置Guid主键的值时自动生成
+        /// </summary>
+        private static void AutoGenGuidForPK(Entity entity, EntityModel model)
+        {
+            if (model.SqlStoreOptions.HasPrimaryKeys)
+            {
+                for (int i = 0; i < model.SqlStoreOptions.PrimaryKeys.Count; i++)
+                {
+                    ref EntityMember pk = ref entity.GetMember(model.SqlStoreOptions.PrimaryKeys[i].MemberId);
+                    if (pk.ValueType == EntityFieldType.Guid && (!pk.Flag.HasValue || pk.GuidValue == Guid.Empty))
+                        pk.GuidValue = Guid.NewGuid(); //TODO:考虑顺序Guid
+                }
+            }
+        }
+
         public async Task<int> InsertAsync(Entity entity, DbTransaction txn = null)
         {
             if (entity == null) throw new ArgumentNullException(nameof(entity));
@@ -203,6 +219,9 @@ namespace appbox.Store
             var model = await RuntimeContext.Current.GetModelAsync<EntityModel>(entity.ModelId);
             if (model.SqlStoreOptions == null)
                 throw new InvalidOperationException("Can't insert entity to sqlstore");
+
+            //TODO:暂在这里处理前端未设置的Guid主键，另考虑前端实现UUID，则可以移除
+            AutoGenGuidForPK(entity, model);
 
             var cmd = BuildInsertCommand(entity, model);
             cmd.Connection = txn != null ? txn.Connection : MakeConnection();
