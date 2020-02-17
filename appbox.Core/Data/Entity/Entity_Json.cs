@@ -167,7 +167,8 @@ namespace appbox.Data
                     case EntityMemberType.DataField:
                         {
                             //TODO:other type
-                            switch (((DataFieldModel)memberModel).DataType)
+                            var dfm = (DataFieldModel)memberModel;
+                            switch (dfm.DataType)
                             {
                                 case EntityFieldType.Binary:
                                     if (reader.TokenType == JsonTokenType.Null)
@@ -232,7 +233,14 @@ namespace appbox.Data
                                     break;
                                 case EntityFieldType.Guid:
                                     if (reader.TokenType == JsonTokenType.Null)
-                                        SetGuidNullable(memberModel.MemberId, null, true);
+                                    {
+                                        //如果是新建状态的实体且为非空主键则生成Guid
+                                        if (!memberModel.AllowNull && PersistentState == PersistentState.Detached
+                                            && dfm.IsPrimaryKey)
+                                            SetGuidNullable(memberModel.MemberId, Guid.NewGuid() /*考虑顺序Guid*/, true);
+                                        else
+                                            SetGuidNullable(memberModel.MemberId, null, true);
+                                    }
                                     else
                                         SetGuidNullable(memberModel.MemberId, reader.GetGuid(), true);
                                     break;
