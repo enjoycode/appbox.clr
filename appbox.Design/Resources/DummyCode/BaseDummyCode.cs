@@ -50,162 +50,151 @@ namespace System.Reflection
     #endregion
 }
 
-namespace sys
+#region ====Attributes====
+/// <summary>
+/// 控制服务方法的调用权限
+/// </summary>
+[AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
+public class InvokePermissionAttribute : Attribute
 {
-    #region ====Attributes====
-    /// <summary>
-    /// 控制服务方法的调用权限
-    /// </summary>
-    [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
-    public class InvokePermissionAttribute : Attribute
-    {
-        public InvokePermissionAttribute(bool permission) { }
-    }
-    #endregion
+    public InvokePermissionAttribute(bool permission) { }
+}
+#endregion
 
-    #region ====Data====
-    //todo: 将该region的代码移至sys.Data命名空间下
+#region ====Data====
+public interface IImageSource { }
 
-    public interface IImageSource { }
-
-    [RealType("appbox.Data.EntityId")]
-    public sealed class EntityId
-    {
-        private EntityId() { }
-        public static implicit operator Guid(EntityId id) { return Guid.Empty; }
-        public static implicit operator EntityId(Guid guid) { return new EntityId(); }
-    }
-
-    [RealType("appbox.Data.Entity")]
-    public abstract class EntityBase
-    {
-    }
-
-    /// <summary>
-    /// 映射至系统存储的实体基类
-    /// </summary>
-    [RealType("appbox.Data.Entity")]
-    public abstract class SysEntityBase : EntityBase
-    {
-        public EntityId Id { get; }
-
-        public DateTime CreateTime { get; }
-
-        public void AcceptChanges() { }
-
-        public void MarkDeleted() { }
-
-        public PersistentState PersistentState { get { return PersistentState.Detached; } }
-    }
-
-    /// <summary>
-    /// 映射至SqlStore的实体基类
-    /// </summary>
-    [RealType("appbox.Data.Entity")]
-    public abstract class SqlEntityBase : EntityBase
-    {
-        public void AcceptChanges() { }
-
-        public void MarkDeleted() { }
-
-        public PersistentState PersistentState { get { return PersistentState.Detached; } }
-    }
-
-    /// <summary>
-	/// 映射至CqlStore的实体基类
-	/// </summary>
-	[RealType("appbox.Data.Entity")]
-    public abstract class CqlEntityBase : EntityBase, ICqlEntityOrView { }
-
-    public interface ICqlEntityOrView { }
-
-    public interface IEntityIndex<out T> where T : EntityBase { }
-
-    [RealType("appbox.Data.PersistentState")]
-    public enum PersistentState : byte
-    {
-        Detached = 0,
-        Unchanged = 1,
-        Modified = 2,
-        Deleted = 3,
-    }
-
-    [RealType("appbox.Data.EntityList")]
-    [GenericCreate()]
-    public sealed class EntityList<T> : Collection<T> where T : EntityBase
-    {
-        private EntityList() { }
-
-        //public List<T> DeletedItems { get { return null; } }
-    }
-
-    //[RealType("AppBox.Core.PermissionNode")]
-    //public sealed class PermissionNode
-    //{
-    //    public string Name { get; set; }
-
-    //    public bool IsFolder { get; }
-
-    //    //public bool IsInherit {get;}
-    //    //public bool HasPermission {get;}
-    //    public bool HasChanged { get; }
-
-    //    public bool SetCurrentOrgUnit(sys.Entities.OrgUnit ou) { return true; }
-
-    //    public object ChangePermission(bool owns) { return null; }
-
-    //    public void AcceptChanges(object state) { }
-
-    //    public bool CancelChanges(object state) { return true; }
-    //}
-
-    //[RealType("AppBox.Core.DataTable")]
-    //public sealed class DataTable : System.Data.DataTable
-    //{
-    //}
-    #endregion
-
-    #region ====Funcs====
-
-    /// <summary>
-    /// 系统内置表达式函数
-    /// </summary>
-    public static class Funcs
-    {
-        ///// <summary>
-        ///// 生成顺序Guid
-        ///// </summary>
-        //[InvocationInterceptor("SystemFunc")]
-        //public static Guid NewSequenceGuid() { return Guid.Empty; }
-
-        /// <summary>
-        /// 获取当前用户会话信息
-        /// </summary>
-        [InvocationInterceptor("SystemFunc")]
-        public static Runtime.ISessionInfo GetCurrentSession() { return null; }
-
-        // [InvocationInterceptor("SystemFunc")]
-        // public static decimal Sum<T>(IList<T> list, Action<T> selector)
-        // { return 0; }
-
-        //[InvocationInterceptor("SystemFunc")]
-        //public static long Count(object field) { return 0; }
-
-        //[InvocationInterceptor("SystemFunc")]
-        //public static T Sum<T>(T field) { return default; }
-
-        //[InvocationInterceptor("SystemFunc")]
-        //public static bool In<T>(T field, IList<T> list) { return false; }
-
-        //[InvocationInterceptor("SystemFunc")]
-        //public static bool NotIn<T>(T field, IList<T> list) { return false; }
-    }
-
-    #endregion
-
+[RealType("appbox.Data.EntityId")]
+public sealed class EntityId
+{
+    private EntityId() { }
+    public static implicit operator Guid(EntityId id) { return Guid.Empty; }
+    public static implicit operator EntityId(Guid guid) { return new EntityId(); }
 }
 
-namespace sys.Security
+[RealType("appbox.Data.Entity")]
+public abstract class EntityBase
+{
+}
+
+/// <summary>
+/// 映射至系统存储的实体基类
+/// </summary>
+[RealType("appbox.Data.Entity")]
+public abstract class SysEntityBase : EntityBase
+{
+    public EntityId Id { get; }
+
+    public DateTime CreateTime { get; }
+
+    public void AcceptChanges() { }
+
+    public void MarkDeleted() { }
+
+    public PersistentState PersistentState { get { return PersistentState.Detached; } }
+}
+
+/// <summary>
+/// 映射至SqlStore的实体基类
+/// </summary>
+[RealType("appbox.Data.Entity")]
+public abstract class SqlEntityBase : EntityBase
+{
+    public void AcceptChanges() { }
+
+    public void MarkDeleted() { }
+
+    public PersistentState PersistentState { get { return PersistentState.Detached; } }
+}
+
+/// <summary>
+/// 映射至CqlStore的实体基类
+/// </summary>
+[RealType("appbox.Data.Entity")]
+public abstract class CqlEntityBase : EntityBase, ICqlEntityOrView { }
+
+public interface ICqlEntityOrView { }
+
+public interface IEntityIndex<out T> where T : EntityBase { }
+
+[RealType("appbox.Data.PersistentState")]
+public enum PersistentState : byte
+{
+    Detached = 0,
+    Unchanged = 1,
+    Modified = 2,
+    Deleted = 3,
+}
+
+[RealType("appbox.Data.EntityList")]
+[GenericCreate()]
+public sealed class EntityList<T> : Collection<T> where T : EntityBase
+{
+    private EntityList() { }
+
+    public IReadOnlyList<T> DeletedItems { get { return null; } }
+}
+
+//[RealType("AppBox.Core.PermissionNode")]
+//public sealed class PermissionNode
+//{
+//    public string Name { get; set; }
+
+//    public bool IsFolder { get; }
+
+//    //public bool IsInherit {get;}
+//    //public bool HasPermission {get;}
+//    public bool HasChanged { get; }
+
+//    public bool SetCurrentOrgUnit(sys.Entities.OrgUnit ou) { return true; }
+
+//    public object ChangePermission(bool owns) { return null; }
+
+//    public void AcceptChanges(object state) { }
+
+//    public bool CancelChanges(object state) { return true; }
+//}
+#endregion
+
+#region ====Funcs====
+
+/// <summary>
+/// 系统内置表达式函数
+/// </summary>
+public static class Funcs
+{
+    ///// <summary>
+    ///// 生成顺序Guid
+    ///// </summary>
+    //[InvocationInterceptor("SystemFunc")]
+    //public static Guid NewSequenceGuid() { return Guid.Empty; }
+
+    /// <summary>
+    /// 获取当前用户会话信息
+    /// </summary>
+    [InvocationInterceptor("SystemFunc")]
+    public static Runtime.ISessionInfo GetCurrentSession() { return null; }
+
+    // [InvocationInterceptor("SystemFunc")]
+    // public static decimal Sum<T>(IList<T> list, Action<T> selector)
+    // { return 0; }
+
+    //[InvocationInterceptor("SystemFunc")]
+    //public static long Count(object field) { return 0; }
+
+    //[InvocationInterceptor("SystemFunc")]
+    //public static T Sum<T>(T field) { return default; }
+
+    //[InvocationInterceptor("SystemFunc")]
+    //public static bool In<T>(T field, IList<T> list) { return false; }
+
+    //[InvocationInterceptor("SystemFunc")]
+    //public static bool NotIn<T>(T field, IList<T> list) { return false; }
+}
+
+#endregion
+
+namespace Security
 {
     [RealType("appbox.Security.IPasswordHasher")]
     public interface IPasswordHasher
@@ -215,7 +204,7 @@ namespace sys.Security
     }
 }
 
-namespace sys.Runtime
+namespace Runtime
 {
     [RealType("appbox.Runtime.ISessionInfo")]
     public interface ISessionInfo
@@ -269,7 +258,7 @@ namespace sys.Runtime
     }
 }
 
-namespace sys.Data
+namespace Data
 {
 
     [RealType("appbox.Data.ObjectArray")]

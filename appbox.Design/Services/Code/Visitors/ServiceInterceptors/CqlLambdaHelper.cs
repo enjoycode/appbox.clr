@@ -16,10 +16,10 @@ namespace appbox.Design.ServiceInterceptors
             var memberType = TypeHelper.GetSymbolType(memberSymbol);
             var valueTypeString = memberType.ToString();
 
-            if (valueTypeString.StartsWith("sys.Data.FieldSet<")) //FieldSet<T>转换
+            if (valueTypeString.StartsWith("FieldSet<")) //FieldSet<T>转换
             {
                 var elementType = memberType.GetTypeArguments()[0].ToString();
-                sb.Append("new AppBox.Core.FieldSet<");
+                sb.Append("new appbox.Data.FieldSet<");
                 sb.Append(elementType);
                 sb.Append(">(");
 

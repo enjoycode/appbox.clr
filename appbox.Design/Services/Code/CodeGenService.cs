@@ -88,13 +88,13 @@ namespace appbox.Design
             sb.Append($"public class {model.Name}");
             //根据映射存储不同生成不同的继承
             if (model.SysStoreOptions != null)
-                sb.Append(" : sys.SysEntityBase");
+                sb.Append($": {TypeHelper.Type_SysEntityBase}");
             else if (model.SqlStoreOptions != null)
-                sb.Append(" : sys.SqlEntityBase");
+                sb.Append($": {TypeHelper.Type_SqlEntityBase}");
             else if (model.CqlStoreOptions != null)
-                sb.Append(" : sys.CqlEntityBase");
+                sb.Append($": {TypeHelper.Type_CqlEntityBase}");
             else
-                sb.Append(" : sys.EntityBase");
+                sb.Append($": {TypeHelper.Type_EntityBase}");
             sb.Append(" {\n");
 
             //生成静态TypeId属性
@@ -106,9 +106,12 @@ namespace appbox.Design
             for (int i = 0; i < ls.Length; i++)
             {
                 EntityMemberModel mm = ls[i];
-                sb.Append("/// <summary>\n");
-                sb.AppendFormat("/// {0}\n", mm.Name); //TODO:fix comment
-                sb.Append("/// </summary>\n");
+                if (!string.IsNullOrEmpty(mm.Comment))
+                {
+                    sb.Append("/// <summary>\n");
+                    sb.AppendFormat("/// {0}\n", mm.Comment);
+                    sb.Append("/// </summary>\n");
+                }
 
                 string typeString = "object";
                 bool readOnly = false;
@@ -212,10 +215,10 @@ namespace appbox.Design
 
             //生成FetchEntitySet方法
             //sb.AppendFormat("\t\t[{0}(\"FetchEntitySetMethod\")]{1}", TypeHelper.InvocationInterceptorAttribute, Environment.NewLine);
-            //sb.AppendFormat("\t\tpublic void FetchEntitySet<T>(System.Func<{0}.Entities.{1},sys.EntityList<T>> selector) where T: sys.EntityBase {{}}{2}"
+            //sb.AppendFormat("\t\tpublic void FetchEntitySet<T>(System.Func<{0}.Entities.{1},EntityList<T>> selector) where T: EntityBase {{}}{2}"
             //                , model.AppID, model.Name, Environment.NewLine);
             //sb.AppendFormat("\t\t[{0}(\"FetchEntitySetMethod\")]{1}", TypeHelper.InvocationInterceptorAttribute, Environment.NewLine);
-            //sb.AppendFormat("\t\tpublic void FetchEntitySet<T>(System.Func<{0}.Entities.{1},sys.EntityList<T>> selector, System.Func<T, sys.EntityBase[]> includes) where T: sys.EntityBase {{}}{2}"
+            //sb.AppendFormat("\t\tpublic void FetchEntitySet<T>(System.Func<{0}.Entities.{1},EntityList<T>> selector, System.Func<T, EntityBase[]> includes) where T: EntityBase {{}}{2}"
             //, model.AppID, model.Name, Environment.NewLine);
 
             sb.Append("}\n}");
@@ -242,7 +245,7 @@ namespace appbox.Design
                     //}
                     if (dmm.DataType == EntityFieldType.EntityId)
                     {
-                        typeString = "sys.EntityId";
+                        typeString = "EntityId";
                     }
                     else
                     {
@@ -280,7 +283,7 @@ namespace appbox.Design
                     {
                         EntitySetModel sm = (EntitySetModel)mm;
                         var targetModelNode = designTree.FindModelNode(ModelType.Entity, sm.RefModelId);
-                        typeString = $"sys.EntityList<{targetModelNode.AppNode.Model.Name}.Entities.{targetModelNode.Model.Name}>";
+                        typeString = $"EntityList<{targetModelNode.AppNode.Model.Name}.Entities.{targetModelNode.Model.Name}>";
                         readOnly = true;
                     }
                     break;

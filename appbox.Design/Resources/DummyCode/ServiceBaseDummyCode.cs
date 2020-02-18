@@ -3,7 +3,6 @@ using System.Data.Common;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Reflection;
-using sys;
 
 [RealType("appbox.Log")]
 public static class Log
@@ -60,19 +59,19 @@ public sealed class Transaction : IDisposable
 [RealType("appbox.Store.EntityStore")]
 public static class EntityStore
 {
-    public static ValueTask SaveAsync(sys.SysEntityBase entity) { return new ValueTask(); }
-    public static ValueTask SaveAsync(sys.SysEntityBase entity, Transaction txn) { return new ValueTask(); }
-    public static ValueTask DeleteAsync(sys.SysEntityBase entity) { return new ValueTask(); }
-    public static ValueTask DeleteAsync(sys.SysEntityBase entity, Transaction txn) { return new ValueTask(); }
+    public static ValueTask SaveAsync(SysEntityBase entity) { return new ValueTask(); }
+    public static ValueTask SaveAsync(SysEntityBase entity, Transaction txn) { return new ValueTask(); }
+    public static ValueTask DeleteAsync(SysEntityBase entity) { return new ValueTask(); }
+    public static ValueTask DeleteAsync(SysEntityBase entity, Transaction txn) { return new ValueTask(); }
     [InvocationInterceptor("DeleteEntity")]
-    public static ValueTask DeleteAsync<T>(Guid id) where T : sys.SysEntityBase { return new ValueTask(); }
+    public static ValueTask DeleteAsync<T>(Guid id) where T : SysEntityBase { return new ValueTask(); }
     [InvocationInterceptor("DeleteEntity")]
-    public static ValueTask DeleteAsync<T>(Guid id, Transaction txn) where T : sys.SysEntityBase { return new ValueTask(); }
+    public static ValueTask DeleteAsync<T>(Guid id, Transaction txn) where T : SysEntityBase { return new ValueTask(); }
     [InvocationInterceptor("LoadEntity")]
-    public static ValueTask<T> LoadAsync<T>(Guid id) where T : sys.SysEntityBase { throw new Exception(); }
+    public static ValueTask<T> LoadAsync<T>(Guid id) where T : SysEntityBase { throw new Exception(); }
     [InvocationInterceptor("LoadEntitySet")]
     public static ValueTask<EntityList<TResult>> LoadEntitySetAsync<TSource, TResult>(Guid id,
-        Func<TSource, EntityList<TResult>> entitySet) where TSource : sys.SysEntityBase where TResult : sys.SysEntityBase
+        Func<TSource, EntityList<TResult>> entitySet) where TSource : SysEntityBase where TResult : SysEntityBase
     {
         throw new Exception();
     }
@@ -125,9 +124,9 @@ public sealed class SqlStore
 
     //public Task LoadAsync<T>(T entity, Action<ISqlIncluder<T>> includer) { return null; }
 
-    public Task ExecCommandAsync<TSource>(SqlUpdateCommand<TSource> cmd) where TSource : SqlEntityBase { return null; }
+    public Task ExecCommandAsync<TSource>(SqlUpdateCommand<TSource> cmd, DbTransaction txn = null) where TSource : SqlEntityBase { return null; }
 
-    public Task ExecCommandAsync<TSource>(SqlDeleteCommand<TSource> cmd) where TSource : SqlEntityBase { return null; }
+    public Task<int> ExecCommandAsync<TSource>(SqlDeleteCommand<TSource> cmd, DbTransaction txn = null) where TSource : SqlEntityBase { return null; }
 }
 
 public sealed class CqlStore
@@ -146,7 +145,7 @@ public sealed class CqlStore
 
 #region ====Entity Query====
 [RealType("appbox.Store.PartitionPredicates")]
-public sealed class PartitionPredicates<T> where T : sys.SysEntityBase
+public sealed class PartitionPredicates<T> where T : SysEntityBase
 {
     private PartitionPredicates() { }
     [InvocationInterceptor("PartitionPredicate")]
@@ -154,7 +153,7 @@ public sealed class PartitionPredicates<T> where T : sys.SysEntityBase
 }
 
 [RealType("appbox.Store.IndexPredicates")]
-public sealed class IndexPredicates<T> where T : IEntityIndex<sys.SysEntityBase>
+public sealed class IndexPredicates<T> where T : IEntityIndex<SysEntityBase>
 {
     private IndexPredicates() { }
     [InvocationInterceptor("IndexPredicate")]
@@ -164,7 +163,7 @@ public sealed class IndexPredicates<T> where T : IEntityIndex<sys.SysEntityBase>
 [RealType("appbox.Store.TableScan")]
 [GenericCreate()]
 [QueriableClass(true)]
-public sealed class TableScan<T> : IIncluder<T> where T : sys.SysEntityBase
+public sealed class TableScan<T> : IIncluder<T> where T : SysEntityBase
 {
     /// <summary>
     /// Partition key predicates for scan from which partitions, only for partitioned table.
@@ -181,13 +180,13 @@ public sealed class TableScan<T> : IIncluder<T> where T : sys.SysEntityBase
 
     [InvocationInterceptor("ToTreeList")]
     public ValueTask<EntityList<T>> ToTreeListAsync<TResult>(Func<T, EntityList<TResult>> entitySet)
-        where TResult : sys.SysEntityBase
+        where TResult : SysEntityBase
     { throw new Exception(); }
 }
 
 [RealType("appbox.Store.IndexScan")]
 [GenericCreate()]
-public sealed class IndexScan<TEntity, TIndex> where TEntity : sys.SysEntityBase where TIndex : IEntityIndex<TEntity>
+public sealed class IndexScan<TEntity, TIndex> where TEntity : SysEntityBase where TIndex : IEntityIndex<TEntity>
 {
     /// <summary>
     /// Partition key predicates for scan from which partitions, only for partitioned local indexes.

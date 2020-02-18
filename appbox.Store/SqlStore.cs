@@ -273,8 +273,6 @@ namespace appbox.Store
             if (entity == null) throw new ArgumentNullException(nameof(entity));
             if (entity.PersistentState == PersistentState.Detached)
                 throw new InvalidOperationException("Can't delete new entity");
-            if (entity.PersistentState == PersistentState.Deleted)
-                throw new InvalidOperationException("Entity already deleted");
 
             var model = await RuntimeContext.Current.GetModelAsync<EntityModel>(entity.ModelId);
             if (model.SqlStoreOptions == null)

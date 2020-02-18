@@ -24,17 +24,19 @@ namespace appbox.Design
         internal const string EnumModelAttribute = "System.Reflection.EnumModelAttribute";
         internal const string ResourceModelAttribute = "System.Reflection.ResourceModelAttribute";
         internal const string RealTypeAttribute = "System.Reflection.RealTypeAttribute";
-        internal const string InvokePermissionAttribute = "sys.InvokePermissionAttribute";
+        internal const string InvokePermissionAttribute = "InvokePermissionAttribute";
 
-        internal const string Type_EntityBase = "sys.EntityBase";
-        internal const string Type_SysEntityBase = "sys.SysEntityBase";
-        internal const string Type_EntityList = "sys.EntityList";
-        internal const string Type_FieldSet = "sys.Data.FieldSet";
-        //internal const string Type_IImageSource = "sys.IImageSource";
+        internal const string Type_EntityBase = "EntityBase";
+        internal const string Type_SysEntityBase = "SysEntityBase";
+        internal const string Type_SqlEntityBase = "SqlEntityBase";
+        internal const string Type_CqlEntityBase = "CqlEntityBase";
+        internal const string Type_EntityList = "EntityList";
+        internal const string Type_FieldSet = "Data.FieldSet";
+        //internal const string Type_IImageSource = "IImageSource";
 
         internal const string Type_SqlStore = "SqlStore";
         internal const string Type_CqlStore = "CqlStore";
-        //internal const string Type_BlobStore = "sys.Data.BlobStore";
+        //internal const string Type_BlobStore = "BlobStore";
         #endregion
 
         #region ----运行时类型常量----
@@ -125,7 +127,7 @@ namespace appbox.Design
         {
             if (typeSymbol != null)
             {
-                return typeSymbol.ToString() == "sys.Funcs";
+                return typeSymbol.ToString() == "Funcs";
             }
             return false;
         }
@@ -369,8 +371,9 @@ namespace appbox.Design
             string type;
             switch (valueTypeString)
             {
-                //TODO: fix others
+                case "ushort": type = "UInt16"; break;
                 case "short": type = "Int16"; break;
+                case "uint": type = "UInt32"; break;
                 case "int": type = "Int32"; break;
                 case "long": type = "Int64"; break;
                 case "ulong": type = "UInt64"; break;
@@ -385,7 +388,7 @@ namespace appbox.Design
                 case "DateTime": type = "DateTime"; break;
                 case "byte[]": type = "Bytes"; break;
                 case "string": type = "String"; break;
-                case "sys.EntityId": type = "EntityId"; break;
+                case "EntityId": type = "EntityId"; break;
                 //case Type_IImageSource: type = "ImageSource"; break;
                 case RuntimeType_Entity: type = "EntityRef"; break;
                 case RuntimeType_EntityList: type = "EntitySet"; break;

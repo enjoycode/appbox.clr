@@ -46,7 +46,7 @@ namespace sys.ServiceLogic
             var vs = new Entities.VehicleState(1);
             vs.Lng = 120.123F;
             vs.Lat = 32.112F;
-            await sys.EntityStore.SaveAsync(vs);
+            await EntityStore.SaveAsync(vs);
             return new List<string> { "Hello Future!" };
         }
     }

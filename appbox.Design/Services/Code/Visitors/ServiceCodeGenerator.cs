@@ -258,8 +258,10 @@ namespace appbox.Design
                                                                    SyntaxFactory.Literal(entityModelNode.Model.Id));
                         }
 
-                        //判断成员是否属于实体成员, 仅映射至系统存储的需要
-                        if (expSymbol.ContainingType.ToString() != TypeHelper.Type_SysEntityBase)
+                        //判断成员是否属于实体成员
+                        if (!expSymbol.ContainingType.ToString().In(
+                            new string[] { TypeHelper.Type_EntityBase, TypeHelper.Type_SysEntityBase,
+                                TypeHelper.Type_SqlEntityBase, TypeHelper.Type_CqlEntityBase }))
                         {
                             //TODO:判断是否AggregationRefField，返回的object类型，应使用BoxedValue处理
                             ITypeSymbol valueTypeSymbol = TypeHelper.GetSymbolType(expSymbol);
@@ -293,7 +295,7 @@ namespace appbox.Design
                     }
                     else if (expSymbol.IsStatic && (expSymbol is IPropertySymbol || expSymbol is IFieldSymbol))
                     {
-                        //处理需要转换为运行时类型的静态成员访问, eg: sys.PersistentState.Detached
+                        //处理需要转换为运行时类型的静态成员访问, eg: PersistentState.Detached
                         var realTypeName = TypeHelper.GetRealTypeName(expSymbol.ContainingType);
                         if (!string.IsNullOrEmpty(realTypeName))
                             return SyntaxFactory.ParseExpression($"{realTypeName}.{node.Name.Identifier.ValueText}");
