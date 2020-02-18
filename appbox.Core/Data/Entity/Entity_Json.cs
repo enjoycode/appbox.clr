@@ -124,15 +124,16 @@ namespace appbox.Data
                 // read property name
                 propName = reader.GetString();
                 memberModel = model.GetMember(propName, false);
-                if (memberModel == null) //表示附加成员
-                {
-                    //TODO: impl it
-                    Log.Warn($"Entity json反序化读取附加成员暂未实现: {propName}");
-                    reader.Skip();
-                }
                 //read property value
                 if (!reader.Read())
                     throw new Exception($"Read property[{propName}] value error");
+
+                if (memberModel == null) //表示附加成员
+                {
+                    //暂附加成员不可能为Object或Array
+                    Log.Warn($"Read AttachedProperty[{propName}] not supported now.");
+                    continue;
+                }
 
                 switch (memberModel.Type)
                 {
@@ -269,7 +270,7 @@ namespace appbox.Data
                         }
                         break;
                     default:
-                        reader.Skip(); //TODO:暂忽略所有其他类型
+                        reader.Read(); //TODO:暂忽略所有其他类型,另不要使用Skip()
                         Log.Warn($"Read member[{model.Name}.{propName}] with type[{memberModel.Type}] is not supported.");
                         break;
                 }
