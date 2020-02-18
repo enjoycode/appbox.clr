@@ -31,6 +31,15 @@ namespace appbox.Expressions
             Owner = owner;
         }
 
+        /// <summary>
+        /// eg: Customer.Name => CustomerName
+        /// </summary>
+        /// <returns></returns>
+        internal string GetFieldAlias()
+        {
+            return Expression.IsNull(Owner) ? Name : $"{Owner.GetFieldAlias()}{Name}";
+        }
+
         #region ====Serialization Methods====
         public override void WriteObject(BinSerializer writer)
         {

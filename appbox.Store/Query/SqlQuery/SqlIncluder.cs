@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using appbox.Data;
 using appbox.Expressions;
 using appbox.Models;
+using System.Text;
 
 namespace appbox.Store
 {
@@ -98,7 +99,9 @@ namespace appbox.Store
                 //    throw new ArgumentException("Owner not same");
                 if (ReferenceEquals(member.Owner, MemberExpression))
                     throw new ArgumentException("Can't include field");
-                //TODO:判断alias空，是则自动生成eg:t.Customer.Region.Name => CustomerRegionName
+                //判断alias空，是则自动生成eg:t.Customer.Region.Name => CustomerRegionName
+                if (string.IsNullOrEmpty(alias))
+                    alias = member.GetFieldAlias();
                 //TODO:判断重复
                 if (Childs == null) Childs = new List<SqlIncluder>();
                 var res = new SqlIncluder(this, new SqlSelectItemExpression(member, alias));

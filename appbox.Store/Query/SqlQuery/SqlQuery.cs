@@ -138,7 +138,7 @@ namespace appbox.Store
         public async Task<int> CountAsync()
         {
             Purpose = QueryPurpose.Count;
-            var model = await Runtime.RuntimeContext.Current.GetModelAsync<EntityModel>(T.ModelID);
+            var model = await RuntimeContext.Current.GetModelAsync<EntityModel>(T.ModelID);
             var db = SqlStore.Get(model.SqlStoreOptions.StoreModelId);
             var cmd = db.BuildQuery(this);
             using var conn = db.MakeConnection();
@@ -157,7 +157,7 @@ namespace appbox.Store
             Purpose = QueryPurpose.ToSingleEntity;
 
             //添加选择项
-            var model = await Runtime.RuntimeContext.Current.GetModelAsync<EntityModel>(T.ModelID);
+            var model = await RuntimeContext.Current.GetModelAsync<EntityModel>(T.ModelID);
             AddAllSelects(this, model, T, null);
             if (_rootIncluder != null)
                 await _rootIncluder.AddSelects(this, model);
@@ -407,10 +407,9 @@ namespace appbox.Store
             if (indexOfDot < 0)
             {
                 ref EntityMember m = ref target.TryGetMember(path, out bool found);
-                if (!found)
+                if (!found) //不存在的作为附加成员
                 {
-                    //TODO:不存在的作为附加成员
-                    throw new NotImplementedException("Attached");
+                    target.AddAttached(path.ToString(), reader.GetValue(clIndex));
                 }
                 else
                 {
