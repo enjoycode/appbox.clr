@@ -13,18 +13,24 @@ namespace appbox.Models
         #region ====Fields & Properties====
         public override ModelType ModelType => ModelType.View;
 
-        /// <summary>
-        /// 编译好的运行时代码，包含样式，以json形式存在
-        /// eg: {"Code":"jscode", "Style":"style"}
-        /// </summary>
-        //public string RuntimeCode { get; set; }
-
         public ViewModelFlag Flag { get; set; }
 
         /// <summary>
+        /// 自定义路由的上级
+        /// </summary>
+        public string RouteParent { get; set; }
+
+        /// <summary>
         /// 自定义路由的路径，未定义则采用默认路径如: /ERP/CustomerList
+        /// 如设置RouteParent则必须设置
         /// </summary>
         public string RoutePath { get; set; }
+
+        /// <summary>
+        /// 仅用于模型存储
+        /// </summary>
+        internal string RouteStoredPath =>
+            string.IsNullOrEmpty(RouteParent) ? RoutePath : $"{RouteParent};{RoutePath}";
 
         /// <summary>
         /// 列入路由或菜单所对应的权限模型标识
@@ -33,7 +39,6 @@ namespace appbox.Models
         #endregion
 
         #region ====Ctor====
-
         /// <summary>
         /// Ctor for Serialization
         /// </summary>
@@ -49,7 +54,10 @@ namespace appbox.Models
 
             bs.Write((byte)Flag, 1);
             bs.Write(PermissionID, 2);
-            bs.Write(RoutePath, 3);
+            if (!string.IsNullOrEmpty(RoutePath))
+                bs.Write(RoutePath, 3);
+            if (!string.IsNullOrEmpty(RouteParent))
+                bs.Write(RouteParent, 4);
 
             bs.Write((uint)0);
         }
@@ -58,7 +66,7 @@ namespace appbox.Models
         {
             base.ReadObject(bs);
 
-            uint propIndex = 0;
+            uint propIndex;
             do
             {
                 propIndex = bs.ReadUInt32();
@@ -67,6 +75,7 @@ namespace appbox.Models
                     case 1: Flag = (ViewModelFlag)bs.ReadByte(); break;
                     case 2: PermissionID = bs.ReadUInt64(); break;
                     case 3: RoutePath = bs.ReadString(); break;
+                    case 4: RouteParent = bs.ReadString(); break;
                     case 0: break;
                     default: throw new Exception($"Deserialize_ObjectUnknownFieldIndex: {GetType().Name}");
                 }
@@ -78,6 +87,7 @@ namespace appbox.Models
         void IJsonSerializable.WriteToJson(Utf8JsonWriter writer, WritedObjects objrefs)
         {
             writer.WriteBoolean("Route", (Flag & ViewModelFlag.ListInRouter) == ViewModelFlag.ListInRouter);
+            writer.WriteString("RouteParent", RouteParent);
             writer.WriteString("RoutePath", RoutePath);
         }
 

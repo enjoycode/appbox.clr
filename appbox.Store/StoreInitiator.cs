@@ -534,7 +534,7 @@ namespace appbox.Store
             {
                 model.Flag = ViewModelFlag.ListInRouter;
                 model.RoutePath = routePath;
-                await ModelStore.UpsertViewRoute($"sys.{model.Name}", model.RoutePath, txn);
+                await ModelStore.UpsertViewRoute($"sys.{model.Name}", model.RouteStoredPath, txn);
             }
             await ModelStore.InsertModelAsync(model, txn);
 

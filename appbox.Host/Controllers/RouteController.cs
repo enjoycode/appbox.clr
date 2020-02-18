@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -14,24 +15,43 @@ namespace appbox.Controllers
         /// 获取路由表
         /// </summary>
         [HttpGet()]
-        public async Task<IActionResult> Get() //todo:考虑获取是否移动端后获取不同的路由表
+        public async Task<IActionResult> Get()
         {
-            //todo: cache it
-
-            var list = new List<object>();
+            //TODO:获取是否移动端后获取不同的路由表
+            //TODO:Cache result
+            var dic = new Dictionary<string, RouteItem>(32);
             var routes = await Store.ModelStore.LoadViewRoutes();
             if (routes != null && routes.Length > 0)
             {
                 for (int i = 0; i < routes.Length; i++)
                 {
-                    if (string.IsNullOrEmpty(routes[i].Item2))
-                        list.Add(new { v = routes[i].Item1 });
+                    var view = routes[i].Item1;
+                    var path = routes[i].Item2;
+                    if (string.IsNullOrEmpty(path))
+                    {
+                        dic.Add(routes[i].Item1.Replace('.', '/'), new RouteItem { v = view });
+                    }
                     else
-                        list.Add(new { p = routes[i].Item2, v = routes[i].Item1 });
+                    {
+                        //继续判断是否有上级
+                        var sepIndex = path.AsSpan().IndexOf(';');
+                        if (sepIndex > 0 && dic.TryGetValue(path.AsSpan(0, sepIndex).ToString(), out RouteItem parent))
+                        {
+                            if (parent.s == null) parent.s = new List<RouteItem>();
+                            parent.s.Add(new RouteItem { v = view, p = path.AsSpan(sepIndex + 1).ToString() });
+                        }
+                        else
+                        {
+                            if (!dic.TryAdd(path, new RouteItem { v = view, p = path }))
+                            {
+                                Log.Warn($"Route[{path}] for view[{view}] has existed");
+                            }
+                        }
+                    }
                 }
             }
-            
-            return Ok(list);
+
+            return Ok(dic.Values.ToArray());
         }
 
         /// <summary>
@@ -47,4 +67,17 @@ namespace appbox.Controllers
             return Content(res);
         }
     }
+
+    struct RouteItem
+    {
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "<Pending>")]
+        public string v { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "<Pending>")]
+        [Newtonsoft.Json.JsonProperty(NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public string p { get; set; }
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "<Pending>")]
+        [Newtonsoft.Json.JsonProperty(NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore)]
+        public List<RouteItem> s { get; set; }
+    }
+
 }

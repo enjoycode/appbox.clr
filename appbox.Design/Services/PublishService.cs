@@ -280,7 +280,7 @@ namespace appbox.Design
                                 {
                                     var app = hub.DesignTree.FindApplicationNode(model.AppId);
                                     var viewName = $"{app.Model.Name}.{viewModel.Name}";
-                                    await ModelStore.UpsertViewRoute(viewName, viewModel.RoutePath, txn);
+                                    await ModelStore.UpsertViewRoute(viewName, viewModel.RouteStoredPath, txn);
                                 }
                             }
                             break;
@@ -313,7 +313,7 @@ namespace appbox.Design
                                 {
                                     var viewName = $"{app.Model.Name}.{viewModel.Name}";
                                     //TODO:判断重命名删除旧的
-                                    await ModelStore.UpsertViewRoute(viewName, viewModel.RoutePath, txn);
+                                    await ModelStore.UpsertViewRoute(viewName, viewModel.RouteStoredPath, txn);
                                 }
                                 else
                                 {

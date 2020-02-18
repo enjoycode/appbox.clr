@@ -798,7 +798,7 @@ namespace appbox.Store
         /// 保存视图模型路由表
         /// </summary>
         /// <param name="viewName">eg: sys.CustomerList</param>
-        /// <param name="path">无自定义路由为空</param>
+        /// <param name="path">无自定义路由为空，有上级路由;分隔</param>
         internal static ValueTask UpsertViewRoute(string viewName, string path, Transaction txn)
         {
             //TODO:简化Key与Value编码,直接utf8,各减去3字节字符数标记

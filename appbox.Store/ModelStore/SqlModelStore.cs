@@ -382,7 +382,7 @@ namespace appbox.Store
         /// 保存视图模型路由表
         /// </summary>
         /// <param name="viewName">eg: sys.CustomerList</param>
-        /// <param name="path">无自定义路由为空</param>
+        /// <param name="path">无自定义路由为空, 有上级则;分隔</param>
         internal static async ValueTask UpsertViewRoute(string viewName, string path, DbTransaction txn)
         {
             using var cmd = SqlStore.Default.MakeCommand();
