@@ -17,7 +17,7 @@ namespace appbox.Store
 
             EntityModel model = Runtime.RuntimeContext.Current.GetModelAsync<EntityModel>(updateCommand.T.ModelID).Result;
 
-            ctx.AppendFormat("Update \"{0}\" t Set ", model.Name);
+            ctx.AppendFormat("Update \"{0}\" t Set ", model.GetSqlTableName(false, null));
             ctx.CurrentQueryInfo.BuildStep = BuildQueryStep.BuildUpdateSet;
             for (int i = 0; i < updateCommand.UpdateItems.Count; i++)
             {

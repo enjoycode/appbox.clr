@@ -400,11 +400,6 @@ public class SqlSubQuery<TSource> : ISqlQueryJoin<TSource>, /*伪*/IEnumerable<T
 [QueriableClass(false)]
 public sealed class SqlUpdateCommand<TSource> where TSource : SqlEntityBase
 {
-    /// <summary>
-    /// 输出的值集合
-    /// </summary>
-    public object[] OutputValues { get { return null; } } //TODO:同步改为支持多条记录返回字段
-
     [QueryMethod()]
     public SqlUpdateCommand<TSource> Where(Func<TSource, bool> condition) { return this; }
 
