@@ -423,10 +423,19 @@ public sealed class SqlUpdateCommand<TSource> where TSource : SqlEntityBase
     public SqlUpdateCommand<TSource> Update(Action<TSource> setter) { return this; }
 
     /// <summary>
-    /// 输出
+    /// 输出返回值
     /// </summary>
     [QueryMethod()]
-    public SqlUpdateCommand<TSource> Output<TResult>(Func<TSource, TResult> selector) { return this; }
+    public UpdateOutputs<TResult> Output<TResult>(Func<TSource, TResult> selector) { return null; }
+
+    public sealed class UpdateOutputs<T>
+    {
+        private UpdateOutputs() { }
+
+        public T this[int index] => values[index];
+
+        public int Count => values.Count;
+    }
 }
 
 [RealType("appbox.Store.SqlDeleteCommand")]

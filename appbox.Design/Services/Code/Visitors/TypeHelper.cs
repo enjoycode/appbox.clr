@@ -10,9 +10,9 @@ namespace appbox.Design
     static class TypeHelper
     {
 
-        internal const string SqlQueryToDataTableMethod = "ToDataTable";
         internal const string SqlQueryToListMethod = "ToListAsync";
         internal const string SqlQueryToScalarMethod = "ToScalar";
+        internal const string SqlUpdateOutputMethod = "Output";
 
         #region ----设计时类型常量----
         internal const string MemberAccessInterceptorAttribute = "System.Reflection.MemberAccessInterceptorAttribute";

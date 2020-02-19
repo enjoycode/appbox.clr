@@ -20,36 +20,20 @@ namespace appbox.Store
         /// </summary>
         public Expression Filter { get; set; }
 
+        /// <summary>
+        /// 更新表达式 TODO:使用BlockExpression支持多个t=>{t.V1=t.V1+1; t.V2=t.V2+2}
+        /// </summary>
         public List<Expression> UpdateItems { get; }
 
-        private List<MemberExpression> _outputItems;
-        public List<MemberExpression> OutputItems
-        {
-            get
-            {
-                if (_outputItems == null)
-                    _outputItems = new List<MemberExpression>();
-                return _outputItems;
-            }
-        }
+        /// <summary>
+        /// 更新同时输出的成员
+        /// </summary>
+        public MemberExpression[] OutputItems { get; private set; }
 
-        public bool HasOutputItems
-        {
-            get { return _outputItems != null && _outputItems.Count > 0; }
-        }
-
-        private object[] _outputValues;
-        public object[] OutputValues //TODO: 改为2维数组支持多条记录
-        {
-            get
-            {
-                if (!HasOutputItems)
-                    throw new NotSupportedException("Has no output items.");
-                if (_outputValues == null)
-                    _outputValues = new object[_outputItems.Count];
-                return _outputValues;
-            }
-        }
+        /// <summary>
+        /// 用于回调设置输出结果
+        /// </summary>
+        internal Action<SqlRowReader> SetOutputs;
         #endregion
 
         #region ====Ctor====
@@ -66,20 +50,26 @@ namespace appbox.Store
         /// </summary>
         public SqlUpdateCommand Update(Expression assignment)
         {
+            //TODO:验证
             UpdateItems.Add(assignment);
             return this;
         }
 
         public SqlUpdateCommand Update(MemberExpression target, Expression value)
         {
+            //TODO:验证
             UpdateItems.Add(target == value);
             return this;
         }
 
-        public SqlUpdateCommand Output(MemberExpression target)
+        public UpdateOutputs<TResult> Output<TResult>(Func<SqlRowReader, TResult> selector,
+            params MemberExpression[] selectItem)
         {
-            OutputItems.Add(target);
-            return this;
+            //TODO:验证Selected members
+            OutputItems = selectItem;
+            var res = new UpdateOutputs<TResult>(selector);
+            SetOutputs = res.OnResults;
+            return res;
         }
 
         public SqlUpdateCommand Where(Expression filter)
@@ -89,5 +79,24 @@ namespace appbox.Store
         }
         #endregion
 
+        public sealed class UpdateOutputs<T>
+        {
+            private readonly Func<SqlRowReader, T> selector;
+            private readonly IList<T> values = new List<T>();
+
+            public T this[int index] => values[index];
+
+            public int Count => values.Count;
+
+            internal UpdateOutputs(Func<SqlRowReader, T> selector)
+            {
+                this.selector = selector;
+            }
+
+            internal void OnResults(SqlRowReader reader)
+            {
+                values.Add(selector(reader));
+            }
+        }
     }
 }

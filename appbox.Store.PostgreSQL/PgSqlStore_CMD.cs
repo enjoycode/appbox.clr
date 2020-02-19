@@ -44,15 +44,15 @@ namespace appbox.Store
             ctx.BuildQueryAutoJoins(q1); //再处理自动联接
 
             //最后处理返回值
-            if (updateCommand.HasOutputItems)
+            if (updateCommand.OutputItems != null)
             {
                 ctx.CurrentQueryInfo.BuildStep = BuildQueryStep.BuildWhere; //TODO: fix this?
                 ctx.Append(" RETURNING ");
-                for (int i = 0; i < updateCommand.OutputItems.Count; i++)
+                for (int i = 0; i < updateCommand.OutputItems.Length; i++)
                 {
                     var field = (FieldExpression)updateCommand.OutputItems[i];
                     ctx.AppendFormat("\"{0}\"", field.Name);
-                    if (i != updateCommand.OutputItems.Count - 1)
+                    if (i != updateCommand.OutputItems.Length - 1)
                         ctx.Append(",");
                 }
             }

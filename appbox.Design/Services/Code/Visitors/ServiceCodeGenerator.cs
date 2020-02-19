@@ -542,15 +542,14 @@ namespace appbox.Design
                 //注意：只处理最后一个参数，即移除之前的参数，如上示例中的join1参数，最后的Lambda由VisitQueryMethodLambdaExpresssion处理
                 var newArgNode = node.Arguments[node.Arguments.Count - 1].Expression.Accept(this);
 
-                //eg: q.ToDataTable(join1, (t, j1) => new {t.ID, t.Name, j1.Address})
-                //如果是ToDataTable或ToList方法，需要处理 new {XX,XX,XX}为参数列表
-                if ((queryMethodCtx.Current.MethodName == TypeHelper.SqlQueryToDataTableMethod
-                    || queryMethodCtx.Current.MethodName == TypeHelper.SqlQueryToScalarMethod
-                    || queryMethodCtx.Current.MethodName == TypeHelper.SqlQueryToListMethod)
-                    && newArgNode is ArgumentListSyntax)
+                //eg: q.ToList(join1, (t, j1) => new {t.ID, t.Name, j1.Address})
+                //需要处理 new {XX,XX,XX}为参数列表
+                if ((queryMethodCtx.Current.MethodName == TypeHelper.SqlQueryToScalarMethod
+                    || queryMethodCtx.Current.MethodName == TypeHelper.SqlQueryToListMethod
+                    || queryMethodCtx.Current.MethodName == TypeHelper.SqlUpdateOutputMethod)
+                    && newArgNode is ArgumentListSyntax argList)
                 {
                     //已被VisitQueryMethodLambdaExpresssion转换为ArgumentListSyntax
-                    var argList = (ArgumentListSyntax)newArgNode;
                     args = args.AddRange(argList.Arguments);
                 }
                 else
@@ -677,19 +676,14 @@ namespace appbox.Design
         {
             queryMethodCtx.Current.InLambdaExpression = true;
             SyntaxNode res;
-            if (queryMethodCtx.Current.MethodName == TypeHelper.SqlQueryToDataTableMethod ||
-                (queryMethodCtx.Current.MethodName == TypeHelper.SqlQueryToListMethod
-                && queryMethodCtx.Current.ArgsCount > 0))
+            if (queryMethodCtx.Current.IsDynamicMethod)
             {
                 //注意处理行差
-                var aoc = lambda.Body as AnonymousObjectCreationExpressionSyntax;
-                if (aoc == null)
-                    throw new Exception("Query.ToDataTable or Query.ToList<T>的第一个参数暂只支持匿名类");
                 var args = new SeparatedSyntaxList<ArgumentSyntax>();
-
-                //如果是ToList，转换Lambda表达式为运行时Lambda表达式
-                if (queryMethodCtx.Current.MethodName == TypeHelper.SqlQueryToListMethod)
+                if (lambda.Body is AnonymousObjectCreationExpressionSyntax aoc)
                 {
+                    //转换Lambda表达式为运行时Lambda表达式
+                    //eg: t=>new {t.Id, t.Name} 转换为 r=> new {Id=r.GetInt(0), Name=r.GetString(1)}
                     var sb = StringBuilderCache.Acquire();
                     sb.Append("r => new {");
                     for (int i = 0; i < aoc.Initializers.Count; i++)
@@ -712,33 +706,58 @@ namespace appbox.Design
                     }
                     sb.Append('}');
                     //转换为参数并加入参数列表
-                    var argExpression = SyntaxFactory.ParseExpression(StringBuilderCache.GetStringAndRelease(sb));
-                    var arg = SyntaxFactory.Argument(argExpression);
-                    args = args.Add(arg);
-                }
+                    args = args.Add(SyntaxFactory.Argument(
+                            SyntaxFactory.ParseExpression(StringBuilderCache.GetStringAndRelease(sb))
+                        ));
 
-                //处理selectItems参数
-                for (int i = 0; i < aoc.Initializers.Count; i++)
+                    //处理selectItems参数
+                    for (int i = 0; i < aoc.Initializers.Count; i++)
+                    {
+                        var initializer = aoc.Initializers[i];
+                        var argExpression = (ExpressionSyntax)initializer.Expression.Accept(this);
+                        if (initializer.NameEquals != null) //TODO:***检查是否还需要转换为SelectAs("XXX")，因前面已按序号获取
+                        {
+                            var selectAsMethodName = (SimpleNameSyntax)SyntaxFactory.ParseName("SelectAs");
+                            var selectAsMethod = SyntaxFactory.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, argExpression, selectAsMethodName);
+                            var selectAsArgs = SyntaxFactory.ParseArgumentList(string.Format("(\"{0}\")", initializer.NameEquals.Name.Identifier.ValueText));
+                            argExpression = SyntaxFactory.InvocationExpression(selectAsMethod, selectAsArgs);
+                        }
+                        var arg = SyntaxFactory.Argument(argExpression);
+                        //最后一个参数补body所有行差
+                        if (i == aoc.Initializers.Count - 1)
+                        {
+                            var lineSpan = lambda.Body.GetLocation().GetLineSpan();
+                            var lineDiff = lineSpan.EndLinePosition.Line - lineSpan.StartLinePosition.Line;
+                            if (lineDiff > 0)
+                                arg = arg.WithTrailingTrivia(SyntaxFactory.Whitespace(new string('\n', lineDiff)));
+                        }
+                        args = args.Add(arg);
+                    }
+                }
+                else if (lambda.Body is MemberAccessExpressionSyntax ma)
                 {
-                    var initializer = aoc.Initializers[i];
-                    var argExpression = (ExpressionSyntax)initializer.Expression.Accept(this);
-                    if (initializer.NameEquals != null)
-                    {
-                        var selectAsMethodName = (SimpleNameSyntax)SyntaxFactory.ParseName("SelectAs");
-                        var selectAsMethod = SyntaxFactory.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, argExpression, selectAsMethodName);
-                        var selectAsArgs = SyntaxFactory.ParseArgumentList(string.Format("(\"{0}\")", initializer.NameEquals.Name.Identifier.ValueText));
-                        argExpression = SyntaxFactory.InvocationExpression(selectAsMethod, selectAsArgs);
-                    }
-                    var arg = SyntaxFactory.Argument(argExpression);
-                    //最后一个参数补body所有行差
-                    if (i == aoc.Initializers.Count - 1)
-                    {
-                        var lineSpan = lambda.Body.GetLocation().GetLineSpan();
-                        var lineDiff = lineSpan.EndLinePosition.Line - lineSpan.StartLinePosition.Line;
-                        if (lineDiff > 0)
-                            arg = arg.WithTrailingTrivia(SyntaxFactory.Whitespace(new string('\n', lineDiff)));
-                    }
-                    args = args.Add(arg);
+                    //转换Lambda表达式为运行时Lambda表达式
+                    //eg: t=> t.Name 转换为 r=> r.GetString(0)
+                    var sb = StringBuilderCache.Acquire();
+                    sb.Append("r => r.Get");
+                    var expSymbol = SemanticModel.GetSymbolInfo(ma).Symbol;
+                    var expType = TypeHelper.GetSymbolType(expSymbol);
+                    var typeString = TypeHelper.GetEntityMemberTypeString(expType, out bool isNullable);
+                    if (isNullable) sb.Append("Nullable");
+                    sb.Append(typeString);
+                    sb.Append("(0)");
+                    //转换为参数并加入参数列表
+                    args = args.Add(SyntaxFactory.Argument(
+                            SyntaxFactory.ParseExpression(StringBuilderCache.GetStringAndRelease(sb))
+                        ));
+
+                    //处理selectItems参数
+                    var argExpression = (ExpressionSyntax) ma.Accept(this);
+                    args = args.Add(SyntaxFactory.Argument(argExpression).WithTriviaFrom(ma));
+                }
+                else
+                {
+                    throw new NotImplementedException($"动态查询方法的第一个参数[{lambda.Body.GetType().Name}]暂未实现");
                 }
 
                 res = SyntaxFactory.ArgumentList(args);

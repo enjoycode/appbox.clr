@@ -28,6 +28,10 @@ namespace appbox.Design
 
         internal bool IsIncludeMethod => MethodName == "Include" || MethodName == "ThenInclude";
 
+        internal bool IsDynamicMethod => ArgsCount > 0
+            && (MethodName == TypeHelper.SqlQueryToListMethod
+                || MethodName == TypeHelper.SqlUpdateOutputMethod);
+
         internal IdentifierNameSyntax ReplaceLambdaParameter(IdentifierNameSyntax identifier)
         {
             //Include不用处理

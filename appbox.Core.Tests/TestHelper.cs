@@ -84,6 +84,8 @@ namespace appbox.Core.Tests
             CityModel.AddMember(cityCode);
             var cityName = new DataFieldModel(CityModel, "Name", EntityFieldType.String);
             CityModel.AddMember(cityName);
+            var cityPerson = new DataFieldModel(CityModel, "Persons", EntityFieldType.Int32);
+            CityModel.AddMember(cityPerson);
             var cityPk = new List<FieldWithOrder>();
             cityPk.Add(new FieldWithOrder { MemberId = cityCode.MemberId, OrderByDesc = false });
             CityModel.SqlStoreOptions.SetPrimaryKeys(CityModel, cityPk);

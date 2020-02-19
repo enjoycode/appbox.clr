@@ -85,8 +85,11 @@ namespace appbox.Store.Tests
 
             var q = new SqlUpdateCommand(model.Id);
             q.Update(q.T["Code"].Assign(q.T["Code"] + 1));
-            q.Output(q.T["Code"]);
             q.Where(q.T["Code"] == 2);
+
+            var outs = q.Output(r => r.GetInt32(0), q.T["Code"]);
+            //var outs = q.Output(r => new { Code = r.GetInt32(0), Name = r.GetString(1) }, q.T["Code"], q.T["Name"]);
+            //outs[0].Code == 3;
 
             var store = new PgSqlStore(StoreSettings);
             var cmd = store.BuidUpdateCommand(q);

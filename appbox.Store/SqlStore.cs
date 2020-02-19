@@ -315,17 +315,14 @@ namespace appbox.Store
                 await cmd.Connection.OpenAsync();
             Log.Debug(cmd.CommandText);
             //执行命令
-            if (updateCommand.HasOutputItems && UseReaderForOutput) //返回字段通过DbReader读取
+            if (updateCommand.OutputItems != null && UseReaderForOutput) //返回字段通过DbReader读取
             {
                 try
                 {
-                    var reader = await cmd.ExecuteReaderAsync();
-                    if (await reader.ReadAsync()) //TODO:*****循环Read多条记录的返回值
+                    using var reader = await cmd.ExecuteReaderAsync();
+                    while (await reader.ReadAsync())
                     {
-                        for (int i = 0; i < updateCommand.OutputItems.Count; i++)
-                        {
-                            updateCommand.OutputValues[i] = reader.GetValue(i);
-                        }
+                        updateCommand.SetOutputs(new SqlRowReader(reader));
                     }
                 }
                 catch (Exception ex)
@@ -354,7 +351,7 @@ namespace appbox.Store
                     if (txn == null) cmd.Connection.Dispose();
                 }
 
-                if (updateCommand.HasOutputItems)
+                if (updateCommand.OutputItems != null)
                 {
                     throw new NotImplementedException(); //TODO:读取输出参数值
                 }
