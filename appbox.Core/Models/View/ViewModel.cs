@@ -16,13 +16,13 @@ namespace appbox.Models
         public ViewModelFlag Flag { get; set; }
 
         /// <summary>
-        /// 自定义路由的上级
+        /// 自定义路由的上级，指向视图名称eg: sys.Home
         /// </summary>
         public string RouteParent { get; set; }
 
         /// <summary>
-        /// 自定义路由的路径，未定义则采用默认路径如: /ERP/CustomerList
-        /// 如设置RouteParent则必须设置
+        /// 自定义路由的路径，未定义则采用默认路径如: /erp/CustomerList
+        /// 如设置RouteParent但不定义，则为/Parent/thisViewName
         /// </summary>
         public string RoutePath { get; set; }
 

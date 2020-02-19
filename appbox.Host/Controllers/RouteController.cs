@@ -19,39 +19,61 @@ namespace appbox.Controllers
         {
             //TODO:获取是否移动端后获取不同的路由表
             //TODO:Cache result
-            var dic = new Dictionary<string, RouteItem>(32);
+            var dic = new Dictionary<string, RouteItem>(32); //key为视图,eg: erp.Customers
             var routes = await Store.ModelStore.LoadViewRoutes();
-            if (routes != null && routes.Length > 0)
+            if (routes == null || routes.Length == 0)
+                return Ok(dic.Values.ToArray());
+
+            var children = new List<RouteItem>(16);
+            for (int i = 0; i < routes.Length; i++)
             {
-                for (int i = 0; i < routes.Length; i++)
+                var view = routes[i].Item1;
+                var path = routes[i].Item2;
+                if (string.IsNullOrEmpty(path)) //无自定义路径，则肯定没有上级
                 {
-                    var view = routes[i].Item1;
-                    var path = routes[i].Item2;
-                    if (string.IsNullOrEmpty(path))
+                    dic.Add(view, new RouteItem { v = view });
+                }
+                else
+                {
+                    //判断是否有上级
+                    var sepIndex = path.AsSpan().IndexOf(';');
+                    if (sepIndex > 0)
                     {
-                        dic.Add(routes[i].Item1.Replace('.', '/'), new RouteItem { v = view });
+                        var parent = path.AsSpan(0, sepIndex).ToString();
+                        var child = path.AsSpan(sepIndex + 1).ToString();
+                        if (string.IsNullOrEmpty(child))//无自定义子级路径
+                        {
+                            var dotIndex = view.AsSpan().IndexOf('.');
+                            child = view.AsSpan(dotIndex + 1).ToString();
+                        }
+                        var item = new RouteItem { Parent = parent, v = view, p = child };
+                        dic.Add(view, item);
+                        children.Add(item);
                     }
                     else
                     {
-                        //继续判断是否有上级
-                        var sepIndex = path.AsSpan().IndexOf(';');
-                        if (sepIndex > 0 && dic.TryGetValue(path.AsSpan(0, sepIndex).ToString(), out RouteItem parent))
-                        {
-                            if (parent.s == null) parent.s = new List<RouteItem>();
-                            parent.s.Add(new RouteItem { v = view, p = path.AsSpan(sepIndex + 1).ToString() });
-                        }
-                        else
-                        {
-                            if (!dic.TryAdd(path, new RouteItem { v = view, p = path }))
-                            {
-                                Log.Warn($"Route[{path}] for view[{view}] has existed");
-                            }
-                        }
+                        dic.Add(view, new RouteItem { v = view, p = path });
                     }
                 }
             }
 
-            return Ok(dic.Values.ToArray());
+            for (int i = 0; i < children.Count; i++)
+            {
+                if (dic.TryGetValue(children[i].Parent, out RouteItem route))
+                {
+                    if (route.s == null) route.s = new List<RouteItem>();
+                    route.s.Add(children[i]);
+                }
+                else
+                {
+                    Log.Warn($"Can't find Parent[{children[i].Parent}] for [{children[i].v}]");
+                }
+            }
+
+            if (children.Count == 0)
+                return Ok(dic.Values);
+            else
+                return Ok(dic.Values.Where(t => t.Parent == null));
         }
 
         /// <summary>
@@ -68,8 +90,11 @@ namespace appbox.Controllers
         }
     }
 
-    struct RouteItem
+    sealed class RouteItem
     {
+        [Newtonsoft.Json.JsonIgnore]
+        public string Parent { get; set; }
+
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "<Pending>")]
         public string v { get; set; }
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "<Pending>")]
