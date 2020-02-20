@@ -5,7 +5,7 @@ namespace appbox.Server
     public static class Consts
     {
 #if Windows
-        public static readonly string LibPath = "";
+        public static readonly string LibPath = "lib";
 
 #else
         public static readonly string LibPath = "lib";
