@@ -169,8 +169,8 @@ namespace appbox.Design
             {
                 if (disposing)
                 {
-                    //if (this._debugService != null)
-                    //this._debugService.Dispose();
+                    if (_debugService != null)
+                        _debugService.StopDebugger(force: true);
                 }
 
                 disposedValue = true;

@@ -7,7 +7,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Text.Json;
-using Newtonsoft.Json;
 using appbox.Data;
 using appbox.Serialization;
 using appbox.Server;
@@ -122,8 +121,10 @@ namespace appbox.Design
             Initialize(InitializeCB);
         }
 
+        // force用于前端直接关闭浏览器后，断开WebSocket后的强制中止调试进程
         internal void StopDebugger(bool force = false)
         {
+            Log.Debug($"Stopping Debugger, force={force}");
             // 注意：不能暴力终止调试器进程
             if (Thread.VolatileRead(ref _runningFlag) != 0)
             {
@@ -475,26 +476,5 @@ namespace appbox.Design
         }
         #endregion
 
-        #region ====IDisposable Support====
-        private bool disposedValue; // To detect redundant calls
-
-        void Dispose(bool disposing)
-        {
-            if (!disposedValue)
-            {
-                if (disposing)
-                {
-                    StopDebugger(true); //用于前端直接关闭浏览器后，断开WebSocket后的强制中止调试进程
-                }
-
-                disposedValue = true;
-            }
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-        }
-        #endregion
     }
 }
