@@ -18,7 +18,7 @@ namespace appbox.Server
         /// <param name="name">eg:sys.HelloService</param>
         public async ValueTask<IService> TryGetAsync(string name)
         {
-            IService instance = null;
+            IService instance;
             if (services.TryGet(name, out instance))
                 return instance;
 
@@ -69,7 +69,7 @@ namespace appbox.Server
                     var type = asm.GetType(string.Format("{0}.ServiceLogic.{1}", sr[0], sr[2]), true);
                     var instance = (IService)Activator.CreateInstance(type);
                     services.TryAdd(sr[0] + "." + sr[2], instance);
-                    //Log.Debug("Inject debug service instance:" + files[i]);
+                    Log.Debug("Inject debug service instance:" + files[i]);
                 }
             }
         }

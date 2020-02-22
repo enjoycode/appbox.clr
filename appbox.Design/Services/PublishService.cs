@@ -123,10 +123,10 @@ namespace appbox.Design
             byte[] asmData = null;
             if (forDebug)
             {
-                //TODO:考虑改写入内置文件存储系统
                 using var dllStream = new FileStream(Path.Combine(debugFolder, docName + ".dll"), FileMode.CreateNew);
-                using var pdbStream = new FileStream(Path.Combine(debugFolder, docName + ".pdb"), FileMode.CreateNew);
-                emitResult = compilation.Emit(dllStream, pdbStream);
+                var emitOpts = new EmitOptions(false, DebugInformationFormat.Embedded);
+                //using var pdbStream = new FileStream(Path.Combine(debugFolder, docName + ".pdb"), FileMode.CreateNew);
+                emitResult = compilation.Emit(dllStream, null, null, null, null, emitOpts);
             }
             else
             {
