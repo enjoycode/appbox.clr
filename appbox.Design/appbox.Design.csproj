@@ -19,33 +19,23 @@
 
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <LangVersion>8.0</LangVersion>
-    <WarningsNotAsErrors></WarningsNotAsErrors>
-    <TreatWarningsAsErrors></TreatWarningsAsErrors>
     <AllowUnsafeBlocks></AllowUnsafeBlocks>
     <CheckForOverflowUnderflow></CheckForOverflowUnderflow>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>8.0</LangVersion>
-    <IntermediateOutputPath>obj\Release\netcoreapp2.2</IntermediateOutputPath>
-    <WarningLevel></WarningLevel>
-    <DefineConstants></DefineConstants>
-    <WarningLevel>4</WarningLevel>
-    <DocumentationFile></DocumentationFile>
-    <DocumentationFile></DocumentationFile>
-    <IntermediateOutputPath>obj\Release\netcoreapp2.2</IntermediateOutputPath>
+    <RunWithWarnings>true</RunWithWarnings>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'DebugFuture|AnyCPU' ">
     <LangVersion>8.0</LangVersion>
     <WarningsNotAsErrors></WarningsNotAsErrors>
-    <IntermediateOutputPath>obj\Debug\netcoreapp2.2</IntermediateOutputPath>
     <DebugSymbols>true</DebugSymbols>
     <Optimize>false</Optimize>
     <DefineConstants>TRACE;DEBUG;NETCOREAPP;NETCOREAPP2_2;FUTURE</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseFuture|AnyCPU' ">
     <LangVersion>8.0</LangVersion>
-    <IntermediateOutputPath>obj\Release\netcoreapp2.2\netcoreapp2.2</IntermediateOutputPath>
-    <DocumentationFile></DocumentationFile>
     <DebugType></DebugType>
     <Optimize>true</Optimize>
     <DefineConstants>TRACE;RELEASE;NETCOREAPP;NETCOREAPP2_2;FUTURE</DefineConstants>
