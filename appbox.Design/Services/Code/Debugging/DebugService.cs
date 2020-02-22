@@ -10,7 +10,7 @@ using System.Text.Json;
 using appbox.Data;
 using appbox.Serialization;
 using appbox.Server;
-using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Linq; //TODO: use System.Text.Json
 
 namespace appbox.Design
 {
@@ -44,7 +44,7 @@ namespace appbox.Design
             get { return (IDeveloperSession)_hub.Session; }
         }
 
-        internal SharedMemoryChannel Channel; //调试子进程的消息通道
+        private SharedMemoryChannel _channel; //调试子进程的消息通道
         internal string DebugSourcePath; //调试目标服务的源文件路径
         private JArray _breakpoints;
         private int _stopAtStackFrameId; //暂停的线程stackframe标识
@@ -94,22 +94,29 @@ namespace appbox.Design
             _breakpoints = JArray.Parse(breakpoints);
 
             //2.建立调试子进程消息通道并注册调试会话
-            Channel = new SharedMemoryChannel(_hub.Session.SessionID.ToString(),
+            _channel = new SharedMemoryChannel(_hub.Session.SessionID.ToString(),
                 128/*TODO:*/, DebugSessionManager.MakeMessageDispatcher(), _hub.Session.SessionID);
-            Channel.StartReceive();
-            Channel.SendMessage(ref req); //直接发送调用调试目标的消息
+            _channel.StartReceive();
+            _channel.SendMessage(ref req); //直接发送调用调试目标的消息
 
             DebugSessionManager.Instance.StartSession(this);
 
             //3.再启动调试进程
             var process = new Process();
             process.StartInfo.FileName = Path.Combine(Runtime.RuntimeContext.Current.AppPath, Server.Consts.LibPath, "netcoredbg");
-            //注意netcoredbg覆盖启动目标及参数
-            process.StartInfo.Arguments = $"--interpreter=vscode -- appbox.AppContainer {Runtime.RuntimeContext.PeerId} {_hub.Session.SessionID}";
+            //注意netcoredbg通过StartInfo.Arguments覆盖调试目标及参数
+#if Windows
+            var appContainer = "appbox.AppContainer.exe";
+            //process.StartInfo.WorkingDirectory = Path.Combine(Runtime.RuntimeContext.Current.AppPath, Server.Consts.LibPath);
+#else   
+            var appContainer = "appbox.AppContainer";
+#endif
+            process.StartInfo.Arguments = $"--interpreter=vscode -- {appContainer} {Runtime.RuntimeContext.PeerId} {_hub.Session.SessionID}";
             process.StartInfo.UseShellExecute = false;
             process.StartInfo.RedirectStandardInput = true;
             process.StartInfo.RedirectStandardOutput = true;
             process.StartInfo.RedirectStandardError = true;
+            //process.StartInfo.StandardOutputEncoding = Encoding.UTF8;
             process.ErrorDataReceived += OnError;
 
             _process = process;
@@ -157,9 +164,9 @@ namespace appbox.Design
         private void Launch(Action<string> cb)
         {
             //netcoredbg启动调试目标必须通过参数指定，否则默认使用dotnet来启动
-            //string programArgs = string.Format("[\"{0}\",\"{1}\"]", Runtime.RuntimeContext.PeerId, sessionID);
-            //string args = string.Format("{{\"name\":\"ServiceDebugger\",\"type\":\"coreclr\",\"request\":\"launch\",\"program\":\"{0}\",\"args\":{1},\"cwd\":\"{2}\",\"console\":\"internalConsole\",\"stopAtEntry\":false,\"internalConsoleOptions\":\"openOnSessionStart\",\"__sessionId\":\"{3}\"}}"
-            //    , _programPath, programArgs, _programCWD, _debugSessionID);
+            ////string programArgs = string.Format("[\"{0}\",\"{1}\"]", Runtime.RuntimeContext.PeerId, sessionID);
+            ////string args = string.Format("{{\"name\":\"ServiceDebugger\",\"type\":\"coreclr\",\"request\":\"launch\",\"program\":\"{0}\",\"args\":{1},\"cwd\":\"{2}\",\"console\":\"internalConsole\",\"stopAtEntry\":false,\"internalConsoleOptions\":\"openOnSessionStart\",\"__sessionId\":\"{3}\"}}"
+            ////    , _programPath, programArgs, _programCWD, _debugSessionID);
             string args = string.Format("{{\"name\":\"ServiceDebugger\",\"type\":\"coreclr\",\"request\":\"launch\",\"console\":\"internalConsole\",\"stopAtEntry\":false,\"internalConsoleOptions\":\"openOnSessionStart\",\"__sessionId\":\"{0}\"}}"
                 , _debugSessionID);
             //Log.Debug($"Debug.Launch args={args}");
@@ -239,6 +246,8 @@ namespace appbox.Design
 
         private void DisconnectCB(string body)
         {
+            _channel.StopReceive();
+
             //先清理资源
             lock (_readLock)
             {
@@ -255,8 +264,6 @@ namespace appbox.Design
             }
             _process.Close();
             _process = null;
-
-            Channel.StopReceive();
 
             Interlocked.Exchange(ref _runningFlag, 0);
             Log.Debug("调试器进程已退出");
@@ -308,10 +315,11 @@ namespace appbox.Design
 
         private async Task ReadOutputAsync()
         {
-            //todo:暂简单实现组包
+            //TODO:暂简单实现组包
             var tempBuffer = new byte[512];
-            int len = -1;
-            while (Thread.VolatileRead(ref _runningFlag) != 0 /*_process != null && !_process.HasExited*/)
+            int len;
+            while (Thread.VolatileRead(ref _runningFlag) != 0
+                && _process != null && !_process.HasExited/*netcoredbg意外crash*/)
             {
                 try
                 {
@@ -453,6 +461,10 @@ namespace appbox.Design
                 var eventBody = string.Format("{{\"Type\":\"HitBreakpoint\",\"Thread\":{0},\"Line\": {1}}}", threadID, line);
                 ForwardEvent(eventBody);
             }
+            //else if (eventType == "terminated") //仅测试用，即调试目标正常退出
+            //{
+            //    StopDebugger();
+            //}
         }
         #endregion
 

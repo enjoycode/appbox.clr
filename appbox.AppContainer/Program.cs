@@ -17,6 +17,11 @@ namespace appbox.AppContainer
         /// </summary>
         static void Main(string[] args)
         {
+#if Windows
+            //临时方案修复调试器的json编码问题
+            Console.OutputEncoding = System.Text.Encoding.UTF8;
+#endif
+
             ushort peerId = ushort.Parse(args[0]);
             Log.Debug($"AppContainer start. PeerId={peerId}");
 

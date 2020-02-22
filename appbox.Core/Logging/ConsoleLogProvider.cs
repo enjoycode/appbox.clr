@@ -5,6 +5,7 @@ namespace appbox.Logging
 {
     public sealed class ConsoleLogProvider : ILogProvider
     {
+#if !Windows
         //1B5B33316D [=5B 3=33 1=31 m=6D
         private static readonly byte[] Red = { 0x1B, 0x5B, 0x33, 0x31, 0x6D };
         private static readonly byte[] Green = { 0x1B, 0x5B, 0x33, 0x32, 0x6D };
@@ -12,30 +13,33 @@ namespace appbox.Logging
         private static readonly byte[] Blue = { 0x1B, 0x5B, 0x33, 0x34, 0x6D };
         private static readonly byte[] Magenta = { 0x1B, 0x5B, 0x33, 0x35, 0x6D };
         private static readonly byte[] Reset = { 0x1B, 0x5b, 0x30, 0x6D };
+#endif
 
         private static char GetLevelChar(LogLevel level)
         {
-            switch (level)
+            return level switch
             {
-                case LogLevel.Debug: return 'D';
-                case LogLevel.Info: return 'I';
-                case LogLevel.Warn: return 'W';
-                case LogLevel.Error: return 'E';
-                default: return 'U';
-            }
+                LogLevel.Debug => 'D',
+                LogLevel.Info => 'I',
+                LogLevel.Warn => 'W',
+                LogLevel.Error => 'E',
+                _ => 'U',
+            };
         }
 
+#if !Windows
         private static byte[] GetLevelColor(LogLevel level)
         {
-            switch (level)
+            return level switch
             {
-                case LogLevel.Debug: return Blue;
-                case LogLevel.Info: return Green;
-                case LogLevel.Warn: return Yellow;
-                case LogLevel.Error: return Red;
-                default: return Magenta;
-            }
+                LogLevel.Debug => Blue,
+                LogLevel.Info => Green,
+                LogLevel.Warn => Yellow,
+                LogLevel.Error => Red,
+                _ => Magenta,
+            };
         }
+#endif
 
         public void Write(LogLevel level, string file, int line, string method, string msg)
         {

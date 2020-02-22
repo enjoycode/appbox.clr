@@ -69,7 +69,7 @@ namespace appbox.Server
                     var type = asm.GetType(string.Format("{0}.ServiceLogic.{1}", sr[0], sr[2]), true);
                     var instance = (IService)Activator.CreateInstance(type);
                     services.TryAdd(sr[0] + "." + sr[2], instance);
-                    Log.Debug("注入调试目标服务实例:" + files[i]);
+                    //Log.Debug("Inject debug service instance:" + files[i]);
                 }
             }
         }

@@ -7,6 +7,11 @@ namespace appbox.Host
     {
         public static void Main(string[] args)
         {
+#if Windows
+            //临时方案修复调试器的json编码问题
+            System.Console.OutputEncoding = System.Text.Encoding.UTF8;
+#endif
+
             //初始化运行时
             RuntimeContext.Init(new HostRuntimeContext(), 0x1041); //TODO:fix peerid
             Server.Runtime.SysServiceContainer.Init();
