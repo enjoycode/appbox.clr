@@ -66,6 +66,7 @@ namespace appbox.Design
             ds.ForwardEvent(eventBody);
 
             //终止调试器进程
+            Log.Debug("收到调试调用结果,终止调试器...");
             ds.StopDebugger();
         }
 

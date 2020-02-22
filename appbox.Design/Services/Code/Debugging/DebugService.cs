@@ -131,14 +131,18 @@ namespace appbox.Design
         // force用于前端直接关闭浏览器后，断开WebSocket后的强制中止调试进程
         internal void StopDebugger(bool force = false)
         {
-            Log.Debug($"Stopping Debugger, force={force}");
             // 注意：不能暴力终止调试器进程
             if (Thread.VolatileRead(ref _runningFlag) != 0)
             {
-                //Log.Warn($"will stop debugger, force={force}");
+                Interlocked.Exchange(ref _runningFlag, 0);
+                Log.Debug($"Stopping Debugger, force={force}");
+
+                _channel.StopReceive();
+                DebugSessionManager.Instance.RemoveSession(Session.SessionID);
                 try
                 {
-                    SendRequest("disconnect", "{\"restart\":false}", DisconnectCB);
+                    //SendRequest("disconnect", "{\"restart\":false}", DisconnectCB);
+                    SendRequest("disconnect", "{\"terminateDebuggee\":true}", DisconnectCB);
                 }
                 catch (Exception ex) //可能调试进程异常关闭
                 {
@@ -246,26 +250,13 @@ namespace appbox.Design
 
         private void DisconnectCB(string body)
         {
-            _channel.StopReceive();
-
-            //先清理资源
-            lock (_readLock)
+            if (!_process.HasExited)
             {
-                _bufferOffset = 0;
-                _bodyLen = _headEndIndex = -1;
+                Log.Warn("Debuggee has not terminated");
+                _process.Close();
             }
-            DebugSessionManager.Instance.RemoveSession(Session.SessionID);
-
-            //再等待进程退出, 注意：有时候调试进程不终止，待深究
-            if (!_process.WaitForExit(300))
-            {
-                _process.Kill();
-                _process.WaitForExit();
-            }
-            _process.Close();
             _process = null;
 
-            Interlocked.Exchange(ref _runningFlag, 0);
             Log.Debug("调试器进程已退出");
         }
         #endregion
@@ -318,38 +309,42 @@ namespace appbox.Design
             //TODO:暂简单实现组包
             var tempBuffer = new byte[512];
             int len;
-            while (Thread.VolatileRead(ref _runningFlag) != 0
-                && _process != null && !_process.HasExited/*netcoredbg意外crash*/)
+            while (_process != null)
             {
                 try
                 {
                     len = await _process.StandardOutput.BaseStream.ReadAsync(tempBuffer, 0, tempBuffer.Length);
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
                     len = 0;
-                    Log.Warn("读取调试器输出错误");
+                    Log.Warn($"Read debuggee output error: {ex.Message}");
                 }
+                if (len <= 0) break;
 
-                if (len > 0)
+                lock (_readLock)
                 {
-                    lock (_readLock)
+                    var left = _buffer.Length - _bufferOffset;
+                    if (left < len) //空间不够扩容
                     {
-                        var left = _buffer.Length - _bufferOffset;
-                        if (left < len) //空间不够扩容
-                        {
-                            var newBuffer = new byte[_buffer.Length + len - left];
-                            Buffer.BlockCopy(_buffer, 0, newBuffer, 0, _bufferOffset);
-                            _buffer = newBuffer;
-                        }
-                        Buffer.BlockCopy(tempBuffer, 0, _buffer, _bufferOffset, len);
-                        _bufferOffset += len;
-
-                        // 开始组装消息
-                        BuildMessage();
+                        var newBuffer = new byte[_buffer.Length + len - left];
+                        Buffer.BlockCopy(_buffer, 0, newBuffer, 0, _bufferOffset);
+                        _buffer = newBuffer;
                     }
+                    Buffer.BlockCopy(tempBuffer, 0, _buffer, _bufferOffset, len);
+                    _bufferOffset += len;
+
+                    // 开始组装消息
+                    BuildMessage();
                 }
             }
+
+            lock (_readLock)
+            {
+                _bufferOffset = 0;
+                _bodyLen = _headEndIndex = -1;
+            }
+            Log.Debug("Stopped debuggee read loop.");
         }
 
         private void BuildMessage()
