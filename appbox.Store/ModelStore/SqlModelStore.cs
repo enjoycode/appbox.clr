@@ -225,7 +225,9 @@ namespace appbox.Store
         internal static async ValueTask<ModelBase> LoadModelAsync(ulong modelId)
         {
             var data = await LoadMetaDataAsync(Meta_Model, modelId.ToString());
-            return (ModelBase)DeserializeModel(data);
+            var model = (ModelBase)DeserializeModel(data);
+            model.AcceptChanges();
+            return model;
         }
 
         internal static async ValueTask InsertModelAsync(ModelBase model, DbTransaction txn)
