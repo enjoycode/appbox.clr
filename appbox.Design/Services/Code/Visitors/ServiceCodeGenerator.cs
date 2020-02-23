@@ -498,18 +498,6 @@ namespace appbox.Design
                             if (TypeHelper.IsEnumModel(ownerSymbol.ContainingType))
                                 return SyntaxFactory.ParseExpression($"\"{ownerSymbol.Name}\"").WithTriviaFrom(node);
                         }
-                        else
-                        {
-                            throw new NotImplementedException();
-                            //var enumType = TypeHelper.GetSymbolType(ownerSymbol);
-                            //if (TypeHelper.IsEnumModel(enumType as INamedTypeSymbol))
-                            //{
-                            //    var updateExp = memberAccess.Expression.Accept(this);
-                            //    var sr = enumType.ToString().Split('.');
-                            //    var newexp = $"AppBox.Core.EnumModel.ToString(AppBox.Core.RuntimeContext.Default,\"{sr[0]}.{sr[2]}\",{updateExp.ToString()})";
-                            //    return SyntaxFactory.ParseExpression(newexp).WithTriviaFrom(node);
-                            //}
-                        }
                     }
                 }
                 //TODO:处理Enum.Parse等方法
