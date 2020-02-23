@@ -271,7 +271,7 @@ namespace appbox.Store
                     break;
                 case EntityFieldType.DateTime:
                     defaultValue = dfm.DefaultValue.HasValue ? $"'{dfm.DefaultValue.Value.DateTimeValue}'" : "'1970-1-1'";
-                    sb.Append("timestamp ");
+                    sb.Append("timestamptz ");
                     break;
                 case EntityFieldType.UInt16:
                     defaultValue = dfm.DefaultValue.HasValue ? dfm.DefaultValue.Value.UInt16Value.ToString() : "0";
