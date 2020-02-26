@@ -16,8 +16,7 @@ namespace appbox.Store
     internal static class ModelStore
     {
 
-        private const byte Meta_App_Model_Dev_Counter = 0xAC;
-        private const byte Meta_App_Model_Usr_Counter = 0xAD;
+        //以下常量跟内置存储的MetaCF内的Key前缀一致
         private const byte Meta_Application = 0x0C;
         private const byte Meta_Model = 0x0D;
         private const byte Meta_Code = 0x0E;
@@ -25,6 +24,8 @@ namespace appbox.Store
         private const byte Meta_Service_Assembly = 0xA0;
         private const byte Meta_View_Assembly = 0xA1;
         private const byte Meta_View_Router = 0xA2;
+        private const byte Meta_App_Model_Dev_Counter = 0xAC;
+        private const byte Meta_App_Model_Usr_Counter = 0xAD;
 
         #region ====初始化====
         /// <summary>
@@ -427,13 +428,94 @@ namespace appbox.Store
         }
         #endregion
 
+        #region ====导出相关====
+        /// <summary>
+        /// 加载指定App的所有模型包，用于导出
+        /// </summary>
+        /// <param name="appName">eg: erp</param>
+        internal static async Task LoadToAppPackage(uint appId, string appName, Server.IAppPackage pkg)
+        {
+            var db = SqlStore.Default;
+            var esc = db.NameEscaper;
+            var appPrefix = $"{appName}.";
+            using var conn = await db.OpenConnectionAsync();
+            using var cmd = db.MakeCommand();
+            cmd.Connection = conn;
+            cmd.CommandText = $"Select meta,id,data From {esc}sys.Meta{esc} where meta<{Meta_View_Router}";
+            using var reader = await cmd.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
+            {
+                // 根据不同类型判断是否属于当前App
+                var metaType = reader.GetInt16(0);
+                var id = reader.GetString(1);
+                switch (metaType)
+                {
+                    case Meta_Application:
+                        {
+                            if (uint.Parse(id) == appId)
+                            {
+                                var appModel = (ApplicationModel)DeserializeModel((byte[])reader.GetValue(2)); //TODO: use GetStream
+                                pkg.Application = appModel;
+
+                            }
+                        }
+                        break;
+                    case Meta_Model:
+                        {
+                            ulong modelId = ulong.Parse(id);
+                            if (IdUtil.GetAppIdFromModelId(modelId) == appId)
+                            {
+                                var model = (ModelBase)DeserializeModel((byte[])reader.GetValue(2)); //TODO:同上
+                                model.AcceptChanges();
+                                pkg.Models.Add(model);
+                            }
+                        }
+                        break;
+                    case Meta_Code:
+                        {
+                            ulong modelId = ulong.Parse(id);
+                            if (IdUtil.GetAppIdFromModelId(modelId) == appId)
+                                pkg.SourceCodes.Add(modelId, (byte[])reader.GetValue(2));
+                        }
+                        break;
+                    case Meta_Folder:
+                        {
+                            var dotIndex = id.AsSpan().IndexOf('.');
+                            uint folderAppId = uint.Parse(id.AsSpan(0, dotIndex));
+                            if (folderAppId == appId)
+                            {
+                                var folder = (ModelFolder)DeserializeModel((byte[])reader.GetValue(2)); //TODO:同上
+                                pkg.Folders.Add(folder);
+                            }
+                        }
+                        break;
+                    case Meta_Service_Assembly:
+                        {
+                            if (id.AsSpan().StartsWith(appPrefix))
+                                pkg.ServiceAssemblies.Add(id, (byte[])reader.GetValue(2));
+                        }
+                        break;
+                    case Meta_View_Assembly:
+                        {
+                            if (id.AsSpan().StartsWith(appPrefix))
+                                pkg.ViewAssemblies.Add(id, (byte[])reader.GetValue(2));
+                        }
+                        break;
+                    default:
+                        Log.Warn($"Load unknown meta type: {metaType}");
+                        break;
+                }
+            }
+        }
+        #endregion
+
         #region ====Helpers====
         private static async Task<byte[]> LoadMetaDataAsync(byte metaType, string id)
         {
             var db = SqlStore.Default;
             var esc = db.NameEscaper;
-            using var conn = db.MakeConnection();
-            await conn.OpenAsync();
+            using var conn = await db.OpenConnectionAsync();
             using var cmd = db.MakeCommand();
             cmd.Connection = conn;
             cmd.CommandText = $"Select data From {esc}sys.Meta{esc} Where meta={metaType} And id='{id}'";
@@ -442,17 +524,19 @@ namespace appbox.Store
             byte[] metaData = null;
             if (await reader.ReadAsync())
             {
-                metaData = (byte[])reader.GetValue(0); //TODO:暂使用GetValue
+                metaData = (byte[])reader.GetValue(0); //TODO:Use GetStream
             }
             return metaData;
         }
 
+        /// <summary>
+        /// 加载所有指定meta类型并反序列化目标类型
+        /// </summary>
         private static async Task<T[]> LoadMetasAsync<T>(byte metaType)
         {
             var db = SqlStore.Default;
             var esc = db.NameEscaper;
-            using var conn = db.MakeConnection();
-            await conn.OpenAsync();
+            using var conn = await db.OpenConnectionAsync();
             using var cmd = db.MakeCommand();
             cmd.Connection = conn;
             cmd.CommandText = $"Select data From {esc}sys.Meta{esc} Where meta={metaType}";
@@ -461,7 +545,7 @@ namespace appbox.Store
             var list = new List<T>();
             while (await reader.ReadAsync())
             {
-                var meta = (T)DeserializeModel((byte[])reader.GetValue(0)); //TODO:暂使用GetValue
+                var meta = (T)DeserializeModel((byte[])reader.GetValue(0)); //TODO:Use GetStream
                 list.Add(meta);
             }
             return list.ToArray();

@@ -1,19 +1,22 @@
-﻿#if FUTURE
-
-using System;
+﻿using System;
+using System.IO;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using appbox.Models;
-using appbox.Server.Channel;
 using appbox.Runtime;
-using System.IO;
+using appbox.Serialization;
+using appbox.Server.Channel;
 
 namespace appbox.Controllers
 {
+    /// <summary>
+    /// 文件上传下载控制器
+    /// </summary>
     [ApiController]
     [Route("[controller]")]
     public sealed class BlobController : ControllerBase
     {
+#if FUTURE
 
         private static int fileIndex;
         /// <summary>
@@ -162,8 +165,6 @@ namespace appbox.Controllers
                 }
             });
         }
-
+#endif
     }
 }
-
-#endif

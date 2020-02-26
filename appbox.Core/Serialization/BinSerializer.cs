@@ -37,7 +37,9 @@ namespace appbox.Serialization
         private static readonly ByteSerializer ByteSerializer = new ByteSerializer();
         private static readonly BooleanSerializer BooleanSerializer = new BooleanSerializer();
         private static readonly Int32Serializer Int32Serializer = new Int32Serializer();
+        private static readonly UInt32Serializer UInt32Serializer = new UInt32Serializer();
         private static readonly Int64Serializer Int64Serializer = new Int64Serializer();
+        private static readonly UInt64Serializer UInt64Serializer = new UInt64Serializer();
         private static readonly GuidSerializer GuidSerializer = new GuidSerializer();
         private static readonly DateTimeSerializer DateTimeSerializer = new DateTimeSerializer();
         private static readonly StringSerializer StringSerializer = new StringSerializer();
@@ -54,7 +56,9 @@ namespace appbox.Serialization
             RegisterKnownType(BooleanSerializer);
             RegisterKnownType(ByteSerializer);
             RegisterKnownType(Int32Serializer);
+            RegisterKnownType(UInt32Serializer);
             RegisterKnownType(Int64Serializer);
+            RegisterKnownType(UInt64Serializer);
             RegisterKnownType(GuidSerializer);
             RegisterKnownType(DateTimeSerializer);
             RegisterKnownType(StringSerializer);

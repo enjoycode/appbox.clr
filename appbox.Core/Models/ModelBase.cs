@@ -10,7 +10,6 @@ namespace appbox.Models
     /// </summary>
     public abstract class ModelBase : IBinSerializable
     {
-
         #region ====Fields & Properties====
         /// <summary>
         /// 模型标识号 AppId + 流水号
@@ -126,6 +125,28 @@ namespace appbox.Models
                     default: throw new Exception("Deserialize_ObjectUnknownFieldIndex: " + GetType().Name);
                 }
             } while (propIndex != 0);
+        }
+        #endregion
+
+        #region ====Import====
+        internal virtual void Import()
+        {
+            Version -= 1; //注意:先-1，发布时+1
+            PersistentState = PersistentState.Detached;
+        }
+
+        internal virtual bool UpdateFrom(ModelBase from)
+        {
+            Version -= 1; //注意:先-1，发布时+1
+            if (Name != from.Name)
+            {
+                _originalName = Name;
+                Name = from.Name;
+            }
+            FolderId = from.FolderId;
+            PersistentState = PersistentState.Modified;
+
+            return true;
         }
         #endregion
     }

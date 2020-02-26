@@ -1,6 +1,7 @@
 ﻿using System;
 using appbox.Models;
 using appbox.Runtime;
+using appbox.Serialization;
 
 namespace appbox.Design
 {
@@ -9,7 +10,14 @@ namespace appbox.Design
     /// </summary>
     public sealed class DesignHub : IDesignContext, IDisposable //TODO: rename to DesignContext
     {
+        #region ====Static Ctor for register serializer====
+        static DesignHub()
+        {
+            BinSerializer.RegisterKnownType(new UserSerializer(PayloadType.AppPackage, typeof(AppPackage), () => new AppPackage()));
+        }
+        #endregion
 
+        #region ====Fields & Properties====
         /// <summary>
         /// 当前实例对应的开发者的会话信息
         /// </summary>
@@ -114,6 +122,7 @@ namespace appbox.Design
                 return _debugService;
             }
         }
+        #endregion
 
         #region ====Ctor====
         public DesignHub(ISessionInfo session)
