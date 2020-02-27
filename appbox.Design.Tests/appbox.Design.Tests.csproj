@@ -33,6 +33,7 @@
     <PackageReference Include="xunit" Version="2.3.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.3.1" />
     <DotNetCliToolReference Include="dotnet-xunit" Version="2.3.1" />
+    <PackageReference Include="Npgsql" Version="4.1.3.1" />
   </ItemGroup>
 
   <ItemGroup>
@@ -48,6 +49,7 @@
   <ItemGroup>
     <ProjectReference Include="..\appbox.Core\appbox.Core.csproj" />
     <ProjectReference Include="..\appbox.Design\appbox.Design.csproj" />
+    <ProjectReference Include="..\appbox.Store.PostgreSQL\appbox.Store.PostgreSQL.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Resources\" />

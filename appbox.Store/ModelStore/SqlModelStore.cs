@@ -409,8 +409,7 @@ namespace appbox.Store
         {
             var db = SqlStore.Default;
             var esc = db.NameEscaper;
-            using var conn = db.MakeConnection();
-            await conn.OpenAsync();
+            using var conn = await db.OpenConnectionAsync();
             using var cmd = db.MakeCommand();
             cmd.Connection = conn;
             cmd.CommandText = $"Select id,data From {esc}sys.Meta{esc} Where meta={Meta_View_Router}";
@@ -441,7 +440,7 @@ namespace appbox.Store
             using var conn = await db.OpenConnectionAsync();
             using var cmd = db.MakeCommand();
             cmd.Connection = conn;
-            cmd.CommandText = $"Select meta,id,data From {esc}sys.Meta{esc} where meta<{Meta_View_Router}";
+            cmd.CommandText = $"Select meta,id,data From {esc}sys.Meta{esc} Where meta<{Meta_View_Router} And model<>10";
             using var reader = await cmd.ExecuteReaderAsync();
 
             while (await reader.ReadAsync())

@@ -36,5 +36,26 @@ namespace appbox.Controllers
             //    Log.Warn($"Export error: {ex.Message}");
             //}
         }
+
+        /// <summary>
+        /// 导入应用模型包
+        /// </summary>
+        [HttpPost()]
+        public IActionResult Import()
+        {
+            if (Request.Form.Files.Count != 1)
+                return BadRequest("Please upload one pkg file");
+
+            //设置当前用户会话
+            RuntimeContext.Current.CurrentSession = HttpContext.Session.LoadWebSession();
+            //TODO:结合前端修改上传方式
+            var formFile = Request.Form.Files[0];
+            using var ss = formFile.OpenReadStream();
+            //反序列化
+            var bs = new BinSerializer(ss);
+            var appPkg = (Design.AppPackage)bs.Deserialize();
+            Log.Warn(appPkg.Application.Name);
+            return Ok();
+        }
     }
 }
