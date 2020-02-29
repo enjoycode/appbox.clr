@@ -41,10 +41,10 @@ namespace appbox.Controllers
         /// 导入应用模型包
         /// </summary>
         [HttpPost()]
-        public IActionResult Import()
+        public async Task<IActionResult> Import()
         {
             if (Request.Form.Files.Count != 1)
-                return BadRequest("Please upload one pkg file");
+                return BadRequest("Please upload one apk file");
 
             //设置当前用户会话
             RuntimeContext.Current.CurrentSession = HttpContext.Session.LoadWebSession();
@@ -54,7 +54,7 @@ namespace appbox.Controllers
             //反序列化
             var bs = new BinSerializer(ss);
             var appPkg = (Design.AppPackage)bs.Deserialize();
-            Log.Warn(appPkg.Application.Name);
+            await Design.AppStoreService.Import(appPkg);
             return Ok();
         }
     }

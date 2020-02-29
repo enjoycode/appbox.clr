@@ -403,5 +403,62 @@ namespace appbox.Models
             return Id.CompareTo(other.Id);
         }
         #endregion
+
+        #region ====导入方法====
+        internal override void Import()
+        {
+            base.Import();
+            foreach (var member in Members)
+            {
+                member.Import(this);
+            }
+            StoreOptions?.Import();
+        }
+
+        internal override bool UpdateFrom(ModelBase other)
+        {
+            var from = (EntityModel)other;
+            bool changed = base.UpdateFrom(other);
+
+            //导入成员
+            var memberComparer = new MemberComparer();
+            var removedMembers = Members.Except(from.Members, memberComparer);
+            foreach (var removedMember in removedMembers)
+            {
+                RemoveMember(removedMember.Name);
+            }
+            var addedMembers = from.Members.Except(Members, memberComparer);
+            foreach (var addedMember in addedMembers)
+            {
+                addedMember.Import(this);
+                AddMember(addedMember);
+            }
+            var otherMembers = Members.Intersect(from.Members, memberComparer);
+            foreach (var member in otherMembers)
+            {
+                member.UpdateFrom(from.Members.Single(t => t.MemberId == member.MemberId));
+            }
+
+            //导入存储选项
+            StoreOptions?.UpdateFrom(from.StoreOptions);
+
+            return changed;
+        }
+
+        private class MemberComparer : IEqualityComparer<EntityMemberModel>
+        {
+            public bool Equals(EntityMemberModel x, EntityMemberModel y)
+            {
+                if (ReferenceEquals(x, y)) return true;
+                if (x == null || y == null) return false;
+                return x.MemberId == y.MemberId;
+            }
+
+            public int GetHashCode(EntityMemberModel obj)
+            {
+                return obj == null ? 0 : obj.MemberId.GetHashCode();
+            }
+        }
+        #endregion
     }
 }

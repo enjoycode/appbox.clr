@@ -278,6 +278,18 @@ namespace appbox.Models
 
         public void ReadFromJson(ref Utf8JsonReader reader, ReadedObjects objrefs) => throw new NotSupportedException();
         #endregion
+
+        #region ====导入方法====
+        void IEntityStoreOptions.Import()
+        {
+            throw new NotImplementedException();
+        }
+
+        void IEntityStoreOptions.UpdateFrom(IEntityStoreOptions other)
+        {
+            throw new NotImplementedException();
+        }
+        #endregion
     }
 
 }

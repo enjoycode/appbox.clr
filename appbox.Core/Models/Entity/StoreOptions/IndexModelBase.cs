@@ -136,5 +136,18 @@ namespace appbox.Models
 
         public void ReadFromJson(ref Utf8JsonReader reader, ReadedObjects objrefs) => throw new NotSupportedException();
         #endregion
+
+        #region ====导入方法====
+        internal void Import()
+        {
+            PersistentState = PersistentState.Detached;
+        }
+
+        internal void UpdateFrom(IndexModelBase from)
+        {
+            //TODO: fix this
+            PersistentState = PersistentState.Modified;
+        }
+        #endregion
     }
 }

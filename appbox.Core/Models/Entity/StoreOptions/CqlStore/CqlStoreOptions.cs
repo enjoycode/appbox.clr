@@ -182,52 +182,52 @@ namespace appbox.Models
         #endregion
 
         #region ====导入方法====
-        //void IEntityStoreOptions.Import()
-        //{
-        //    if (HasMaterializedView)
-        //    {
-        //        for (int i = 0; i < _materializedViews.Count; i++)
-        //        {
-        //            _materializedViews[i].Import();
-        //        }
-        //    }
-        //}
+        void IEntityStoreOptions.Import()
+        {
+            if (HasMaterializedView)
+            {
+                for (int i = 0; i < _materializedViews.Count; i++)
+                {
+                    _materializedViews[i].Import();
+                }
+            }
+        }
 
-        //void IEntityStoreOptions.UpdateFrom(IEntityStoreOptions other)
-        //{
-        //    var from = (CqlStoreOptions)other;
-        //    if (from != null && from.HasMaterializedView)
-        //    {
-        //        var mvComparer = new ViewComparer();
-        //        var addedViews = from.MaterializedViews.Except(MaterializedViews, mvComparer);
-        //        foreach (var addedView in addedViews)
-        //        {
-        //            addedView.Import();
-        //            this.MaterializedViews.Add(addedView);
-        //        }
-        //        var removedViews = MaterializedViews.Except(from.MaterializedViews, mvComparer);
-        //        foreach (var removedView in removedViews)
-        //        {
-        //            removedView.MarkDelete();
-        //        }
-        //        // 暂不需要更新
-        //        // var otherViews = this.MaterializedViews.Intersect(from.MaterializedViews, mvComparer);
-        //        // foreach (var otherView in otherViews)
-        //        // {
-        //        //     otherView.UpdateFrom(from.MaterializedViews.Single(t => t.Name == otherView.Name));
-        //        // }
-        //    }
-        //    else
-        //    {
-        //        if (HasMaterializedView)
-        //        {
-        //            for (int i = 0; i < _materializedViews.Count; i++)
-        //            {
-        //                _materializedViews[i].MarkDelete();
-        //            }
-        //        }
-        //    }
-        //}
+        void IEntityStoreOptions.UpdateFrom(IEntityStoreOptions other)
+        {
+            var from = (CqlStoreOptions)other;
+            if (from != null && from.HasMaterializedView)
+            {
+                var mvComparer = new ViewComparer();
+                var addedViews = from.MaterializedViews.Except(MaterializedViews, mvComparer);
+                foreach (var addedView in addedViews)
+                {
+                    addedView.Import();
+                    this.MaterializedViews.Add(addedView);
+                }
+                var removedViews = MaterializedViews.Except(from.MaterializedViews, mvComparer);
+                foreach (var removedView in removedViews)
+                {
+                    removedView.MarkDelete();
+                }
+                // 暂不需要更新
+                // var otherViews = this.MaterializedViews.Intersect(from.MaterializedViews, mvComparer);
+                // foreach (var otherView in otherViews)
+                // {
+                //     otherView.UpdateFrom(from.MaterializedViews.Single(t => t.Name == otherView.Name));
+                // }
+            }
+            else
+            {
+                if (HasMaterializedView)
+                {
+                    for (int i = 0; i < _materializedViews.Count; i++)
+                    {
+                        _materializedViews[i].MarkDelete();
+                    }
+                }
+            }
+        }
 
         private class ViewComparer : IEqualityComparer<CqlMaterializedView>
         {

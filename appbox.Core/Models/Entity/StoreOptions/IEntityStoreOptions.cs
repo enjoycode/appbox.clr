@@ -19,8 +19,8 @@ namespace appbox.Models
 
         void AcceptChanges();
 
-        //void Import();
+        void Import();
 
-        //void UpdateFrom(IEntityStoreOptions other);
+        void UpdateFrom(IEntityStoreOptions other);
     }
 }

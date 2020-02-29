@@ -133,6 +133,25 @@ namespace appbox.Models
 
         void IJsonSerializable.ReadFromJson(ref Utf8JsonReader reader, ReadedObjects objrefs) => throw new NotSupportedException();
         #endregion
+
+        #region ====导入方法====
+        internal void Import(EntityModel owner)
+        {
+            Owner = owner ?? throw new ArgumentNullException();
+            PersistentState = PersistentState.Detached;
+        }
+
+        internal virtual void UpdateFrom(EntityMemberModel from)
+        {
+            if (Name != from.Name)
+            {
+                Name = from.Name;
+                //TODO:如果字典表重构，从字典表中移除旧名称，添加新名称 Owner.RenameMember()
+            }
+            AllowNull = from.AllowNull;
+            Comment = from.Comment;
+        }
+        #endregion
     }
 
 }

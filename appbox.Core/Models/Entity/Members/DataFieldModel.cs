@@ -277,5 +277,24 @@ namespace appbox.Models
             }
         }
         #endregion
+
+        #region ====导入方法====
+        internal override void UpdateFrom(EntityMemberModel other)
+        {
+            base.UpdateFrom(other);
+
+            var from = (DataFieldModel)other;
+            //先判断是否数据类型变更, TODO:默认值是否变更
+            if (DataType != from.DataType || Length != from.Length || Decimals != from.Decimals)
+                OnDataTypeChanged();
+            //复制属性
+            DataType = from.DataType;
+            IsForeignKey = from.IsForeignKey;
+            Length = from.Length;
+            Decimals = from.Decimals;
+            EnumModelId = from.EnumModelId;
+            DefaultValue = from.DefaultValue;
+        }
+        #endregion
     }
 }

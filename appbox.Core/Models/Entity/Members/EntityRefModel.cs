@@ -175,6 +175,14 @@ namespace appbox.Models
             writer.WriteList(RefModelIds, objrefs);
         }
         #endregion
+
+        #region ====导入方法====
+        internal override void UpdateFrom(EntityMemberModel from)
+        {
+            base.UpdateFrom(from);
+            //TODO:聚合引用添加或删除处理，以及规则变更等
+        }
+        #endregion
     }
 
     public enum EntityRefActionRule : byte

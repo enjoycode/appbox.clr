@@ -13,5 +13,6 @@ namespace appbox.Models
             FieldWithOrder[] fields, ushort[] storingFields = null)
             : base(owner, name, unique, fields, storingFields) { }
         #endregion
+
     }
 }

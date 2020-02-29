@@ -27,15 +27,15 @@ namespace appbox.Models
         public string RoutePath { get; set; }
 
         /// <summary>
+        /// 列入路由或菜单所对应的权限模型标识
+        /// </summary>
+        public ulong PermissionID { get; set; }
+
+        /// <summary>
         /// 仅用于模型存储
         /// </summary>
         internal string RouteStoredPath =>
             string.IsNullOrEmpty(RouteParent) ? RoutePath : $"{RouteParent};{RoutePath}";
-
-        /// <summary>
-        /// 列入路由或菜单所对应的权限模型标识
-        /// </summary>
-        public ulong PermissionID { get; set; }
         #endregion
 
         #region ====Ctor====
@@ -95,20 +95,19 @@ namespace appbox.Models
         #endregion
 
         #region ====导入方法====
-        //public override bool UpdateFrom(ModelBase other)
-        //{
-        //    var from = (ViewModel)other;
-        //    bool changed = base.UpdateFrom(other);
+        internal override bool UpdateFrom(ModelBase other)
+        {
+            var from = (ViewModel)other;
+            bool changed = base.UpdateFrom(other);
 
-        //    //同步属性
-        //    this.SourceCode = from.SourceCode;
-        //    this.RuntimeCode = from.RuntimeCode;
-        //    this.Flag = from.Flag;
-        //    this.PermissionID = from.PermissionID;
-        //    this.RoutePath = from.RoutePath;
+            //同步属性
+            Flag = from.Flag;
+            RouteParent = from.RouteParent;
+            RoutePath = from.RoutePath;
+            PermissionID = from.PermissionID;
 
-        //    return changed;
-        //}
+            return changed;
+        }
         #endregion
 
     }

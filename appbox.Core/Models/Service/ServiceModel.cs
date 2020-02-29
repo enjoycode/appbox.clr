@@ -64,19 +64,16 @@ namespace appbox.Models
         #endregion
 
         #region ====导入方法====
-        //public override bool UpdateFrom(ModelBase other)
-        //{
-        //    var from = (ServiceModel)other;
-        //    bool changed = base.UpdateFrom(other);
+        internal override bool UpdateFrom(ModelBase other)
+        {
+            var from = (ServiceModel)other;
+            bool changed = base.UpdateFrom(other);
 
-        //    //同步属性
-        //    this._dummyCode = from._dummyCode;
-        //    this._sourceCode = from._sourceCode;
-        //    this._references = from._references;
-        //    this._assembly = from._assembly;
+            //同步属性
+            _references = from._references;
 
-        //    return changed;
-        //}
+            return changed;
+        }
         #endregion
 
     }
