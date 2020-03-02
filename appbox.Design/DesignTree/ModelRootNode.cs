@@ -14,33 +14,18 @@ namespace appbox.Design
         #region ====Fields & Properties====
         public override DesignNodeType NodeType => DesignNodeType.ModelRootNode;
 
-        internal override int SortNo
+        internal override int SortNo => TargetType switch
         {
-            get
-            {
-                switch (TargetType)
-                {
-                    case ModelType.Entity:
-                        return 0;
-                    case ModelType.Service:
-                        return 1;
-                    case ModelType.View:
-                        return 2;
-                    case ModelType.Workflow:
-                        return 3;
-                    case ModelType.Report:
-                        return 4;
-                    case ModelType.Enum:
-                        return 5;
-                    case ModelType.Event:
-                        return 6;
-                    case ModelType.Permission:
-                        return 7;
-                    default:
-                        return 0;
-                }
-            }
-        }
+            ModelType.Entity => 0,
+            ModelType.Service => 1,
+            ModelType.View => 2,
+            ModelType.Workflow => 3,
+            ModelType.Report => 4,
+            ModelType.Enum => 5,
+            ModelType.Event => 6,
+            ModelType.Permission => 7,
+            _ => 0,
+        };
 
         internal uint AppID => ((ApplicationNode)Parent).Model.Id;
 

@@ -74,6 +74,9 @@ namespace appbox.Models
                 PersistentState = PersistentState.Modified;
         }
 
+        /// <summary>
+        /// 将模型标为已删除
+        /// </summary>
         internal protected void MarkDeleted()
         {
             if (PersistentState != PersistentState.Detached)

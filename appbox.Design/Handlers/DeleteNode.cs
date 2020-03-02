@@ -7,6 +7,9 @@ using OmniSharp.Mef;
 
 namespace appbox.Design
 {
+    /// <summary>
+    /// 删除模型、文件夹或整个应用
+    /// </summary>
     sealed class DeleteNode : IRequestHandler
     {
         public async Task<object> Handle(DesignHub hub, InvokeArgs args)
@@ -20,11 +23,11 @@ namespace appbox.Design
                 || (deleteNode.NodeType == DesignNodeType.FolderNode && deleteNode.Nodes.Count == 0)))
                 throw new Exception("Can not delete it.");
 
-            DesignNode rootNode;
+            DesignNode rootNode = null;
             if (deleteNode is ModelNode modelNode)
                 rootNode = await DeleteModelNode(hub, modelNode);
-            else if (deleteNode is ApplicationNode)
-                throw ExceptionHelper.NotImplemented(); //DeleteApplicationNode(hub, deleteNode);
+            else if (deleteNode is ApplicationNode appNode)
+                await DeleteApplicationNode(hub, appNode);
             else
                 throw ExceptionHelper.NotImplemented(); //rootNode = DeleteFolderNode(hub, deleteNode);
 
@@ -83,15 +86,50 @@ namespace appbox.Design
             }
             // 移除对应节点
             rootNode.RemoveModel(node);
-            // 删除 Roslyn相关
+            // 删除Roslyn相关
+            RemoveRoslynFromModelNode(hub, node);
+
+            return rootNodeHasCheckout ? null : rootNode;
+        }
+
+        private static async Task DeleteApplicationNode(DesignHub hub, ApplicationNode appNode)
+        {
+            //TODO:*****暂简单实现，待实现: 签出所有子节点，判断有无其他应用的引用
+            //TODO:考虑删除整个应用前自动导出备份
+
+            //先组包用现有PublishService发布(删除)
+            var pkg = new PublishPackage();
+            var modelNodes = appNode.GetAllModelNodes();
+            foreach (var modelNode in modelNodes)
+            {
+                if (modelNode.Model.PersistentState != PersistentState.Detached)
+                {
+                    modelNode.Model.MarkDeleted();
+                    pkg.Models.Add(modelNode.Model);
+                    //不用加入需要删除的相关代码及组件
+                }
+
+                //删除所有Roslyn相关
+                RemoveRoslynFromModelNode(hub, modelNode);
+            }
+            //TODO:加入待删除的根级文件夹
+            //TODO:暂使用PublishService.PublishAsync
+            await PublishService.PublishAsync(hub, pkg, $"Delete Application: {appNode.Model.Name}");
+
+            //TODO:清理Staged(只清理当前删除的App相关的)
+
+            //最后移除ApplicationNode
+            hub.DesignTree.AppRootNode.Nodes.Remove(appNode);
+        }
+
+        private static void RemoveRoslynFromModelNode(DesignHub hub, ModelNode node)
+        {
             if (node.RoslynDocumentId != null)
                 hub.TypeSystem.RemoveDocument(node.RoslynDocumentId);
             if (node.AsyncProxyDocumentId != null)
                 hub.TypeSystem.RemoveDocument(node.AsyncProxyDocumentId);
             if (node.ServiceProjectId != null) //注意：服务模型移除整个虚拟项目
                 hub.TypeSystem.RemoveServiceProject(node.ServiceProjectId);
-
-            return rootNodeHasCheckout ? null : rootNode;
         }
     }
 }

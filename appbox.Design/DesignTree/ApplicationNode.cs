@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using appbox.Models;
 
@@ -87,6 +88,17 @@ namespace appbox.Design
                 if (Nodes[i] is ModelRootNode modelRootNode)
                     modelRootNode.CheckinAllNodes();
             }
+        }
+
+        internal IList<ModelNode> GetAllModelNodes()
+        {
+            var list = new List<ModelNode>();
+            for (int i = 0; i < Nodes.Count; i++)
+            {
+                if (Nodes[i] is ModelRootNode modelRootNode)
+                    list.AddRange(modelRootNode.GetAllModelNodes());
+            }
+            return list;
         }
 
     }

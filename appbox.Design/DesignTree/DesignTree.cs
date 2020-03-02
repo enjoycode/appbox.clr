@@ -207,8 +207,7 @@ namespace appbox.Design
             Guid folderId = new Guid(id); //注意：id为Guid形式
             for (int i = 0; i < AppRootNode.Nodes.Count; i++)
             {
-                var appNode = AppRootNode.Nodes[i] as ApplicationNode;
-                if (appNode != null)
+                if (AppRootNode.Nodes[i] is ApplicationNode appNode)
                 {
                     var folderNode = appNode.FindFolderNode(folderId);
                     if (folderNode != null)

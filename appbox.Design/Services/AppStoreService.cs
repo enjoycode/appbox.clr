@@ -121,18 +121,7 @@ namespace appbox.Design
             {
                 removedModel.MarkDeleted();
                 publish.Models.Add(removedModel);
-                if (removedModel.ModelType == ModelType.Service)
-                {
-                    publish.SourceCodes.Add(removedModel.Id, null);
-                    var key = $"{from.Application.Name}.Services.{removedModel.Name}";
-                    publish.ServiceAssemblies.Add(key, null);
-                }
-                else if (removedModel.ModelType == ModelType.View)
-                {
-                    publish.SourceCodes.Add(removedModel.Id, null);
-                    var key = $"{from.Application.Name}.Views.{removedModel.Name}";
-                    publish.ViewAssemblies.Add(key, null);
-                }
+                //删除模型的相关代码组件等由PublishService处理，不用再加入
             }
             //}
             var otherModels = local.Models.Intersect(from.Models, modelComparer);

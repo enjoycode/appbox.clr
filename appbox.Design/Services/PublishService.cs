@@ -166,6 +166,7 @@ namespace appbox.Design
         /// </summary>
         internal static async Task PublishAsync(DesignHub hub, PublishPackage package, string commitMessage)
         {
+            //先根据依赖关系排序
             package.SortAllModels();
 
 #if FUTURE
@@ -250,7 +251,9 @@ namespace appbox.Design
                 await ModelStore.UpsertFolderAsync(folder, txn);
             }
 
-            //保存模型，注意映射至系统存储的实体模型的变更与删除暂由ModelStore处理，映射至SqlStore的DDL暂在这里处理
+            //保存模型，注意:
+            //1.映射至系统存储的实体模型的变更与删除暂由ModelStore处理，映射至SqlStore的DDL暂在这里处理
+            //2.删除的模型同时删除相关代码及编译好的组件，包括视图模型的相关路由
             foreach (var model in package.Models)
             {
                 switch (model.PersistentState)
@@ -288,7 +291,6 @@ namespace appbox.Design
                     case PersistentState.Unchanged: //TODO:临时
                     case PersistentState.Modified:
                         {
-                            //TODO:判断服务及视图模型是否改名，是则将旧名称加入package内在下面删除掉旧的
                             await ModelStore.UpdateModelAsync(model, txn, aid => hub.DesignTree.FindApplicationNode(aid).Model);
                             if (model.ModelType == ModelType.Entity)
                             {
@@ -305,6 +307,7 @@ namespace appbox.Design
                                     await cqlStore.AlterTableAsync(em);
                                 }
                             }
+                            //TODO:服务模型重命名删除旧的Assembly
                             else if (model.ModelType == ModelType.View)
                             {
                                 var viewModel = (ViewModel)model;
@@ -372,7 +375,6 @@ namespace appbox.Design
             //保存服务模型编译好的组件
             foreach (var serviceName in package.ServiceAssemblies.Keys)
             {
-                //TODO:Value=null的删除
                 var asmData = package.ServiceAssemblies[serviceName];
                 await ModelStore.UpsertAssemblyAsync(true, serviceName, asmData, txn);
             }
@@ -380,7 +382,6 @@ namespace appbox.Design
             //保存视图模型编译好的运行时代码
             foreach (var viewName in package.ViewAssemblies.Keys)
             {
-                //TODO:Value=null的删除
                 var asmData = package.ViewAssemblies[viewName];
                 await ModelStore.UpsertAssemblyAsync(false, viewName, asmData, txn);
             }

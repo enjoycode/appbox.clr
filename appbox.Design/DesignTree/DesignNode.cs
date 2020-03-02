@@ -188,7 +188,7 @@ namespace appbox.Design
     public sealed class NodeCollection
     {
 
-        private DesignNode owner;
+        private readonly DesignNode owner;
         private readonly List<DesignNode> nodes;
 
         public int Count => nodes.Count;
@@ -234,7 +234,7 @@ namespace appbox.Design
 
         public void Remove(DesignNode item)
         {
-            var index = this.nodes.IndexOf(item);
+            var index = nodes.IndexOf(item);
             if (index >= 0)
             {
                 item.Parent = null;
@@ -244,11 +244,11 @@ namespace appbox.Design
 
         public void Clear()
         {
-            for (int i = 0; i < this.nodes.Count; i++)
+            for (int i = 0; i < nodes.Count; i++)
             {
-                this.nodes[i].Parent = null;
+                nodes[i].Parent = null;
             }
-            this.nodes.Clear();
+            nodes.Clear();
         }
 
         public DesignNode Find(Predicate<DesignNode> match)

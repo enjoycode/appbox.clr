@@ -11,9 +11,18 @@ namespace appbox.Design
     {
         public List<ModelBase> Models { get; protected set; }
         public List<ModelFolder> Folders { get; protected set; }
-        public Dictionary<ulong, byte[]> SourceCodes { get; protected set; } //Key=ModelId
-        public Dictionary<string, byte[]> ServiceAssemblies { get; protected set; } //Value=null表示重命名后需要删除的
-        public Dictionary<string, byte[]> ViewAssemblies { get; protected set; } //Value=null同上
+        /// <summary>
+        /// 新建或更新的模型的虚拟代码，Key=ModelId
+        /// </summary>
+        public Dictionary<ulong, byte[]> SourceCodes { get; protected set; }
+        /// <summary>
+        /// 新建或更新的编译好的服务组件, Key=xxx.Services.XXXX
+        /// </summary>
+        public Dictionary<string, byte[]> ServiceAssemblies { get; protected set; }
+        /// <summary>
+        /// 新建或更新的视图组件, Key=xxx.Views.XXXX
+        /// </summary>
+        public Dictionary<string, byte[]> ViewAssemblies { get; protected set; }
 
         public PublishPackage()
         {
@@ -31,12 +40,23 @@ namespace appbox.Design
         {
             Models.Sort((a, b) =>
             {
+                //先将标为删除的排在前面
+                if (a.PersistentState == Data.PersistentState.Deleted
+                        && b.PersistentState != Data.PersistentState.Deleted)
+                    return -1;
+                if (a.PersistentState != Data.PersistentState.Deleted
+                        && b.PersistentState == Data.PersistentState.Deleted)
+                    return 1;
+                //后面根据类型及依赖关系排序
                 if (a.ModelType != b.ModelType)
                     return a.ModelType.CompareTo(b.ModelType);
-
                 if (a.ModelType == ModelType.Entity)
+                {
+                    //注意如果都标为删除需要倒序
+                    if (a.PersistentState == Data.PersistentState.Deleted)
+                        return ((EntityModel)b).CompareTo((EntityModel)a);
                     return ((EntityModel)a).CompareTo((EntityModel)b);
-
+                }
                 return string.Compare(a.Name, b.Name, StringComparison.Ordinal);
             });
         }
