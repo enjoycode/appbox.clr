@@ -63,12 +63,12 @@ namespace appbox.Models
             bs.Write(DevModelIdSeq, 2);
             bs.Write(Owner, 3);
             bs.Write(Name, 4);
-            bs.Write((uint)0);
+            bs.Write(0u);
         }
 
         void IBinSerializable.ReadObject(BinSerializer bs)
         {
-            uint propIndex = 0;
+            uint propIndex;
             do
             {
                 propIndex = bs.ReadUInt32();

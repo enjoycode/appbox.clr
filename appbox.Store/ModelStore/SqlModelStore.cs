@@ -84,7 +84,7 @@ namespace appbox.Store
         }
         #endregion
 
-        #region ====模型相关操作====
+        #region ====序列化====
         /// <summary>
         /// Serializes the model.
         /// </summary>
@@ -112,11 +112,12 @@ namespace appbox.Store
 
             return result;
         }
+        #endregion
 
+        #region ====模型相关操作====
         internal static async ValueTask CreateApplicationAsync(ApplicationModel app)
         {
-            using var conn = SqlStore.Default.MakeConnection();
-            await conn.OpenAsync();
+            using var conn = await SqlStore.Default.OpenConnectionAsync();
             using var txn = conn.BeginTransaction();
             await CreateApplicationAsync(app, txn);
             txn.Commit();
@@ -128,6 +129,15 @@ namespace appbox.Store
             cmd.Connection = txn.Connection;
             cmd.Transaction = txn;
             BuildInsertMetaCommand(cmd, Meta_Application, app.Id.ToString(), ModelType.Application, SerializeModel(app), false);
+            await cmd.ExecuteNonQueryAsync();
+        }
+
+        internal static async ValueTask DeleteApplicationAsync(ApplicationModel app)
+        {
+            using var conn = await SqlStore.Default.OpenConnectionAsync();
+            using var cmd = SqlStore.Default.MakeCommand();
+            cmd.Connection = conn;
+            BuildDeleteMetaCommand(cmd, Meta_Application, app.Id.ToString());
             await cmd.ExecuteNonQueryAsync();
         }
 
