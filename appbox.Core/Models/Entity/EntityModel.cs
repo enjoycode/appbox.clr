@@ -187,19 +187,27 @@ namespace appbox.Models
                 throw new InvalidOperationException("Not supported for DTO");
         }
 
-        internal void AddMember(EntityMemberModel member)
+        /// <summary>
+        /// 添加成员
+        /// </summary>
+        /// <param name="member"></param>
+        /// <param name="byImport">是否导入的成员，是则不再生成标识</param>
+        internal void AddMember(EntityMemberModel member, bool byImport = false)
         {
             CheckDesignMode();
             CheckOwner(member.Owner);
 
-            //TODO:通过设计时上下文获取ApplicationModel是否导入，从而确认当前Layer
-            var layer = ModelLayer.DEV;
-            var seq = layer == ModelLayer.DEV ? ++_devMemberIdSeq : ++_usrMemberIdSeq;
-            if (seq >= MaxMemberId)
-                throw new Exception("MemberId out of range");
+            if (!byImport)
+            {
+                //TODO:通过设计时上下文获取ApplicationModel是否导入，从而确认当前Layer
+                var layer = ModelLayer.DEV;
+                var seq = layer == ModelLayer.DEV ? ++_devMemberIdSeq : ++_usrMemberIdSeq;
+                if (seq >= MaxMemberId)
+                    throw new Exception("MemberId out of range");
 
-            ushort memberId = (ushort)(seq << IdUtil.MEMBERID_SEQ_OFFSET | (ushort)layer << IdUtil.MEMBERID_LAYER_OFFSET);
-            member.InitMemberId(memberId);
+                ushort memberId = (ushort)(seq << IdUtil.MEMBERID_SEQ_OFFSET | (ushort)layer << IdUtil.MEMBERID_LAYER_OFFSET);
+                member.InitMemberId(memberId);
+            }
             Members.Add(member);
 
             if (!member.AllowNull) //注意仅none nullable
@@ -420,7 +428,7 @@ namespace appbox.Models
             var from = (EntityModel)other;
             bool changed = base.UpdateFrom(other);
 
-            //导入成员
+            //导入成员，TODO:处理不同Layer的成员
             var memberComparer = new MemberComparer();
             var removedMembers = Members.Except(from.Members, memberComparer);
             foreach (var removedMember in removedMembers)
@@ -431,7 +439,7 @@ namespace appbox.Models
             foreach (var addedMember in addedMembers)
             {
                 addedMember.Import(this);
-                AddMember(addedMember);
+                AddMember(addedMember, byImport: true);
             }
             var otherMembers = Members.Intersect(from.Members, memberComparer);
             foreach (var member in otherMembers)
@@ -441,6 +449,10 @@ namespace appbox.Models
 
             //导入存储选项
             StoreOptions?.UpdateFrom(from.StoreOptions);
+
+            //同步成员计数器
+            _devMemberIdSeq = Math.Max(_devMemberIdSeq, from._devMemberIdSeq);
+            //_usrMemberIdSeq = Math.Max(_usrMemberIdSeq, from._usrMemberIdSeq);
 
             return changed;
         }
