@@ -19,11 +19,11 @@ namespace appbox.Design
         /// </summary>
         public Dictionary<ulong, byte[]> SourceCodes { get; protected set; }
         /// <summary>
-        /// 新建或更新的编译好的服务组件, Key=xxx.Services.XXXX
+        /// 新建或更新的编译好的服务组件, Key=xxx.XXXX
         /// </summary>
         public Dictionary<string, byte[]> ServiceAssemblies { get; protected set; }
         /// <summary>
-        /// 新建或更新的视图组件, Key=xxx.Views.XXXX
+        /// 新建或更新的视图组件, Key=xxx.XXXX
         /// </summary>
         public Dictionary<string, byte[]> ViewAssemblies { get; protected set; }
 

@@ -33,7 +33,7 @@ namespace appbox.Design
                     var asmData = await CompileServiceAsync(hub, sm);
                     var appName = hub.DesignTree.FindApplicationNode(sm.AppId).Model.Name;
                     var fullName = $"{appName}.{sm.Name}";
-                    //TODO:重命名的需要加入待删除列表
+                    //重命名的已不再需要加入待删除列表，保存模型时已处理
                     package.ServiceAssemblies.Add(fullName, asmData);
                 }
             }

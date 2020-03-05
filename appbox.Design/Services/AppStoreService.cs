@@ -60,7 +60,7 @@ namespace appbox.Design
 
         private static void ImportApp(AppPackage pkg)
         {
-            throw new NotImplementedException();
+            throw new NotImplementedException("暂未实现直接导入应用包");
         }
 
         private static async Task UpdateApp(DesignHub ctx, AppPackage from, ApplicationModel localAppModel)
@@ -104,13 +104,13 @@ namespace appbox.Design
                 if (newModel.ModelType == ModelType.Service)
                 {
                     publish.SourceCodes.Add(newModel.Id, from.SourceCodes[newModel.Id]);
-                    var key = $"{from.Application.Name}.Services.{newModel.Name}";
+                    var key = $"{from.Application.Name}.{newModel.Name}";
                     publish.ServiceAssemblies.Add(key, from.ServiceAssemblies[key]);
                 }
                 else if (newModel.ModelType == ModelType.View)
                 {
                     publish.SourceCodes.Add(newModel.Id, from.SourceCodes[newModel.Id]);
-                    var key = $"{from.Application.Name}.Views.{newModel.Name}";
+                    var key = $"{from.Application.Name}.{newModel.Name}";
                     publish.ViewAssemblies.Add(key, from.ViewAssemblies[key]);
                 }
             }
@@ -132,13 +132,13 @@ namespace appbox.Design
                 if (model.ModelType == ModelType.Service)
                 {
                     publish.SourceCodes.Add(model.Id, from.SourceCodes[model.Id]);
-                    var key = $"{from.Application.Name}.Services.{model.Name}";
+                    var key = $"{from.Application.Name}.{model.Name}";
                     publish.ServiceAssemblies.Add(key, from.ServiceAssemblies[key]);
                 }
                 else if (model.ModelType == ModelType.View)
                 {
                     publish.SourceCodes.Add(model.Id, from.SourceCodes[model.Id]);
-                    var key = $"{from.Application.Name}.Views.{model.Name}";
+                    var key = $"{from.Application.Name}.{model.Name}";
                     publish.ViewAssemblies.Add(key, from.ViewAssemblies[key]);
                 }
             }
