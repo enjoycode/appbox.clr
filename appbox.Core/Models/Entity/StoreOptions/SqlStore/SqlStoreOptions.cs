@@ -106,7 +106,7 @@ namespace appbox.Models
             owner.CheckDesignMode();
             owner.CheckOwner(index.Owner);
 
-            //TODO:同上AddMember
+            //TODO:同AddMember获取当前Layer
             var layer = ModelLayer.DEV;
             var seq = layer == ModelLayer.DEV ? ++_devIndexIdSeq : ++_usrIndexIdSeq;
             if (seq >= MaxIndexId) //TODO:找空的
@@ -250,17 +250,17 @@ namespace appbox.Models
         #region ====导入方法====
         void IEntityStoreOptions.Import()
         {
-            if (HasIndexes)
+            if (!HasIndexes) return;
+
+            for (int i = 0; i < _indexes.Count; i++)
             {
-                for (int i = 0; i < this._indexes.Count; i++)
-                {
-                    _indexes[i].Import();
-                }
+                _indexes[i].Import();
             }
         }
 
         void IEntityStoreOptions.UpdateFrom(IEntityStoreOptions other)
         {
+            //TODO:支持主键变更后，更新主键设置
             var from = (SqlStoreOptions)other;
             if (from != null && from.HasIndexes)
             {
@@ -292,6 +292,10 @@ namespace appbox.Models
                     }
                 }
             }
+
+            //同步索引计数器
+            _devIndexIdSeq = Math.Max(_devIndexIdSeq, from._devIndexIdSeq);
+            //_usrIndexIdSeq = Math.Max(_usrIndexIdSeq, from._usrIndexIdSeq);
         }
 
         private class SqlIndexComparer : IEqualityComparer<SqlIndexModel>
