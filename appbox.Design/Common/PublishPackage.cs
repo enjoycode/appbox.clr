@@ -10,6 +10,9 @@ namespace appbox.Design
     class PublishPackage //等同于旧实现的PublishModels
     {
         public List<ModelBase> Models { get; protected set; }
+        /// <summary>
+        /// 需要保存或删除的模型根文件夹
+        /// </summary>
         public List<ModelFolder> Folders { get; protected set; }
         /// <summary>
         /// 新建或更新的模型的虚拟代码，Key=ModelId

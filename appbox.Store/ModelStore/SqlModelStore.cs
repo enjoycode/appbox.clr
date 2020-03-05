@@ -269,7 +269,7 @@ namespace appbox.Store
         }
 
         /// <summary>
-        /// 插入或更新文件夹
+        /// 插入或更新根文件夹
         /// </summary>
         internal static async ValueTask UpsertFolderAsync(ModelFolder folder, DbTransaction txn)
         {
@@ -283,6 +283,21 @@ namespace appbox.Store
             cmd.Transaction = txn;
             BuildDeleteMetaCommand(cmd, Meta_Folder, id);
             BuildInsertMetaCommand(cmd, Meta_Folder, id, ModelType.Folder, SerializeModel(folder), true);
+            await cmd.ExecuteNonQueryAsync();
+        }
+
+        /// <summary>
+        /// 删除根文件夹
+        /// </summary>
+        internal static async ValueTask DeleteFolderAsync(ModelFolder folder, DbTransaction txn)
+        {
+            if (folder.Parent != null)
+                throw new InvalidOperationException("Can't delete none root folder.");
+            var id = $"{folder.AppId.ToString()}.{(byte)folder.TargetModelType}"; //RootFolder.Id=Guid.Empty
+            using var cmd = SqlStore.Default.MakeCommand();
+            cmd.Connection = txn.Connection;
+            cmd.Transaction = txn;
+            BuildDeleteMetaCommand(cmd, Meta_Folder, id);
             await cmd.ExecuteNonQueryAsync();
         }
         #endregion

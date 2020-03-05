@@ -13,21 +13,27 @@ namespace appbox.Models
     {
 
         #region ====Fields & Properties====
+        /// <summary>
+        /// 根文件夹为null
+        /// </summary>
         public string Name { get; set; }
+
         public ModelFolder Parent { get; internal set; }
-        private List<ModelFolder> _childs;
 
         public uint AppId { get; private set; }
 
         public ModelType TargetModelType { get; private set; }
 
+        /// <summary>
+        /// 根文件夹为Guid.Empty
+        /// </summary>
         public Guid Id { get; private set; }
 
         public int SortNum { get; set; }
 
         public uint Version { get; internal set; } //TODO: remove?
 
-        public bool HasChilds => _childs != null && _childs.Count > 0;
+        private List<ModelFolder> _childs;
 
         public List<ModelFolder> Childs
         {
@@ -38,6 +44,13 @@ namespace appbox.Models
                 return _childs;
             }
         }
+
+        public bool HasChilds => _childs != null && _childs.Count > 0;
+
+        /// <summary>
+        /// 仅Root有效
+        /// </summary>
+        public bool IsDeleted { get; internal set; }
         #endregion
 
         #region ====Ctor====
@@ -70,7 +83,7 @@ namespace appbox.Models
         }
         #endregion
 
-        #region ====Methods====
+        #region ====Designtime Methods====
         /// <summary>
         /// 移除文件夹
         /// </summary>
@@ -87,7 +100,6 @@ namespace appbox.Models
                 return Parent.GetRoot();
             return this;
         }
-
         #endregion
 
         #region ====IBinSerializable Implements====
@@ -104,13 +116,14 @@ namespace appbox.Models
             else
             {
                 cf.Write(Version, 3);
+                cf.Write(IsDeleted, 9);
             }
             if (HasChilds)
-                cf.WriteList<ModelFolder>(_childs, 5);
+                cf.WriteList(_childs, 5);
             cf.Write(AppId, 6);
             cf.Write((byte)TargetModelType, 7);
 
-            cf.Write((uint)0);
+            cf.Write(0u);
         }
 
         public void ReadObject(BinSerializer cf)
@@ -129,8 +142,9 @@ namespace appbox.Models
                     case 6: AppId = cf.ReadUInt32(); break;
                     case 7: TargetModelType = (ModelType)cf.ReadByte(); break;
                     case 8: SortNum = cf.ReadInt32(); break;
+                    case 9: IsDeleted = cf.ReadBoolean(); break;
                     case 0: break;
-                    default: throw new Exception("Deserialize_ObjectUnknownFieldIndex: " + GetType().Name);
+                    default: throw new Exception($"Deserialize_ObjectUnknownFieldIndex: {GetType().Name}");
                 }
             } while (propIndex != 0);
         }
@@ -147,7 +161,7 @@ namespace appbox.Models
             Version = from.Version - 1; //注意：-1，发布时+1
             //TODO:暂简单同步处理
             Name = from.Name;
-            _childs = from._childs;
+            _childs = from._childs; //直接复制
             return true;
         }
         #endregion

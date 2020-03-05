@@ -179,7 +179,10 @@ namespace appbox.Design
                 if (disposing)
                 {
                     if (_debugService != null)
+                    {
                         _debugService.StopDebugger(force: true);
+                        _debugService = null;
+                    }
                 }
 
                 disposedValue = true;

@@ -101,6 +101,20 @@ namespace appbox.Design
             return list;
         }
 
+        /// <summary>
+        /// 获取所有根文件夹，仅用于删除整个App
+        /// </summary>
+        internal IList<ModelFolder> GetAllRootFolders()
+        {
+            var list = new List<ModelFolder>();
+            for (int i = 0; i < Nodes.Count; i++)
+            {
+                if (Nodes[i] is ModelRootNode modelRootNode && modelRootNode.RootFolder != null)
+                    list.Add(modelRootNode.RootFolder);
+            }
+            return list;
+        }
+
     }
 
 }

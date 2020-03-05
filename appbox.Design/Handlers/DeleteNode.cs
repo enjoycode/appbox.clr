@@ -112,7 +112,13 @@ namespace appbox.Design
                 //删除所有Roslyn相关
                 RemoveRoslynFromModelNode(hub, modelNode);
             }
-            //TODO:加入待删除的根级文件夹
+            //加入待删除的根级文件夹
+            var rootFolders = appNode.GetAllRootFolders();
+            foreach (var rootFolder in rootFolders)
+            {
+                rootFolder.IsDeleted = true;
+                pkg.Folders.Add(rootFolder);
+            }
             //TODO:暂使用PublishService.PublishAsync，且与删除ApplicationModel非事务
             await PublishService.PublishAsync(hub, pkg, $"Delete Application: {appNode.Model.Name}");
             //删除ApplicationModel

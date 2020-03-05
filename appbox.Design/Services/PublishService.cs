@@ -248,7 +248,10 @@ namespace appbox.Design
             //保存文件夹
             foreach (var folder in package.Folders)
             {
-                await ModelStore.UpsertFolderAsync(folder, txn);
+                if (folder.IsDeleted)
+                    await ModelStore.DeleteFolderAsync(folder, txn);
+                else
+                    await ModelStore.UpsertFolderAsync(folder, txn);
             }
 
             //保存模型，注意:
