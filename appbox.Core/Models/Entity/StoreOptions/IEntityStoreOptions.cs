@@ -19,8 +19,8 @@ namespace appbox.Models
 
         void AcceptChanges();
 
-        void Import();
+        void Import(EntityModel owner);
 
-        void UpdateFrom(IEntityStoreOptions other);
+        void UpdateFrom(EntityModel owner, IEntityStoreOptions other);
     }
 }

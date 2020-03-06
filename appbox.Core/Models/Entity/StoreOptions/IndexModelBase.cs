@@ -2,6 +2,7 @@
 using appbox.Data;
 using appbox.Serialization;
 using System.Text.Json;
+using System.Diagnostics;
 
 namespace appbox.Models
 {
@@ -138,8 +139,10 @@ namespace appbox.Models
         #endregion
 
         #region ====导入方法====
-        internal void Import()
+        internal void Import(EntityModel owner)
         {
+            Debug.Assert(owner != null);
+            Owner = owner;
             PersistentState = PersistentState.Detached;
         }
 
@@ -147,6 +150,7 @@ namespace appbox.Models
         {
             //TODO: fix this
             PersistentState = PersistentState.Modified;
+            Log.Warn("导入索引暂未实现");
         }
         #endregion
     }

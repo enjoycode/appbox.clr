@@ -182,7 +182,7 @@ namespace appbox.Models
         #endregion
 
         #region ====导入方法====
-        void IEntityStoreOptions.Import()
+        void IEntityStoreOptions.Import(EntityModel owner)
         {
             if (HasMaterializedView)
             {
@@ -193,7 +193,7 @@ namespace appbox.Models
             }
         }
 
-        void IEntityStoreOptions.UpdateFrom(IEntityStoreOptions other)
+        void IEntityStoreOptions.UpdateFrom(EntityModel owner, IEntityStoreOptions other)
         {
             var from = (CqlStoreOptions)other;
             if (from != null && from.HasMaterializedView)

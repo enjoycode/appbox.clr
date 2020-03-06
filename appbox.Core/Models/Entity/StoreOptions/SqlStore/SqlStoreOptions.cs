@@ -248,29 +248,24 @@ namespace appbox.Models
         #endregion
 
         #region ====导入方法====
-        void IEntityStoreOptions.Import()
+        void IEntityStoreOptions.Import(EntityModel owner)
         {
             if (!HasIndexes) return;
 
             for (int i = 0; i < _indexes.Count; i++)
             {
-                _indexes[i].Import();
+                _indexes[i].Import(owner);
             }
         }
 
-        void IEntityStoreOptions.UpdateFrom(IEntityStoreOptions other)
+        void IEntityStoreOptions.UpdateFrom(EntityModel owner, IEntityStoreOptions other)
         {
             //TODO:支持主键变更后，更新主键设置
             var from = (SqlStoreOptions)other;
             if (from != null && from.HasIndexes)
             {
                 var indexComparer = new SqlIndexComparer();
-                var addedIndexes = from.Indexes.Except(Indexes, indexComparer);
-                foreach (var addedIndex in addedIndexes)
-                {
-                    addedIndex.Import();
-                    Indexes.Add(addedIndex);
-                }
+                //注意顺序:删除的 then 更新的 then 新建的
                 var removedIndexes = Indexes.Except(from.Indexes, indexComparer);
                 foreach (var removedIndex in removedIndexes)
                 {
@@ -280,6 +275,13 @@ namespace appbox.Models
                 foreach (var otherIndex in otherIndexes)
                 {
                     otherIndex.UpdateFrom(from.Indexes.Single(t => t.IndexId == otherIndex.IndexId));
+                }
+                var addedIndexes = from.Indexes.Except(Indexes, indexComparer);
+                foreach (var addedIndex in addedIndexes)
+                {
+                    addedIndex.Import(owner);
+                    Indexes.Add(addedIndex);
+                    owner.OnPropertyChanged();
                 }
             }
             else

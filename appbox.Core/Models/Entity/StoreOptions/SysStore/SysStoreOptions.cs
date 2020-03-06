@@ -280,12 +280,12 @@ namespace appbox.Models
         #endregion
 
         #region ====导入方法====
-        void IEntityStoreOptions.Import()
+        void IEntityStoreOptions.Import(EntityModel owner)
         {
             throw new NotImplementedException();
         }
 
-        void IEntityStoreOptions.UpdateFrom(IEntityStoreOptions other)
+        void IEntityStoreOptions.UpdateFrom(EntityModel owner, IEntityStoreOptions other)
         {
             throw new NotImplementedException();
         }

@@ -420,7 +420,7 @@ namespace appbox.Models
             {
                 member.Import(this);
             }
-            StoreOptions?.Import();
+            StoreOptions?.Import(this);
         }
 
         internal override bool UpdateFrom(ModelBase other)
@@ -430,10 +430,16 @@ namespace appbox.Models
 
             //导入成员，TODO:处理不同Layer的成员
             var memberComparer = new MemberComparer();
+            //注意顺序:删除的 then 更新的 then 新建的
             var removedMembers = Members.Except(from.Members, memberComparer);
             foreach (var removedMember in removedMembers)
             {
                 RemoveMember(removedMember.Name);
+            }
+            var otherMembers = Members.Intersect(from.Members, memberComparer);
+            foreach (var member in otherMembers)
+            {
+                member.UpdateFrom(from.Members.Single(t => t.MemberId == member.MemberId));
             }
             var addedMembers = from.Members.Except(Members, memberComparer);
             foreach (var addedMember in addedMembers)
@@ -441,14 +447,9 @@ namespace appbox.Models
                 addedMember.Import(this);
                 AddMember(addedMember, byImport: true);
             }
-            var otherMembers = Members.Intersect(from.Members, memberComparer);
-            foreach (var member in otherMembers)
-            {
-                member.UpdateFrom(from.Members.Single(t => t.MemberId == member.MemberId));
-            }
 
             //导入存储选项
-            StoreOptions?.UpdateFrom(from.StoreOptions);
+            StoreOptions?.UpdateFrom(this, from.StoreOptions);
 
             //同步成员计数器
             _devMemberIdSeq = Math.Max(_devMemberIdSeq, from._devMemberIdSeq);
