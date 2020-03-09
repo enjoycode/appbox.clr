@@ -133,6 +133,15 @@ namespace appbox.Design
         }
         #endregion
 
+        /// <summary>
+        /// 临时方案:用于重新加载设计树时重置TypeSystem
+        /// </summary>
+        internal void ResetTypeSystem()
+        {
+            TypeSystem?.Dispose();
+            TypeSystem = new TypeSystem();
+        }
+
         #region ====DesignTimeModelContainer====
         public ApplicationModel GetApplicationModel(uint appId)
         {
@@ -141,9 +150,6 @@ namespace appbox.Design
 
         public EntityModel GetEntityModel(ulong modelID)
         {
-            if (!DesignTree.HasLoad) //注意：签出根文件夹重新加载导致该判断无效
-                throw new Exception("DesignTree has not load");
-
             var modelNode = DesignTree.FindModelNode(ModelType.Entity, modelID);
             if (modelNode != null)
                 return (EntityModel)modelNode.Model;
@@ -152,20 +158,18 @@ namespace appbox.Design
 
         internal EnumModel GetEnumModel(ulong modelID)
         {
-            throw ExceptionHelper.NotImplemented();
-            //if (this.DesignTree.HasLoad) //注意：签出根文件夹重新加载导致该判断无效
-            //{
-            //    string[] sr = modelID.Split('.');
-            //    var modelNode = this.DesignTree.FindModelNode(ModelType.Enum, sr[0], sr[1]);
-            //    if (modelNode != null)
-            //        return (EnumModel)modelNode.Model;
-            //}
-            //return RuntimeContext.Default.EnumModelContainer.GetModel(modelID);
+            var modelNode = DesignTree.FindModelNode(ModelType.Enum, modelID);
+            if (modelNode != null)
+                return (EnumModel)modelNode.Model;
+            throw new Exception($"Cannot find EntityModel: {modelID}");
         }
 
         internal PermissionModel GetPermissionModel(ulong modelID)
         {
-            throw ExceptionHelper.NotImplemented();
+            var modelNode = DesignTree.FindModelNode(ModelType.Permission, modelID);
+            if (modelNode != null)
+                return (PermissionModel)modelNode.Model;
+            throw new Exception($"Cannot find EntityModel: {modelID}");
         }
         #endregion
 
@@ -183,6 +187,7 @@ namespace appbox.Design
                         _debugService.StopDebugger(force: true);
                         _debugService = null;
                     }
+                    TypeSystem?.Dispose();
                 }
 
                 disposedValue = true;

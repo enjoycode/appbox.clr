@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using appbox.Data;
 using appbox.Models;
@@ -9,9 +10,7 @@ namespace appbox.Design
 {
     public sealed class DesignTree
     {
-
-        private int _loadFlag; //用于判断是否已加载过整个树
-        internal bool HasLoad => System.Threading.Volatile.Read(ref _loadFlag) == 2;
+        private int _loadingFlag; 
 
         /// <summary>
         /// 仅用于加载树时临时放入挂起的模型
@@ -33,9 +32,17 @@ namespace appbox.Design
         #region ====LoadMethod====
         internal async Task LoadNodesAsync()
         {
-            if (System.Threading.Interlocked.CompareExchange(ref _loadFlag, 1, 0) != 0)
-                throw new Exception("DesignTree has loaded or loading.");
+            if (Interlocked.CompareExchange(ref _loadingFlag, 1, 0) != 0)
+                throw new Exception("DesignTree are loading.");
 
+            //先判断是否已经加载过，是则清空准备重新加载
+            if (Nodes.Count > 0)
+            {
+                DesignHub.ResetTypeSystem();
+                Nodes.Clear();
+            }
+
+            //开始加载
             StoreRootNode = new DataStoreRootNode(this);
             Nodes.Add(StoreRootNode);
             AppRootNode = new ApplicationRootNode(this);
@@ -102,18 +109,18 @@ namespace appbox.Design
                 await DesignHub.TypeSystem.CreateModelDocumentAsync(n);
             }
 
-            System.Threading.Interlocked.Exchange(ref _loadFlag, 2);
+            Interlocked.Exchange(ref _loadingFlag, 0);
             //清空Staged
             Staged = null;
 
-            //#if DEBUG
-            //            System.Threading.ThreadPool.QueueUserWorkItem((s) =>
-            //            {
-            //                DesignHub.TypeSystem.DumpProjectErrors(DesignHub.TypeSystem.ModelProjectId);
-            //                //DesignHub.TypeSystem.DumpProjectErrors(DesignHub.TypeSystem.SyncSysServiceProjectId);
-            //                DesignHub.TypeSystem.DumpProjectErrors(DesignHub.TypeSystem.ServiceBaseProjectId);
-            //            });
-            //#endif
+#if DEBUG
+            ThreadPool.QueueUserWorkItem(s =>
+            {
+                DesignHub.TypeSystem.DumpProjectErrors(DesignHub.TypeSystem.ModelProjectId);
+                //DesignHub.TypeSystem.DumpProjectErrors(DesignHub.TypeSystem.SyncSysServiceProjectId);
+                DesignHub.TypeSystem.DumpProjectErrors(DesignHub.TypeSystem.ServiceBaseProjectId);
+            });
+#endif
         }
 
 #if DEBUG
@@ -122,7 +129,7 @@ namespace appbox.Design
         /// </summary>
         internal async Task LoadForTest(List<ApplicationModel> apps, List<ModelBase> models)
         {
-            if (System.Threading.Interlocked.CompareExchange(ref _loadFlag, 1, 0) != 0)
+            if (Interlocked.CompareExchange(ref _loadingFlag, 1, 0) != 0)
                 throw new Exception("DesignTree has loaded or loading.");
 
             StoreRootNode = new DataStoreRootNode(this);
@@ -150,7 +157,7 @@ namespace appbox.Design
                 await DesignHub.TypeSystem.CreateModelDocumentAsync(allModelNodes[i]);
             }
 
-            System.Threading.Interlocked.Exchange(ref _loadFlag, 2);
+            Interlocked.Exchange(ref _loadingFlag, 0);
 
             DesignHub.TypeSystem.DumpProjectErrors(DesignHub.TypeSystem.ModelProjectId);
             //DesignHub.TypeSystem.DumpProjectErrors(DesignHub.TypeSystem.SyncSysServiceProjectId);

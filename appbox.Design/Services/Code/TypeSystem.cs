@@ -19,7 +19,7 @@ namespace appbox.Design
     /// <summary>
     /// 每个开发人员会话的设计时上下文对应一个TypeSystem实例
     /// </summary>
-    sealed class TypeSystem //TODO: rename to VirtualSolution or Workspace?
+    sealed class TypeSystem : IDisposable //TODO: rename to VirtualSolution or Workspace?
     {
 
         #region ====Properties====
@@ -457,6 +457,27 @@ namespace appbox.Design
             {
                 Console.WriteLine("项目[{0}]存在错误: {1}", project.Name, err);
             }
+        }
+        #endregion
+
+        #region ====IDisposable Support====
+        private bool disposedValue = false;
+
+        private void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    Workspace.Dispose();
+                }
+                disposedValue = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
         }
         #endregion
     }
