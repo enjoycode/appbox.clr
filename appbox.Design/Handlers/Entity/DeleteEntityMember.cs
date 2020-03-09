@@ -23,7 +23,7 @@ namespace appbox.Design
             if (!modelNode.IsCheckoutByMe)
                 throw new Exception("Node has not checkout");
             var mm = model.GetMember(memberName, true);
-            //判断是否外键及被索引使 用,仅DataField
+            //判断是否外键及被索引使用,仅DataField
             if (mm.Type == EntityMemberType.DataField)
             {
                 var dfm = (DataFieldModel)mm;
@@ -34,12 +34,16 @@ namespace appbox.Design
                 {
                     foreach (var index in model.StoreOptions.Indexes)
                     {
-                        if (index.Fields.Any(t => t.MemberId == mm.MemberId))
-                            throw new Exception($"Member are used in Index[{index.Name}]");
-                        if (index.HasStoringFields)
+                        //排除已标为删除的
+                        if (index.PersistentState != PersistentState.Deleted)
                         {
-                            if (index.StoringFields.Any(t => t == mm.MemberId))
+                            if (index.Fields.Any(t => t.MemberId == mm.MemberId))
                                 throw new Exception($"Member are used in Index[{index.Name}]");
+                            if (index.HasStoringFields)
+                            {
+                                if (index.StoringFields.Any(t => t == mm.MemberId))
+                                    throw new Exception($"Member are used in Index[{index.Name}]");
+                            }
                         }
                     }
                 }
