@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Data.Common;
 using System.Threading.Tasks;
+using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 
@@ -390,9 +391,13 @@ public class SqlQueryJoin<TSource> : ISqlQueryJoin<TSource> where TSource : SqlE
 }
 
 [RealType("appbox.Store.SqlSubQuery")]
-public class SqlSubQuery<TSource> : ISqlQueryJoin<TSource>, /*伪*/IEnumerable<TSource>
+public class SqlSubQuery<TSource> : ISqlQueryJoin<TSource>, IEnumerable<TSource>
 {
     private SqlSubQuery() { }
+
+    public IEnumerator<TSource> GetEnumerator() { return null; }
+
+    IEnumerator IEnumerable.GetEnumerator() { return null; }
 }
 
 [RealType("appbox.Store.SqlUpdateCommand")]
@@ -427,9 +432,9 @@ public sealed class SqlUpdateCommand<TSource> where TSource : SqlEntityBase
     {
         private UpdateOutputs() { }
 
-        public T this[int index] => values[index];
+        public T this[int index] => default(T);
 
-        public int Count => values.Count;
+        public int Count => 0;
     }
 }
 
@@ -459,7 +464,7 @@ public sealed class SqlDeleteCommand<TSource> where TSource : SqlEntityBase
 public interface IRow
 {
     [InvocationInterceptor("GenericTypeToArg")]
-    T FetchToEntity<T>() where T : ITableOrView;
+    T FetchToEntity<T>() where T : ICqlEntityOrView;
 
     T Fetch<T>(Func<IRow, T> selector);
 
@@ -470,7 +475,7 @@ public interface IRow
 public interface IRowSet : IEnumerable<IRow>
 {
     [InvocationInterceptor("GenericTypeToArg")]
-    List<T> ToEntityList<T>() where T : ITableOrView;
+    List<T> ToEntityList<T>() where T : ICqlEntityOrView;
 
     List<T> ToList<T>(Func<IRow, T> selector);
 
@@ -486,14 +491,13 @@ public struct CqlBatch
 
     public void Delete(CqlEntityBase entity, bool ifNotExists = false) { }
 
-    public Task<IRowSet> ExecuteAsync();
+    public Task<IRowSet> ExecuteAsync() { return null; }
 }
 
 [RealType("appbox.Store.CqlQuery")]
 [GenericCreate()]
 public struct CqlQuery<TSource> where TSource : ICqlEntityOrView
 {
-
     public bool AllowFiltering;
     public int Limit;
 

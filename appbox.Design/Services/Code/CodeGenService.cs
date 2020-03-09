@@ -8,6 +8,8 @@ using appbox.Models;
 using System.Linq;
 using appbox.Caching;
 using appbox.Design.ServiceInterceptors;
+using System.Collections.Generic;
+using System.Collections;
 
 namespace appbox.Design
 {
@@ -179,7 +181,7 @@ namespace appbox.Design
                     string typeString = "object";
                     bool readOnly = false;
                     GetEntityMemberTypeStringAndReadOnly(mm, ref typeString, ref readOnly, designTree);
-                    if (i != 0) { sb.Append(","); ctorsb.Append(","); }
+                    if (i != 0) ctorsb.Append(",");
                     //sb.Append($"{typeString} {mm.Name}"); //TODO:mm.Name转为小驼峰
                     ctorsb.Append($"{typeString} {mm.Name}");
                 }
