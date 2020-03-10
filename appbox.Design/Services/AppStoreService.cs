@@ -53,14 +53,20 @@ namespace appbox.Design
             //判断本地有没有相应的App存在
             var localAppNode = desighHub.DesignTree.FindApplicationNode(pkg.Application.Id);
             if (localAppNode == null)
-                ImportApp(pkg);
+                await ImportApp(desighHub, pkg);
             else
                 await UpdateApp(desighHub, pkg, localAppNode.Model);
         }
 
-        private static void ImportApp(AppPackage pkg)
+        private static async Task ImportApp(DesignHub ctx, AppPackage pkg)
         {
-            throw new NotImplementedException("暂未实现直接导入应用包");
+            //TODO:暂重用更新逻辑简单实现
+            //先创建应用,必须添加到设计树内，因保存实体模型时获取表名需要用到
+            var appRootNode = ctx.DesignTree.AppRootNode;
+            var appNode = new ApplicationNode(ctx.DesignTree, pkg.Application);
+            appRootNode.Nodes.Add(appNode);
+            await ModelStore.CreateApplicationAsync(pkg.Application);
+            await UpdateApp(ctx, pkg, pkg.Application);
         }
 
         private static async Task UpdateApp(DesignHub ctx, AppPackage from, ApplicationModel localAppModel)
