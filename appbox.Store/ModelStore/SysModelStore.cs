@@ -19,7 +19,7 @@ namespace appbox.Store
         private const int APP_DATA_OFFSET = 9;
         private static HostStoreApi HostApi => (HostStoreApi)StoreApi.Api;
 
-        #region ====模型相关操作====
+#region ====模型相关操作====
         //TODO: 获取分区对应的RaftGroupId时考虑在Native层缓存
 
         /// <summary>
@@ -322,7 +322,7 @@ namespace appbox.Store
         internal static async ValueTask UpdateModelAsync(ModelBase model, Transaction txn, Func<uint, ApplicationModel> getApp)
         {
             //TODO:考虑先处理变更项但不提议变更命令，再保存AcceptChanges后的模型数据，最后事务提议变更命令
-            model.Version += 1; //注意：模型版本号+1
+            unchecked { model.Version += 1; } //注意：模型版本号+1
 
             IntPtr keyPtr;
             IntPtr dataPtr = SerializeModel(model, out int dataSize);
@@ -570,9 +570,9 @@ namespace appbox.Store
 
             res.Dispose();
         }
-        #endregion
+#endregion
 
-        #region ====模型代码及Assembly相关操作====
+#region ====模型代码及Assembly相关操作====
         /// <summary>
         /// Insert or Update模型相关的代码，目前主要用于服务模型及视图模型
         /// </summary>
@@ -791,9 +791,9 @@ namespace appbox.Store
 
             return StoreApi.Api.ReadIndexByGetAsync(KeyUtil.META_RAFTGROUP_ID, keyPtr, (uint)keySize);
         }
-        #endregion
+#endregion
 
-        #region ====视图模型路由相关====
+#region ====视图模型路由相关====
         /// <summary>
         /// 保存视图模型路由表
         /// </summary>
@@ -904,7 +904,7 @@ namespace appbox.Store
 
             return routes;
         }
-        #endregion
+#endregion
     }
 }
 

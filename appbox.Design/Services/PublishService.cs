@@ -84,8 +84,9 @@ namespace appbox.Design
             var newTree = SyntaxFactory.SyntaxTree(newRootNode, path: docName + ".cs", encoding: Encoding.UTF8);
             //注意：必须添加并更改版本号，否则服务端Assembly.Load始终是旧版 
             var newModelVersion = model.Version + 1; //用于消除版本差
-            var versionTree = SyntaxFactory.ParseSyntaxTree("using System.Reflection;using System.Runtime.CompilerServices;using System.Runtime.Versioning;[assembly:TargetFramework(\".NETStandard, Version = v2.0\")][assembly: AssemblyVersion(\""
-                                                            + newModelVersion.ToString() + "\")]");
+            var asmVersion = $"{newModelVersion >> 24}.{(newModelVersion >> 16) & 0xFF}.{newModelVersion & 0xFFFF}";
+            var versionTree = SyntaxFactory.ParseSyntaxTree(
+                $"using System.Reflection;using System.Runtime.CompilerServices;using System.Runtime.Versioning;[assembly:TargetFramework(\".NETStandard, Version = v2.0\")][assembly: AssemblyVersion(\"{asmVersion}\")]");
             var options = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary,
                 false, null, null, null, null, forDebug ? OptimizationLevel.Debug : OptimizationLevel.Release);
             var deps = new List<MetadataReference>

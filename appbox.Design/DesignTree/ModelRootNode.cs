@@ -208,8 +208,8 @@ namespace appbox.Design
                     else
                     {
                         n.CheckoutInfo = null;
-                        n.Model.Version = n.Model.Version + 1;
-                        n.Model.AcceptChanges(); //注意：模型接受更改时，模型关联的资源自动接受更改
+                        //不再需要累加版本号，由ModelStore保存模型时处理 n.Model.Version += 1;
+                        n.Model.AcceptChanges();
                     }
                 }
             }

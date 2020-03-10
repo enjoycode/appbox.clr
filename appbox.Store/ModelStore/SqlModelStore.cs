@@ -252,6 +252,7 @@ namespace appbox.Store
 
         internal static async ValueTask UpdateModelAsync(ModelBase model, DbTransaction txn, Func<uint, ApplicationModel> getApp)
         {
+            unchecked { model.Version += 1; } //注意：模型版本号+1
             using var cmd = SqlStore.Default.MakeCommand();
             cmd.Connection = txn.Connection;
             cmd.Transaction = txn;
