@@ -32,8 +32,49 @@ namespace appbox.Design
             //注意目前导出的是最近发布的版本，跟当前设计时版本无关
             var pkg = new AppPackage();
             await ModelStore.LoadToAppPackage(appNode.Model.Id, appName, pkg);
+            //开始解析应用所使用的存储信息
+            ParseDataStores(desighHub, pkg);
             //TODO:考虑sys包忽略特定模型（即不允许导出）
             return pkg;
+        }
+
+        /// <summary>
+        /// 将所有实体模型对应的存储信息加入到应用包内
+        /// </summary>
+        private static void ParseDataStores(DesignHub ctx, AppPackage pkg)
+        {
+            var entityModels = pkg.Models.Where(t => t.ModelType == ModelType.Entity).Cast<EntityModel>();
+            foreach (var model in entityModels)
+            {
+                if (model.StoreOptions == null) continue;
+
+                ulong dataStoreId = 0;
+                if (model.SqlStoreOptions != null)
+                {
+                    dataStoreId = model.SqlStoreOptions.StoreModelId;
+                }
+                else if (model.CqlStoreOptions != null)
+                {
+                    dataStoreId = model.CqlStoreOptions.StoreModelId;
+                }
+#if FUTURE
+                else if (model.SysStoreOptions != null)
+                {
+                    //TODO:
+                    throw new Exception();
+                }
+#endif
+                if (!pkg.DataStores.Exists(t => t.Id == dataStoreId))
+                {
+                    var storeNode = ctx.DesignTree.FindDataStoreNode(dataStoreId);
+                    pkg.DataStores.Add(new DataStoreInfo
+                    {
+                        Id = storeNode.Model.Id,
+                        Name = storeNode.Model.Name,
+                        Kind = storeNode.Model.Kind
+                    });
+                }
+            }
         }
 
         /// <summary>
@@ -48,7 +89,14 @@ namespace appbox.Design
             if (desighHub == null)
                 throw new Exception("Cannot get DesignContext");
 
-            //TODO:先检查导入的实体模型所依赖的相应存储是否存在
+            //先检查导入的实体模型所依赖的相应存储是否存在
+            foreach (var dataStore in pkg.DataStores)
+            {
+                Log.Debug($"Check DataStore exists: {dataStore}");
+                var storeNode = desighHub.DesignTree.FindDataStoreNode(dataStore.Id);
+                if (storeNode == null || storeNode.Model.Kind != dataStore.Kind) //TODO:如果需要判断完全匹配
+                    throw new Exception($"Please create DataStore: {dataStore}");
+            }
 
             //判断本地有没有相应的App存在
             var localAppNode = desighHub.DesignTree.FindApplicationNode(pkg.Application.Id);
@@ -173,7 +221,7 @@ namespace appbox.Design
         {
             public bool Equals(ModelBase x, ModelBase y)
             {
-                if (Object.ReferenceEquals(x, y)) return true;
+                if (ReferenceEquals(x, y)) return true;
                 if (x == null || y == null) return false;
                 return x.AppId == y.AppId && x.ModelType == y.ModelType && x.Id == y.Id;
             }

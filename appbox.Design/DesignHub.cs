@@ -14,6 +14,7 @@ namespace appbox.Design
         static DesignHub()
         {
             BinSerializer.RegisterKnownType(new UserSerializer(PayloadType.AppPackage, typeof(AppPackage), () => new AppPackage()));
+            BinSerializer.RegisterKnownType(new UserSerializer(PayloadType.DataStoreInfo, typeof(DataStoreInfo), () => new DataStoreInfo()));
         }
         #endregion
 

@@ -182,6 +182,11 @@ namespace appbox.Design
             return StoreRootNode.Nodes.Find(t => t.Text == name) as DataStoreNode;
         }
 
+        internal DataStoreNode FindDataStoreNode(ulong id)
+        {
+            return StoreRootNode.Nodes.Find(t => ((DataStoreNode)t).Model.Id == id) as DataStoreNode;
+        }
+
         /// <summary>
         /// 用于前端传回的参数查找对应的设计节点
         /// </summary>

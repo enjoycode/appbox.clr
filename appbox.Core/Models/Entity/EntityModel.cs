@@ -32,10 +32,12 @@ namespace appbox.Models
         internal bool IsDTO => StoreOptions == null;
 
         #region ----ShortPath for Store----
+#if FUTURE
         /// <summary>
         /// 存储用的标识号，模型标识号后3字节
         /// </summary>
         internal uint TableId => (uint)(Id & 0xFFFFFF);
+#endif
         #endregion
         #endregion
 
