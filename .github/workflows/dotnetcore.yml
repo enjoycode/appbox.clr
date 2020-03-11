@@ -32,7 +32,8 @@ jobs:
         echo "$GITHUB_ACTOR"
         git config --global core.autocrlf input
         #git clone https://.:${{ secrets.GITHUB_TOKEN }}@github.com/enjoycode/appbox.deploy.win bin\deploy
-        git clone https://$GITHUB_ACTOR:${{ secrets.CI_TOKEN }}@github.com/enjoycode/appbox.deploy.win bin\deploy
+        #git clone https://$GITHUB_ACTOR:${{ secrets.CI_TOKEN }}@github.com/enjoycode/appbox.deploy.win bin\deploy
+        git clone https://enjoycode:${{ secrets.CI_TOKEN }}@github.com/enjoycode/appbox.deploy.win bin\deploy
         #rm bin\deploy\lib -Force -Recurse
         #xcopy /E /I /Y /Q "bin\AppContainer" "bin\deploy"
         #xcopy /E /I /Y /Q "bin\Host" "bin\deploy"
@@ -48,7 +49,7 @@ jobs:
         git status
         echo "====git commit===="
         git config --local user.email "enjoycode@icloud.com"
-        git config --local user.name "$GITHUB_ACTOR"
+        git config --local user.name "enjoycode"
         git commit -m "CI by appbox.clr"
         echo "====git push==="
         #echo toJson(github.event.commits)
