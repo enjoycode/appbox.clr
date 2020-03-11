@@ -41,8 +41,8 @@ jobs:
         cd deploy
         echo "====git add===="
         git config --global core.autocrlf false
-        git add -A .
-        git status
+        git add -A .\
+        git status .\
         dir
         echo "====git commit===="
         #git commit -m "CI by appbox.clr"
