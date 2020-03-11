@@ -37,6 +37,9 @@ jobs:
         xcopy /I /Y /Q "build\debugger\SymbolReader.dll" "deploy\lib"
         echo "Copy Done."
         cd deploy
+        dir
+        git status
+        echo "begin commit"
         git add -A .
         git commit -m "CI by appbox.clr"
         dir lib\netcore*
