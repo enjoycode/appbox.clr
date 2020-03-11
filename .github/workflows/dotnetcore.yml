@@ -31,10 +31,11 @@ jobs:
       run: |
         git clone https://.:${{ secrets.GITHUB_TOKEN }}@github.com/enjoycode/appbox.deploy.win bin\deploy
         rm bin\deploy\lib -Force -Recurse
-        xcopy /E /I /Y "bin\AppContainer" "deploy"
-        xcopy /E /I /Y "bin\Host" "deploy"
-        copy build\debugger\netcoredbg.exe deploy\lib\
-        copy build\debugger\SymbolReader.dll deploy\lib\
+        xcopy /E /I /Y /Q "bin\AppContainer" "deploy"
+        xcopy /E /I /Y /Q "bin\Host" "deploy"
+        xcopy /I /Y /Q "build\debugger\netcoredbg.exe" "deploy\lib"
+        xcopy /I /Y /Q "build\debugger\SymbolReader.dll" "deploy\lib"
+        echo "Copy Done."
         cd deploy
         git add -A .
         git commit -m "CI by appbox.clr"
