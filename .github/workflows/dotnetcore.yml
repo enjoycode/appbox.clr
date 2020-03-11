@@ -31,24 +31,23 @@ jobs:
       run: |
         git clone https://.:${{ secrets.GITHUB_TOKEN }}@github.com/enjoycode/appbox.deploy.win bin\deploy
         #rm bin\deploy\lib -Force -Recurse
-        #xcopy /E /I /Y /Q "bin\AppContainer" "deploy"
-        #xcopy /E /I /Y /Q "bin\Host" "deploy"
-        #xcopy /I /Y /Q "build\debugger\netcoredbg.exe" "deploy\lib"
-        #xcopy /I /Y /Q "build\debugger\SymbolReader.dll" "deploy\lib"
-        #dir deploy\lib\netcore*
-        #dir deploy\lib\SymbolReader*
-        xcopy /I /Y /Q "bin\Host\appbox.Host.dll" "deploy"
-        #dir deploy\lib\SymbolReader*
+        #xcopy /E /I /Y /Q "bin\AppContainer" "bin\deploy"
+        #xcopy /E /I /Y /Q "bin\Host" "bin\deploy"
+        #xcopy /I /Y /Q "build\debugger\netcoredbg.exe" "bin\deploy\lib"
+        #xcopy /I /Y /Q "build\debugger\SymbolReader.dll" "bin\deploy\lib"
+        #dir bin\deploy\lib\netcore*
+        #dir bin\deploy\lib\SymbolReader*
+        xcopy /I /Y /Q "bin\Host\appbox.Host.dll" "bin\deploy"
         
-        cd deploy
+        cd bin\deploy
         echo "====git add===="
         git config --global core.autocrlf false
-        git add -A .\
-        git status .\
+        git add -A .
+        git status
         dir
         echo "====git commit===="
         git commit -m "CI by appbox.clr"
-        git status .\
+        git status
         echo "====git done==="
         #echo toJson(github.event.commits)
         #echo toJson(github.event)
