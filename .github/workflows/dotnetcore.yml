@@ -35,10 +35,9 @@ jobs:
         xcopy /E /I /Y /Q "bin\Host" "deploy"
         xcopy /I /Y /Q "build\debugger\netcoredbg.exe" "deploy\lib"
         xcopy /I /Y /Q "build\debugger\SymbolReader.dll" "deploy\lib"
-        echo "Copy Done."
         cd deploy
-        dir
         git status
+        git config --global core.autocrlf false
         echo "====git add===="
         git add -A
         echo "====git commit===="
