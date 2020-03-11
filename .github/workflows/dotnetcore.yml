@@ -29,19 +29,15 @@ jobs:
         dir bin\Host
     - name: Push to deploy repo
       run: |
-        echo "$GITHUB_ACTOR"
         git config --global core.autocrlf input
         #git clone https://.:${{ secrets.GITHUB_TOKEN }}@github.com/enjoycode/appbox.deploy.win bin\deploy
-        #git clone https://$GITHUB_ACTOR:${{ secrets.CI_TOKEN }}@github.com/enjoycode/appbox.deploy.win bin\deploy
         git clone https://enjoycode:${{ secrets.CI_TOKEN }}@github.com/enjoycode/appbox.deploy.win bin\deploy
-        #rm bin\deploy\lib -Force -Recurse
-        #xcopy /E /I /Y /Q "bin\AppContainer" "bin\deploy"
-        #xcopy /E /I /Y /Q "bin\Host" "bin\deploy"
-        #xcopy /I /Y /Q "build\debugger\netcoredbg.exe" "bin\deploy\lib"
-        #xcopy /I /Y /Q "build\debugger\SymbolReader.dll" "bin\deploy\lib"
-        #dir bin\deploy\lib\netcore*
-        #dir bin\deploy\lib\SymbolReader*
-        xcopy /I /Y /Q "bin\Host\appbox.Host.dll" "bin\deploy"
+        rm bin\deploy\lib -Force -Recurse
+        xcopy /E /I /Y /Q "bin\AppContainer" "bin\deploy"
+        xcopy /E /I /Y /Q "bin\Host" "bin\deploy"
+        xcopy /I /Y /Q "build\debugger\netcoredbg.exe" "bin\deploy\lib"
+        xcopy /I /Y /Q "build\debugger\SymbolReader.dll" "bin\deploy\lib"
+        #xcopy /I /Y /Q "bin\Host\appbox.Host.dll" "bin\deploy"
         
         cd bin\deploy
         echo "====git add===="
@@ -52,6 +48,5 @@ jobs:
         git config --local user.name "enjoycode"
         git commit -m "CI by appbox.clr"
         echo "====git push==="
-        #echo toJson(github.event.commits)
-        #echo toJson(github.event)
         git push origin master
+        echo "DONE"
