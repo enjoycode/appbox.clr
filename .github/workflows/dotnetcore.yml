@@ -49,6 +49,6 @@ jobs:
         if ($LASTEXITCODE -eq 1) { $LASTEXITCODE = 0 }
         echo "====git push==="
         echo $LASTEXITCODE
-        #git push origin master
+        git push origin master
         if ($LASTEXITCODE -eq 1) { $LASTEXITCODE = 0 }
         echo $LASTEXITCODE
