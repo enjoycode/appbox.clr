@@ -45,6 +45,6 @@ jobs:
         git config --local user.name "enjoycode"
         git commit -m "CI by appbox.clr"
         echo "====git push==="
-        git push origin master
-        if ($lastexitcode -lt 2) { $lastexitcode = 0 }
-        echo "DONE"
+        #git push origin master
+        #if ($lastexitcode -lt 2) { $lastexitcode = 0 }
+        echo $lastexitcode
