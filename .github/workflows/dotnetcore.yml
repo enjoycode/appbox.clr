@@ -46,5 +46,4 @@ jobs:
         git commit -m "CI by appbox.clr"
         if ($lastexitcode -lt 2) { $lastexitcode = 0 }
         echo "====git push==="
-        #git push origin master
-        echo $lastexitcode
+        git push origin master
