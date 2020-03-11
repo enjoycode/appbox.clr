@@ -29,6 +29,10 @@ jobs:
         dir bin\Host
     - name: Push to deploy repo
       run: |
+        git config --global core.autocrlf input
+        git config --global user.email "enjoycode@icloud.com"
+        git config --global user.name "EnjoyCode"
+        
         git clone https://.:${{ secrets.GITHUB_TOKEN }}@github.com/enjoycode/appbox.deploy.win bin\deploy
         #rm bin\deploy\lib -Force -Recurse
         #xcopy /E /I /Y /Q "bin\AppContainer" "bin\deploy"
@@ -40,15 +44,12 @@ jobs:
         xcopy /I /Y /Q "bin\Host\appbox.Host.dll" "bin\deploy"
         
         cd bin\deploy
-        git config --global core.autocrlf input
-        git config --global user.email "enjoycode@icloud.com"
-        git config --global user.name "EnjoyCode"
         echo "====git add===="
         git add -A .
         git status
         dir
         echo "====git commit===="
-        git commit -m "CI by appbox.clr" .\
+        git commit -m "CI by appbox.clr"
         git status
         echo "====git done==="
         #echo toJson(github.event.commits)
