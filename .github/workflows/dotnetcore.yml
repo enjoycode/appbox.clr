@@ -29,11 +29,10 @@ jobs:
         dir bin\Host
     - name: Push to deploy repo
       run: |
-        echo ${{ secrets.GITHUB_TOKEN }}
-        echo $GITHUB_ACTOR
+        echo "$GITHUB_ACTOR"
         git config --global core.autocrlf input
         #git clone https://.:${{ secrets.GITHUB_TOKEN }}@github.com/enjoycode/appbox.deploy.win bin\deploy
-        git clone https://$GITHUB_ACTOR:${{ secrets.GITHUB_TOKEN }}@github.com/enjoycode/appbox.deploy.win bin\deploy
+        git clone https://$GITHUB_ACTOR:${{ secrets.CI_TOKEN }}@github.com/enjoycode/appbox.deploy.win bin\deploy
         #rm bin\deploy\lib -Force -Recurse
         #xcopy /E /I /Y /Q "bin\AppContainer" "bin\deploy"
         #xcopy /E /I /Y /Q "bin\Host" "bin\deploy"
