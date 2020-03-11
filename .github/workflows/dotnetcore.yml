@@ -30,8 +30,8 @@ jobs:
     - name: Push to deploy repo
       run: |
         git config --global core.autocrlf input
-        #git config --global user.email "enjoycode@icloud.com"
-        #git config --global user.name "EnjoyCode"
+        git config --global user.email "enjoycode@icloud.com"
+        git config --global user.name "EnjoyCode"
         
         git clone https://.:${{ secrets.GITHUB_TOKEN }}@github.com/enjoycode/appbox.deploy.win bin\deploy
         #rm bin\deploy\lib -Force -Recurse
