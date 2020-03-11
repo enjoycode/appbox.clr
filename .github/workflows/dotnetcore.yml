@@ -35,8 +35,8 @@ jobs:
         xcopy /E /I /Y /Q "bin\Host" "deploy"
         xcopy /I /Y /Q "build\debugger\netcoredbg.exe" "deploy\lib"
         xcopy /I /Y /Q "build\debugger\SymbolReader.dll" "deploy\lib"
-        dir lib\netcore*
-        dir lib\SymbolReader*
+        #dir deploy\lib\netcore*
+        #dir deploy\lib\SymbolReader*
         
         cd deploy
         echo "====git add===="
