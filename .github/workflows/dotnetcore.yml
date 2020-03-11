@@ -37,6 +37,7 @@ jobs:
         xcopy /I /Y /Q "build\debugger\netcoredbg.exe" "bin\deploy\lib"
         xcopy /I /Y /Q "build\debugger\SymbolReader.dll" "bin\deploy\lib"
         echo "====git add===="
+        echo $LASTEXITCODE
         cd bin\deploy
         git add -A
         git status
@@ -44,6 +45,6 @@ jobs:
         git config --local user.email "enjoycode@icloud.com"
         git config --local user.name "enjoycode"
         git commit -m "CI by appbox.clr"
-        if ($lastexitcode -lt 2) { $lastexitcode = 0 }
+        if ($LASTEXITCODE -eq 1) { $LASTEXITCODE=0 }
         echo "====git push==="
         git push origin master
