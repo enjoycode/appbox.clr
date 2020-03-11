@@ -30,7 +30,7 @@ jobs:
     - name: Push to deploy repo
       run: |
         git clone https://.:${{ secrets.GITHUB_TOKEN }}@github.com/enjoycode/appbox.deploy.win bin\deploy
-        rd /q /s bin\deploy\lib
+        rmdir /Q /S bin\deploy\lib
         xcopy /E /I /Y "bin\AppContainer" "deploy"
         xcopy /E /I /Y "bin\Host" "deploy"
         copy build\debugger\netcoredbg.exe deploy\lib\
@@ -38,4 +38,9 @@ jobs:
         cd deploy
         git add -A .
         git commit -m "CI by appbox.clr"
-        git push
+        dir lib\netcore*
+        dir lib\SymbolReader*
+        git status
+        echo toJson(github.event.commits)
+        echo toJson(github.event)
+        #git push
