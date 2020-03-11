@@ -17,8 +17,16 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 3.1.101
+    - name: Setup NetCoreBeauty
+      run: dotnet tool install --global nulastudio.ncbeauty
     - name: Build with dotnet
-      run: dotnet build appbox.Host\appbox.Host.csproj -c Release
+      run: |
+        dotnet publish -r win-x64 -c Release -o bin\AppContainer appbox.AppContainer\appbox.AppContainer.csproj
+        dir bin\AppContainer
+        ncbeauty --loglevel=Info --nopatch=True bin\AppContainer\publish lib
+        #dotnet publish -r win-x64 -c Release -o bin\Host appbox.Host\appbox.Host.csproj
+        #dir bin\Host
+        #ncbeauty --loglevel=Info --nopatch=True bin\Host\publish lib
     - name: Push to deploy repo
       run: |
         git clone https://.:${{ secrets.GITHUB_TOKEN }}@github.com/enjoycode/appbox.deploy.win bin
