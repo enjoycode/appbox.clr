@@ -35,17 +35,18 @@ jobs:
         xcopy /E /I /Y /Q "bin\Host" "deploy"
         xcopy /I /Y /Q "build\debugger\netcoredbg.exe" "deploy\lib"
         xcopy /I /Y /Q "build\debugger\SymbolReader.dll" "deploy\lib"
-        cd deploy
-        git status
-        git config --global core.autocrlf false
-        echo "====git add===="
-        git add -A
-        echo "====git commit===="
-        git commit -m "CI by appbox.clr"
         dir lib\netcore*
         dir lib\SymbolReader*
+        
+        cd deploy
+        echo "====git add===="
+        git config --global core.autocrlf false
+        git add -A
+        git status
+        echo "====git commit===="
+        git commit -m "CI by appbox.clr"
         git status
         echo "====git done==="
-        echo toJson(github.event.commits)
-        echo toJson(github.event)
+        #echo toJson(github.event.commits)
+        #echo toJson(github.event)
         #git push
