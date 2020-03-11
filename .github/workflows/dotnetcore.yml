@@ -47,8 +47,8 @@ jobs:
         git add -A
         git status
         echo "====git commit===="
-        git config user.email "enjoycode@icloud.com"
-        git config user.name "$GITHUB_ACTOR"
+        git config --local user.email "enjoycode@icloud.com"
+        git config --local user.name "$GITHUB_ACTOR"
         git commit -m "CI by appbox.clr"
         echo "====git push==="
         #echo toJson(github.event.commits)
