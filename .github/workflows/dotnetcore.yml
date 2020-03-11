@@ -30,7 +30,7 @@ jobs:
     - name: Push to deploy repo
       run: |
         git clone https://.:${{ secrets.GITHUB_TOKEN }}@github.com/enjoycode/appbox.deploy.win bin\deploy
-        rmdir /Q bin\deploy\lib
+        rm bin\deploy\lib -Force -Recurse
         xcopy /E /I /Y "bin\AppContainer" "deploy"
         xcopy /E /I /Y "bin\Host" "deploy"
         copy build\debugger\netcoredbg.exe deploy\lib\
