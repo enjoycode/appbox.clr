@@ -28,11 +28,10 @@ jobs:
         ncbeauty --loglevel=Info --nopatch=True bin\Host lib
         dir bin\Host
     - name: Push to deploy repo
+      env: 
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         git config --global core.autocrlf input
-        #git config user.email "enjoycode@icloud.com"
-        #git config user.name "$GITHUB_ACTOR"
-        
         git clone https://.:${{ secrets.GITHUB_TOKEN }}@github.com/enjoycode/appbox.deploy.win bin\deploy
         #rm bin\deploy\lib -Force -Recurse
         #xcopy /E /I /Y /Q "bin\AppContainer" "bin\deploy"
@@ -47,10 +46,11 @@ jobs:
         echo "====git add===="
         git add -A
         git status
-        dir
         echo "====git commit===="
-        #git commit -m "CI by appbox.clr"
-        #git status
+        #git config user.email "enjoycode@icloud.com"
+        #git config user.name "$GITHUB_ACTOR"
+        git commit -m "CI by appbox.clr"
+        git status
         echo "====git done==="
         #echo toJson(github.event.commits)
         #echo toJson(github.event)
