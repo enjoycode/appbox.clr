@@ -31,6 +31,7 @@ jobs:
       env: 
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
+        echo ${{ secrets.GITHUB_TOKEN }}
         git config --global core.autocrlf input
         git clone https://.:${{ secrets.GITHUB_TOKEN }}@github.com/enjoycode/appbox.deploy.win bin\deploy
         #rm bin\deploy\lib -Force -Recurse
