@@ -30,8 +30,8 @@ jobs:
     - name: Push to deploy repo
       run: |
         git config --global core.autocrlf input
-        git config user.email "enjoycode@icloud.com"
-        git config user.name "$GITHUB_ACTOR"
+        #git config user.email "enjoycode@icloud.com"
+        #git config user.name "$GITHUB_ACTOR"
         
         git clone https://.:${{ secrets.GITHUB_TOKEN }}@github.com/enjoycode/appbox.deploy.win bin\deploy
         #rm bin\deploy\lib -Force -Recurse
@@ -49,8 +49,8 @@ jobs:
         git status
         dir
         echo "====git commit===="
-        git commit -m "CI by appbox.clr"
-        git status
+        #git commit -m "CI by appbox.clr"
+        #git status
         echo "====git done==="
         #echo toJson(github.event.commits)
         #echo toJson(github.event)
