@@ -30,17 +30,14 @@ jobs:
     - name: Push to deploy repo
       run: |
         git config --global core.autocrlf input
-        #git clone https://.:${{ secrets.GITHUB_TOKEN }}@github.com/enjoycode/appbox.deploy.win bin\deploy
         git clone https://enjoycode:${{ secrets.CI_TOKEN }}@github.com/enjoycode/appbox.deploy.win bin\deploy
         rm bin\deploy\lib -Force -Recurse
         xcopy /E /I /Y /Q "bin\AppContainer" "bin\deploy"
         xcopy /E /I /Y /Q "bin\Host" "bin\deploy"
         xcopy /I /Y /Q "build\debugger\netcoredbg.exe" "bin\deploy\lib"
         xcopy /I /Y /Q "build\debugger\SymbolReader.dll" "bin\deploy\lib"
-        #xcopy /I /Y /Q "bin\Host\appbox.Host.dll" "bin\deploy"
-        
-        cd bin\deploy
         echo "====git add===="
+        cd bin\deploy
         git add -A
         git status
         echo "====git commit===="
