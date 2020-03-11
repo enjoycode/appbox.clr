@@ -19,3 +19,7 @@ jobs:
         dotnet-version: 3.1.101
     - name: Build with dotnet
       run: dotnet build appbox.Host\appbox.Host.csproj -c Release
+    - name: Push to deploy repo
+      run: |
+        git clone https://.:${{ secrets.GITHUB_TOKEN }}@github.com/appbox.deploy.win bin
+        dir bin
