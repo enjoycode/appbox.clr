@@ -45,6 +45,7 @@ jobs:
         git config --local user.email "enjoycode@icloud.com"
         git config --local user.name "enjoycode"
         git commit -m "CI by appbox.clr"
-        if ($LASTEXITCODE -eq 1) { $LASTEXITCODE=0 }
+        if ($LASTEXITCODE -eq 1) { $LASTEXITCODE = 0 }
         echo "====git push==="
         git push origin master
+        if ($LASTEXITCODE -eq 1) { $LASTEXITCODE = 0 }
