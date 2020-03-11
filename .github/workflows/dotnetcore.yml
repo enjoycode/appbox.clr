@@ -46,13 +46,11 @@ jobs:
         echo "====git add===="
         git add -A
         git status
-        git diff
         echo "====git commit===="
         git config user.email "enjoycode@icloud.com"
         git config user.name "$GITHUB_ACTOR"
         git commit -m "CI by appbox.clr"
-        git status
-        echo "====git done==="
+        echo "====git push==="
         #echo toJson(github.event.commits)
         #echo toJson(github.event)
-        #git push
+        git push
