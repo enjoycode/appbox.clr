@@ -22,12 +22,12 @@ jobs:
     - name: Build with dotnet
       run: |
         dotnet publish -r win-x64 -c Release -o bin\AppContainer appbox.AppContainer\appbox.AppContainer.csproj
+        ncbeauty --loglevel=Info --nopatch=True bin\AppContainer lib
         dir bin\AppContainer
-        ncbeauty --loglevel=Info --nopatch=True bin\AppContainer\publish lib
-        #dotnet publish -r win-x64 -c Release -o bin\Host appbox.Host\appbox.Host.csproj
-        #dir bin\Host
-        #ncbeauty --loglevel=Info --nopatch=True bin\Host\publish lib
+        dotnet publish -r win-x64 -c Release -o bin\Host appbox.Host\appbox.Host.csproj
+        ncbeauty --loglevel=Info --nopatch=True bin\Host lib
+        dir bin\Host
     - name: Push to deploy repo
       run: |
-        git clone https://.:${{ secrets.GITHUB_TOKEN }}@github.com/enjoycode/appbox.deploy.win bin
-        dir bin
+        git clone https://.:${{ secrets.GITHUB_TOKEN }}@github.com/enjoycode/appbox.deploy.win bin\deploy
+        dir bin\deploy
