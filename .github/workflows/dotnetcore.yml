@@ -39,12 +39,14 @@ jobs:
         cd deploy
         dir
         git status
-        echo "begin commit"
-        git add -A .
+        echo "====git add===="
+        git add -A
+        echo "====git commit===="
         git commit -m "CI by appbox.clr"
         dir lib\netcore*
         dir lib\SymbolReader*
         git status
+        echo "====git done==="
         echo toJson(github.event.commits)
         echo toJson(github.event)
         #git push
