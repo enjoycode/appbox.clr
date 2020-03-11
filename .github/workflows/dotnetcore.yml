@@ -40,13 +40,15 @@ jobs:
         xcopy /I /Y /Q "bin\Host\appbox.Host.dll" "bin\deploy"
         
         cd bin\deploy
+        git config --global core.autocrlf input
+        git config --global user.email "enjoycode@icloud.com"
+        git config --global user.name "EnjoyCode"
         echo "====git add===="
-        git config --global core.autocrlf false
         git add -A .
         git status
         dir
         echo "====git commit===="
-        git commit -m "CI by appbox.clr"
+        git commit -m "CI by appbox.clr" .\
         git status
         echo "====git done==="
         #echo toJson(github.event.commits)
