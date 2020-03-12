@@ -31,11 +31,11 @@ jobs:
       run: |
         git config --global core.autocrlf input
         git clone https://enjoycode:${{ secrets.CI_TOKEN }}@github.com/enjoycode/appbox.deploy.win bin\deploy
-        #rm bin\deploy\lib -Force -Recurse
-        #xcopy /E /I /Y /Q "bin\AppContainer" "bin\deploy"
-        #xcopy /E /I /Y /Q "bin\Host" "bin\deploy"
-        #xcopy /I /Y /Q "build\debugger\netcoredbg.exe" "bin\deploy\lib"
-        #xcopy /I /Y /Q "build\debugger\SymbolReader.dll" "bin\deploy\lib"
+        rd /q /s bin\deploy\lib
+        xcopy /E /I /Y /Q "bin\AppContainer" "bin\deploy"
+        xcopy /E /I /Y /Q "bin\Host" "bin\deploy"
+        xcopy /I /Y /Q "build\debugger\netcoredbg.exe" "bin\deploy\lib"
+        xcopy /I /Y /Q "build\debugger\SymbolReader.dll" "bin\deploy\lib"
         echo "====git add===="
         cd bin\deploy
         git add -A
@@ -44,9 +44,7 @@ jobs:
         git config --local user.email "enjoycode@icloud.com"
         git config --local user.name "enjoycode"
         git commit -m "CI by appbox.clr"
-        #if ($LASTEXITCODE -eq 1) { $LASTEXITCODE = 0 }
         echo "====git push==="
         git push origin master
-        #if ($LASTEXITCODE -eq 1) { $LASTEXITCODE = 0 }
         echo "DONE"
       shell: cmd
