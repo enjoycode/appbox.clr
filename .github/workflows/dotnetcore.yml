@@ -47,5 +47,4 @@ jobs:
         echo "====git push==="
         git push origin master
         echo "DONE"
-        echo "${{ github.event.comment.body }}"
       shell: cmd
