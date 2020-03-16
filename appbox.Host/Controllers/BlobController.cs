@@ -16,6 +16,66 @@ namespace appbox.Controllers
     [Route("[controller]")]
     public sealed class BlobController : ControllerBase
     {
+        /// <summary>
+        /// 通过服务验证并处理上传的文件，注意单文件上传，由前端处理多文件上传
+        /// </summary>
+        /// <param name="validator">验证是否具备上传权限 eg: SERP.ProductService.UploadImage</param>
+        /// <param name="processor">处理上传的临时文件 eg: SERP.ProductService.ProcessImage</param>
+        [HttpPost("/api/[controller]/{validator}/{processor}/{args}")]
+        public async Task<IActionResult> Post(string validator, string processor, string args)
+        {
+            if (string.IsNullOrEmpty(validator) || string.IsNullOrEmpty(processor))
+                return BadRequest("Must asign validator and processor service.");
+            if (Request.Form.Files.Count != 1)
+                return BadRequest("Only one file one time.");
+
+            var formFile = Request.Form.Files[0];
+
+            //设置当前用户会话
+            RuntimeContext.Current.CurrentSession = HttpContext.Session.LoadWebSession();
+
+            //1.调用验证服务
+            var iargs = Data.InvokeArgs.From(formFile.FileName, (int)formFile.Length, args);
+            try
+            {
+                await RuntimeContext.Current.InvokeAsync(validator, iargs);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest("Validate upload file error: " + ex.Message);
+            }
+
+            //2.保存为临时文件
+            var tempPath = Path.GetTempPath();
+            var tempFile = Path.Combine(tempPath, Path.GetRandomFileName());
+            try
+            {
+                using var fs = System.IO.File.OpenWrite(tempFile);
+                await formFile.CopyToAsync(fs);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest("Save temp file error: " + ex.Message);
+            }
+
+            //3.调用处理服务
+            object res = null;
+            try
+            {
+                res = await RuntimeContext.Current.InvokeAsync(processor, iargs);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest("Process upload file error: " + ex.Message);
+            }
+            finally
+            {
+                System.IO.File.Delete(tempFile);
+            }
+
+            return Ok(res);
+        }
+
 #if FUTURE
 
         private static int fileIndex;
