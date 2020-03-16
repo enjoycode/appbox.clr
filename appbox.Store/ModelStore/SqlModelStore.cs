@@ -129,7 +129,7 @@ namespace appbox.Store
             using var cmd = SqlStore.Default.MakeCommand();
             cmd.Connection = txn.Connection;
             cmd.Transaction = txn;
-            BuildInsertMetaCommand(cmd, Meta_Application, app.Id.ToString(), ModelType.Application, SerializeModel(app), false);
+            BuildInsertMetaCommand(cmd, Meta_Application, app.Id.ToString(), (byte)ModelType.Application, SerializeModel(app), false);
             await cmd.ExecuteNonQueryAsync();
         }
 
@@ -176,7 +176,7 @@ namespace appbox.Store
             {
                 seq = 1;
                 counterData = BitConverter.GetBytes(seq);
-                BuildInsertMetaCommand(cmd2, meta, id, ModelType.Application, counterData, false);
+                BuildInsertMetaCommand(cmd2, meta, id, (byte)ModelType.Application, counterData, false);
             }
             reader.Close();
 
@@ -247,7 +247,7 @@ namespace appbox.Store
             using var cmd = SqlStore.Default.MakeCommand();
             cmd.Connection = txn.Connection;
             cmd.Transaction = txn;
-            BuildInsertMetaCommand(cmd, Meta_Model, model.Id.ToString(), model.ModelType, SerializeModel(model), false);
+            BuildInsertMetaCommand(cmd, Meta_Model, model.Id.ToString(), (byte)model.ModelType, SerializeModel(model), false);
             await cmd.ExecuteNonQueryAsync();
         }
 
@@ -284,7 +284,7 @@ namespace appbox.Store
             cmd.Connection = txn.Connection;
             cmd.Transaction = txn;
             BuildDeleteMetaCommand(cmd, Meta_Folder, id);
-            BuildInsertMetaCommand(cmd, Meta_Folder, id, ModelType.Folder, SerializeModel(folder), true);
+            BuildInsertMetaCommand(cmd, Meta_Folder, id, (byte)ModelType.Folder, SerializeModel(folder), true);
             await cmd.ExecuteNonQueryAsync();
         }
 
@@ -317,7 +317,7 @@ namespace appbox.Store
             cmd.Connection = txn.Connection;
             cmd.Transaction = txn;
             BuildDeleteMetaCommand(cmd, Meta_Code, id);
-            BuildInsertMetaCommand(cmd, Meta_Code, id, ModelType.Application/**/, codeData, true);
+            BuildInsertMetaCommand(cmd, Meta_Code, id, (byte)ModelType.Application, codeData, true);
             await cmd.ExecuteNonQueryAsync();
         }
 
@@ -356,39 +356,70 @@ namespace appbox.Store
         }
 
         /// <summary>
+        /// 加载指定应用的第三方组件列表，仅用于设计时前端绑定
+        /// </summary>
+        internal static async ValueTask<IList<string>> LoadAppAssemblies(string appName)
+        {
+            byte meta = (byte)MetaAssemblyType.Application;
+            byte model = (byte)AssemblyPlatform.Common;
+
+            var db = SqlStore.Default;
+            var esc = db.NameEscaper;
+            using var conn = await db.OpenConnectionAsync();
+            using var cmd = db.MakeCommand();
+            cmd.Connection = conn;
+            cmd.CommandText = $"Select id From {esc}sys.Meta{esc} Where meta={meta} And id Like '{appName}%' And model={model}";
+            Log.Debug(cmd.CommandText);
+            using var reader = await cmd.ExecuteReaderAsync();
+            var list = new List<string>();
+            while (await reader.ReadAsync())
+            {
+                var id = reader.GetString(0);
+                var firstDot = id.AsSpan().IndexOf('.');
+                var lastDot = id.AsSpan().LastIndexOf('.');
+                list.Add(id.AsSpan(firstDot + 1, lastDot - firstDot -1).ToString());
+            }
+            return list;
+        }
+
+        /// <summary>
         /// 仅用于上传应用使用的第三方组件
         /// </summary>
-        internal static async ValueTask UpsertAssemblyAsync(string asmName, byte[] asmData)
+        internal static async ValueTask UpsertAppAssemblyAsync(string asmName, byte[] asmData, AssemblyPlatform platform)
         {
             using var conn = await SqlStore.Default.OpenConnectionAsync();
             using var txn = conn.BeginTransaction();
-            await UpsertAssemblyAsync(MetaAssemblyType.Application, asmName, asmData, txn);
+            await UpsertAssemblyAsync(MetaAssemblyType.Application, asmName, asmData, txn, platform);
             txn.Commit();
         }
 
         /// <summary>
-        /// 保存编译好的服务组件或视图运行时代码
+        /// 保存编译好的服务组件或视图运行时代码或应用的第三方组件
         /// </summary>
         /// <param name="asmName">
         /// 服务or视图 eg: sys.HelloService or sys.CustomerView
         /// 应用 eg: sys.Newtonsoft.Json.dll,注意应用前缀防止不同app冲突
         /// </param>
         /// <param name="asmData">已压缩</param>
+        /// <param name="platform">仅适用于应用的第三方组件</param>
         internal static async ValueTask UpsertAssemblyAsync(MetaAssemblyType type,
-            string asmName, byte[] asmData, DbTransaction txn)
+            string asmName, byte[] asmData, DbTransaction txn, AssemblyPlatform platform = AssemblyPlatform.Common)
         {
-            var model = type switch
-            {
-                MetaAssemblyType.Application => ModelType.Application,
-                MetaAssemblyType.Service => ModelType.Service,
-                MetaAssemblyType.View => ModelType.View,
-                _ => throw new Exception(),
-            };
+            byte modelType;
+            if (type == MetaAssemblyType.Application)
+                modelType = (byte)platform;
+            else if (type == MetaAssemblyType.Service)
+                modelType = (byte)ModelType.Service;
+            else if (type == MetaAssemblyType.View)
+                modelType = (byte)ModelType.View;
+            else
+                throw new ArgumentException("Not supported MetaAssemblyType");
+
             using var cmd = SqlStore.Default.MakeCommand();
             cmd.Connection = txn.Connection;
             cmd.Transaction = txn;
             BuildDeleteMetaCommand(cmd, (byte)type, asmName);
-            BuildInsertMetaCommand(cmd, (byte)type, asmName, model, asmData, true);
+            BuildInsertMetaCommand(cmd, (byte)type, asmName, modelType, asmData, true);
             await cmd.ExecuteNonQueryAsync();
         }
 
@@ -440,7 +471,7 @@ namespace appbox.Store
             cmd.Connection = txn.Connection;
             cmd.Transaction = txn;
             BuildDeleteMetaCommand(cmd, Meta_View_Router, viewName);
-            BuildInsertMetaCommand(cmd, Meta_View_Router, viewName, ModelType.View, System.Text.Encoding.UTF8.GetBytes(path), true);
+            BuildInsertMetaCommand(cmd, Meta_View_Router, viewName, (byte)ModelType.View, System.Text.Encoding.UTF8.GetBytes(path), true);
             await cmd.ExecuteNonQueryAsync();
         }
 
@@ -598,12 +629,12 @@ namespace appbox.Store
             return list.ToArray();
         }
 
-        private static void BuildInsertMetaCommand(DbCommand cmd, byte metaType, string id, ModelType modelType, byte[] data, bool append)
+        private static void BuildInsertMetaCommand(DbCommand cmd, byte metaType, string id, byte modelType, byte[] data, bool append)
         {
             var db = SqlStore.Default;
             var esc = db.NameEscaper;
             var pname = db.ParameterName;
-            var cmdTxt = $"Insert Into {esc}sys.Meta{esc} (meta,id,model,data) Values ({metaType},'{id}',{(byte)modelType}, {pname}v)";
+            var cmdTxt = $"Insert Into {esc}sys.Meta{esc} (meta,id,model,data) Values ({metaType},'{id}',{modelType}, {pname}v)";
             if (append)
                 cmd.CommandText += ";" + cmdTxt + ";";
             else

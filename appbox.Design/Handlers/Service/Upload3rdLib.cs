@@ -47,7 +47,7 @@ namespace appbox.Design
 
             //保存组件
             var asmName = $"{appName}.{fileName}";
-            await Store.ModelStore.UpsertAssemblyAsync(asmName, asmData);
+            await Store.ModelStore.UpsertAppAssemblyAsync(asmName, asmData, platform);
 
             //TODO:*****
             // 1. 通知所有DesignHub.TypeSystem更新MetadataReference缓存，并更新相关项目引用

@@ -11,25 +11,20 @@ namespace appbox.Design
     /// </summary>
     sealed class GetReferences : IRequestHandler
     {
-        public Task<object> Handle(DesignHub hub, InvokeArgs args)
+        public async Task<object> Handle(DesignHub hub, InvokeArgs args)
         {
             var modelID = args.GetString();
             var modelNode = hub.DesignTree.FindModelNode(ModelType.Service, ulong.Parse(modelID));
             if (modelNode == null)
                 throw new Exception("Can't find service model node");
 
-            //var appNode = (ApplicationNode)hub.DesignTree.FindNode(DesignNodeType.ApplicationNode, sr[0]);
-
+            var appLibs = await Store.ModelStore.LoadAppAssemblies(modelNode.AppNode.Model.Name);
             var res = new
             {
-                //AppDeps = appNode.Model.Assemblies
-                //                .Where(t => t.Platform == AssemblyPlatform.Common)
-                //                .Select(t => Path.GetFileNameWithoutExtension(t.Name))
-                //                .ToArray(),
+                AppDeps = appLibs,
                 ModelDeps = ((ServiceModel)modelNode.Model).References
             };
-
-            return Task.FromResult((object)res);
+            return res;
         }
     }
 }
