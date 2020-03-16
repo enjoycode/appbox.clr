@@ -377,7 +377,7 @@ namespace appbox.Store
                 var id = reader.GetString(0);
                 var firstDot = id.AsSpan().IndexOf('.');
                 var lastDot = id.AsSpan().LastIndexOf('.');
-                list.Add(id.AsSpan(firstDot + 1, lastDot - firstDot -1).ToString());
+                list.Add(id.AsSpan(firstDot + 1, lastDot - firstDot - 1).ToString());
             }
             return list;
         }
@@ -434,10 +434,10 @@ namespace appbox.Store
         }
 
         /// <summary>
-        /// 加载服务组件
+        /// 加载服务组件或应用的第三方组件
         /// </summary>
-        /// <param name="serviceName">eg: sys.HelloService</param>
-        /// <returns></returns>
+        /// <param name="serviceName">eg: sys.HelloService or sys.Newtonsoft.Json.dll</param>
+        /// <returns>压缩过的</returns>
         internal static async ValueTask<byte[]> LoadServiceAssemblyAsync(string serviceName) //TODO:考虑保存至本地文件，返回路径
         {
 #if !DEBUG
@@ -445,7 +445,10 @@ namespace appbox.Store
             //if (Runtime.RuntimeContext.Current.RuntimeId == 0)
             //    throw new NotSupportedException("不支持服务端主进程加载");
 #endif
-            return await LoadMetaDataAsync(Meta_Service_Assembly, serviceName);
+            //暂通过判断有无扩展名来区别是服务的组件还是第三方的组件
+            if (serviceName.Length >= 4 && serviceName.AsSpan(serviceName.Length - 4).SequenceEqual(".dll"))
+                return await LoadMetaDataAsync((byte)MetaAssemblyType.Application, serviceName);
+            return await LoadMetaDataAsync((byte)MetaAssemblyType.Service, serviceName);
         }
 
         internal static async ValueTask<string> LoadViewAssemblyAsync(string viewName)

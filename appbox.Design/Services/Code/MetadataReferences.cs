@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using Microsoft.CodeAnalysis;
 using appbox.Runtime;
+using System.IO.Compression;
 
 namespace appbox.Design
 {
@@ -46,6 +47,7 @@ namespace appbox.Design
             {
                 if (!metaRefs.TryGetValue(asmName, out res))
                 {
+                    //先加载内置的组件
                     var path = Path.Combine(LibPath, asmName);
                     res = LoadFromFile(path);
                     if (res != null)
@@ -53,14 +55,13 @@ namespace appbox.Design
                         metaRefs.Add(asmName, res);
                         return res;
                     }
-
+                    //再加载外置的组件
                     if (!string.IsNullOrEmpty(appName))
                     {
-                        var key = string.Format("{0}-{1}", appName, asmName);
+                        var key = $"{appName}.{asmName}";
                         if (!metaRefs.TryGetValue(key, out res))
                         {
-                            var appPath = Path.Combine(RuntimeContext.Current.AppPath, "AppDeps", appName, asmName);
-                            res = LoadFromFile(appPath);
+                            res = LoadFromModelStore(key);
                             if (res != null)
                             {
                                 metaRefs.Add(key, res);
@@ -79,20 +80,42 @@ namespace appbox.Design
             return res;
         }
 
-        static MetadataReference LoadFromFile(string filePath)
+        private static MetadataReference LoadFromFile(string filePath)
         {
-            if (File.Exists(filePath))
+            if (!File.Exists(filePath)) return null;
+
+            try
             {
-                try
-                {
-                    return MetadataReference.CreateFromFile(filePath);
-                }
-                catch (Exception ex)
-                {
-                    Log.Warn($"Load MetadataReference[{filePath}] error: {ex.Message}");
-                }
+                return MetadataReference.CreateFromFile(filePath);
             }
-            return null;
+            catch (Exception ex)
+            {
+                Log.Warn($"Load MetadataReference[{filePath}] error: {ex.Message}");
+                return null;
+            }
+        }
+
+        private static MetadataReference LoadFromModelStore(string asmName)
+        {
+            var asmData = Store.ModelStore.LoadServiceAssemblyAsync(asmName).Result;
+            //解压缩
+            using var oms = new MemoryStream(1024); //TODO：写临时文件?
+            using (var ms = new MemoryStream(asmData))
+            {
+                using var cs = new BrotliStream(ms, CompressionMode.Decompress, true);
+                //注意:不支持直接从压缩流中读取
+                cs.CopyTo(oms);
+            }
+            oms.Position = 0;
+            try
+            {
+                return MetadataReference.CreateFromStream(oms);
+            }
+            catch (Exception ex)
+            {
+                Log.Warn($"Load MetadataReference[{asmName}] error: {ex.Message}");
+                return null;
+            }
         }
 
         /// <summary>
@@ -105,7 +128,7 @@ namespace appbox.Design
 
             lock (metaRefs)
             {
-                metaRefs.Remove($"{appName}-{asmName}");
+                metaRefs.Remove($"{appName}.{asmName}");
             }
         }
 
