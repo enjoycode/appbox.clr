@@ -42,7 +42,8 @@ namespace appbox.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest("Validate upload file error: " + ex.Message);
+                //Log.Warn(ex.StackTrace);
+                return BadRequest($"Validate upload file error: {ex.Message}");
             }
 
             //2.保存为临时文件
@@ -60,6 +61,7 @@ namespace appbox.Controllers
 
             //3.调用处理服务
             object res = null;
+            iargs = Data.InvokeArgs.From(formFile.FileName, tempFile, args);
             try
             {
                 res = await RuntimeContext.Current.InvokeAsync(processor, iargs);

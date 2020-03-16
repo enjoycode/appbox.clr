@@ -14,9 +14,9 @@ namespace appbox.Design
         {
             string fileName = args.GetString();
             int fileLen = args.GetInt32();
-            string appID = args.GetString();
-            if (string.IsNullOrEmpty(appID))
-                throw new ArgumentException("Must asign AppId");
+            string appName = args.GetString();
+            if (string.IsNullOrEmpty(appName))
+                throw new ArgumentException("Must asign App");
 
             //TODO:考虑检测系统所有内置组件是否存在相同名称的
             Log.Debug($"验证上传的第三方组件: {fileName} {fileLen}");

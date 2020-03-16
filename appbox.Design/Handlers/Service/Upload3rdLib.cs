@@ -42,6 +42,7 @@ namespace appbox.Design
             using var cs = new BrotliStream(dllStream, CompressionMode.Compress, true);
             using var fs = File.OpenRead(tempFile);
             await fs.CopyToAsync(cs);
+            await cs.FlushAsync();
             var asmData = dllStream.ToArray();
 
             //保存组件

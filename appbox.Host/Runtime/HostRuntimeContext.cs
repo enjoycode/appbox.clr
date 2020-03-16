@@ -121,14 +121,18 @@ namespace appbox.Server
         #region ====Invoke Methods====
         public ValueTask<AnyValue> InvokeAsync(string servicePath, InvokeArgs args)
         {
-            throw new NotImplementedException();
-            //return InvokeInternalAsync(InvokeSource.Host, InvokeContentType.Bin, servicePath, args, 0);
+            return InvokeInternal(servicePath, args, false, 0);
         }
 
         /// <summary>
         /// Invoke by websocket or ajax client, free buffer after invoke system service or forward to sub process
         /// </summary>
-        internal async ValueTask<AnyValue> InvokeByClient(string servicePath, int msgId, InvokeArgs args)
+        internal ValueTask<AnyValue> InvokeByClient(string servicePath, int msgId, InvokeArgs args)
+        {
+            return InvokeInternal(servicePath, args, true, msgId);
+        }
+
+        private async ValueTask<AnyValue> InvokeInternal(string servicePath, InvokeArgs args, bool byClient, int msgId)
         {
             if (string.IsNullOrEmpty(servicePath))
                 throw new ArgumentNullException(nameof(servicePath));
@@ -159,7 +163,8 @@ namespace appbox.Server
 
             //非系统服务则包装为InvokeRequire转发至子进程处理
             var tcs = invokeTasksPool.Allocate();
-            var require = new InvokeRequire(InvokeSource.Client, InvokeProtocol.Json,
+            var require = new InvokeRequire(byClient ? InvokeSource.Client : InvokeSource.Host,
+                byClient ? InvokeProtocol.Json : InvokeProtocol.Bin,
                 tcs.GCHandlePtr, servicePath, args, msgId, RuntimeContext.Current.CurrentSession); //注意传播会话信息
             ChildProcess.AppContainer.Channel.SendMessage(ref require);
             args.ReturnBuffer(); //注意归还缓存块
