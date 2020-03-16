@@ -66,9 +66,9 @@ namespace appbox.Server
                 {
                     var sr = Path.GetFileName(files[i]).Split('.');
                     var asm = new ServiceAssemblyLoader().LoadFromAssemblyPath(files[i]);
-                    var type = asm.GetType(string.Format("{0}.ServiceLogic.{1}", sr[0], sr[2]), true);
+                    var type = asm.GetType($"{sr[0]}.ServiceLogic.{sr[2]}", true);
                     var instance = (IService)Activator.CreateInstance(type);
-                    services.TryAdd(sr[0] + "." + sr[2], instance);
+                    services.TryAdd($"{sr[0]}.{sr[2]}", instance);
                     Log.Debug("Inject debug service instance:" + files[i]);
                 }
             }

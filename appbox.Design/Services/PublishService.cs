@@ -354,14 +354,15 @@ namespace appbox.Design
                             {
                                 var app = hub.DesignTree.FindApplicationNode(model.AppId);
                                 await ModelStore.DeleteModelCodeAsync(model.Id, txn);
-                                await ModelStore.DeleteAssemblyAsync(true, $"{app.Model.Name}.{model.OriginalName}", txn);
+                                await ModelStore.DeleteAssemblyAsync(MetaAssemblyType.Service,
+                                    $"{app.Model.Name}.{model.OriginalName}", txn);
                             }
                             else if (model.ModelType == ModelType.View)
                             {
                                 var app = hub.DesignTree.FindApplicationNode(model.AppId);
                                 var oldViewName = $"{app.Model.Name}.{model.OriginalName}";
                                 await ModelStore.DeleteModelCodeAsync(model.Id, txn);
-                                await ModelStore.DeleteAssemblyAsync(false, oldViewName, txn);
+                                await ModelStore.DeleteAssemblyAsync(MetaAssemblyType.View, oldViewName, txn);
                                 await ModelStore.DeleteViewRoute(oldViewName, txn);
                             }
                         }
@@ -380,14 +381,14 @@ namespace appbox.Design
             foreach (var serviceName in package.ServiceAssemblies.Keys)
             {
                 var asmData = package.ServiceAssemblies[serviceName];
-                await ModelStore.UpsertAssemblyAsync(true, serviceName, asmData, txn);
+                await ModelStore.UpsertAssemblyAsync(MetaAssemblyType.Service, serviceName, asmData, txn);
             }
 
             //保存视图模型编译好的运行时代码
             foreach (var viewName in package.ViewAssemblies.Keys)
             {
                 var asmData = package.ViewAssemblies[viewName];
-                await ModelStore.UpsertAssemblyAsync(false, viewName, asmData, txn);
+                await ModelStore.UpsertAssemblyAsync(MetaAssemblyType.View, viewName, asmData, txn);
             }
         }
 

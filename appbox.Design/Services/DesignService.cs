@@ -51,6 +51,8 @@ namespace appbox.Design
                 { nameof(UpdateReferences), new UpdateReferences() },
                 { nameof(StartDebugging), new StartDebugging() },
                 { nameof(ContinueBreakpoint), new ContinueBreakpoint() },
+                { nameof(Validate3rdLib), new Validate3rdLib() },
+                { nameof(Upload3rdLib), new Upload3rdLib() },
                 //View
                 { nameof(NewViewModel), new NewViewModel() },
                 { nameof(OpenViewModel), new OpenViewModel() },

@@ -24,6 +24,7 @@ namespace appbox.Store
         private const byte Meta_Service_Assembly = 0xA0;
         private const byte Meta_View_Assembly = 0xA1;
         private const byte Meta_View_Router = 0xA2;
+        //private const byte Meta_App_Assembly = 0xA3;
         private const byte Meta_App_Model_Dev_Counter = 0xAC;
         private const byte Meta_App_Model_Usr_Counter = 0xAD;
 
@@ -355,28 +356,49 @@ namespace appbox.Store
         }
 
         /// <summary>
+        /// 仅用于上传应用使用的第三方组件
+        /// </summary>
+        internal static async ValueTask UpsertAssemblyAsync(string asmName, byte[] asmData)
+        {
+            using var conn = await SqlStore.Default.OpenConnectionAsync();
+            using var txn = conn.BeginTransaction();
+            await UpsertAssemblyAsync(MetaAssemblyType.Application, asmName, asmData, txn);
+            txn.Commit();
+        }
+
+        /// <summary>
         /// 保存编译好的服务组件或视图运行时代码
         /// </summary>
-        /// <param name="asmName">eg: sys.HelloService or sys.CustomerView</param>
-        internal static async ValueTask UpsertAssemblyAsync(bool isService, string asmName, byte[] asmData, DbTransaction txn)
+        /// <param name="asmName">
+        /// 服务or视图 eg: sys.HelloService or sys.CustomerView
+        /// 应用 eg: sys.Newtonsoft.Json.dll,注意应用前缀防止不同app冲突
+        /// </param>
+        /// <param name="asmData">已压缩</param>
+        internal static async ValueTask UpsertAssemblyAsync(MetaAssemblyType type,
+            string asmName, byte[] asmData, DbTransaction txn)
         {
-            var meta = isService ? Meta_Service_Assembly : Meta_View_Assembly;
-            var model = isService ? ModelType.Service : ModelType.View;
+            var model = type switch
+            {
+                MetaAssemblyType.Application => ModelType.Application,
+                MetaAssemblyType.Service => ModelType.Service,
+                MetaAssemblyType.View => ModelType.View,
+                _ => throw new Exception(),
+            };
             using var cmd = SqlStore.Default.MakeCommand();
             cmd.Connection = txn.Connection;
             cmd.Transaction = txn;
-            BuildDeleteMetaCommand(cmd, meta, asmName);
-            BuildInsertMetaCommand(cmd, meta, asmName, model, asmData, true);
+            BuildDeleteMetaCommand(cmd, (byte)type, asmName);
+            BuildInsertMetaCommand(cmd, (byte)type, asmName, model, asmData, true);
             await cmd.ExecuteNonQueryAsync();
         }
 
-        internal static async ValueTask DeleteAssemblyAsync(bool isService, string asmName, DbTransaction txn)
+        internal static async ValueTask DeleteAssemblyAsync(MetaAssemblyType type,
+            string asmName, DbTransaction txn)
         {
-            var meta = isService ? Meta_Service_Assembly : Meta_View_Assembly;
             using var cmd = SqlStore.Default.MakeCommand();
             cmd.Connection = txn.Connection;
             cmd.Transaction = txn;
-            BuildDeleteMetaCommand(cmd, meta, asmName);
+            BuildDeleteMetaCommand(cmd, (byte)type, asmName);
             await cmd.ExecuteNonQueryAsync();
         }
 

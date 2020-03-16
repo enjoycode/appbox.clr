@@ -22,19 +22,15 @@ namespace appbox.Server
             if (asmData == null)
                 throw new ArgumentNullException(nameof(asmData));
 
-            using (var oms = new MemoryStream(1024))
+            using var oms = new MemoryStream(1024); //TODO：写临时文件?
+            using (var ms = new MemoryStream(asmData))
             {
-                using (var ms = new MemoryStream(asmData))
-                {
-                    using (var cs = new BrotliStream(ms, CompressionMode.Decompress, true))
-                    {
-                        //注意:不支持直接从压缩流中读取
-                        cs.CopyTo(oms);
-                    }
-                }
-                oms.Position = 0;
-                return LoadFromStream(oms);
+                using var cs = new BrotliStream(ms, CompressionMode.Decompress, true);
+                //注意:不支持直接从压缩流中读取
+                cs.CopyTo(oms);
             }
+            oms.Position = 0;
+            return LoadFromStream(oms);
         }
 
         protected override Assembly Load(AssemblyName assemblyName)

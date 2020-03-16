@@ -118,4 +118,15 @@ namespace appbox.Models
             }
         }
     }
+
+    /// <summary>
+    /// 第三方组件所适用的平台
+    /// </summary>
+    public enum AssemblyPlatform : byte
+    {
+        Common,
+        Linux,
+        Windows,
+        OSX
+    }
 }

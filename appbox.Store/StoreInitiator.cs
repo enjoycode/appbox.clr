@@ -516,7 +516,7 @@ namespace appbox.Store
             await ModelStore.UpsertModelCodeAsync(model.Id, codeData, txn);
 
             var asmData = Resources.GetBytes(asmRes);
-            await ModelStore.UpsertAssemblyAsync(true, $"sys.{name}", asmData, txn);
+            await ModelStore.UpsertAssemblyAsync(MetaAssemblyType.Service, $"sys.{name}", asmData, txn);
         }
 
         private static async Task CreateViewModel(string name, ulong idIndex, Guid? folderId,
@@ -546,7 +546,7 @@ namespace appbox.Store
 
             var runtimeCode = Resources.GetString($"Resources.Views.{name}.json");
             var runtimeCodeData = ModelCodeUtil.EncodeViewRuntimeCode(runtimeCode);
-            await ModelStore.UpsertAssemblyAsync(false, $"sys.{name}", runtimeCodeData, txn);
+            await ModelStore.UpsertAssemblyAsync(MetaAssemblyType.View, $"sys.{name}", runtimeCodeData, txn);
         }
     }
 
