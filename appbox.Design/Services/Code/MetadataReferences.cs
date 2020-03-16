@@ -36,7 +36,7 @@ namespace appbox.Design
             metaRefs = new Dictionary<string, MetadataReference>();
         }
 
-        internal static MetadataReference Get(string asmName, string appID = null)
+        internal static MetadataReference Get(string asmName, string appName = null)
         {
             // var am =  AssemblyMetadata.CreateFromFile(asmName);
             // var mr = am.GetReference();
@@ -54,12 +54,12 @@ namespace appbox.Design
                         return res;
                     }
 
-                    if (!string.IsNullOrEmpty(appID))
+                    if (!string.IsNullOrEmpty(appName))
                     {
-                        var key = string.Format("{0}-{1}", appID, asmName);
+                        var key = string.Format("{0}-{1}", appName, asmName);
                         if (!metaRefs.TryGetValue(key, out res))
                         {
-                            var appPath = Path.Combine(RuntimeContext.Current.AppPath, "AppDeps", appID, asmName);
+                            var appPath = Path.Combine(RuntimeContext.Current.AppPath, "AppDeps", appName, asmName);
                             res = LoadFromFile(appPath);
                             if (res != null)
                             {
@@ -98,14 +98,14 @@ namespace appbox.Design
         /// <summary>
         /// 仅用于上传第三方组件后更新相应的缓存
         /// </summary>
-        internal static void RemoveMetadataReference(string asmName, string appID)
+        internal static void RemoveMetadataReference(string asmName, string appName)
         {
-            if (string.IsNullOrEmpty(appID))
-                throw new ArgumentNullException(nameof(appID));
+            if (string.IsNullOrEmpty(appName))
+                throw new ArgumentNullException(nameof(appName));
 
             lock (metaRefs)
             {
-                metaRefs.Remove($"{appID}-{asmName}");
+                metaRefs.Remove($"{appName}-{asmName}");
             }
         }
 
