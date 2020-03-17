@@ -3,6 +3,17 @@ using System.Reflection;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
+namespace System
+{
+    public static class SequenceGuid
+    {
+		/// <summary>
+		/// 获取顺序Guid，线程安全
+		/// </summary>
+		public static Guid NewGuid() => Guid.Empty;
+	}
+}
+
 namespace System.Reflection
 {
     #region ====Attributes====
