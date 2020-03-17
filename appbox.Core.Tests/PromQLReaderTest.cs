@@ -10,7 +10,6 @@ namespace appbox.Core.Tests
     public class PromQLReaderTest
     {
 
-
         [Fact]
         public void ParsePromQLResult()
         {

@@ -1,4 +1,6 @@
-﻿using System;
+﻿#if FUTURE
+
+using System;
 using Xunit;
 using appbox.Data;
 
@@ -25,3 +27,5 @@ namespace appbox.Core.Tests
         }
     }
 }
+
+#endif
