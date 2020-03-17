@@ -22,21 +22,25 @@ namespace appbox.Server
             if (services.TryGet(name, out instance))
                 return instance;
 
+            //加载服务模型的组件
             var asmData = await Store.ModelStore.LoadServiceAssemblyAsync(name);
             if (asmData == null || asmData.Length == 0)
             {
                 Log.Warn($"无法从存储加载ServiceAssembly: {name}");
                 return null;
             }
-
-            //测试直接读取文件
-            //var asmData = System.IO.File.ReadAllBytes("/media/psf/Home/Projects/AppBoxFuture/appbox/bin/sys.HelloService.dll");
+            //释放应用的第三方组件为临时文件，因非托管组件只能从文件加载
+            //TODO:避免重复释放或者考虑获取服务模型后根据引用释放
+            var dotIndex = name.AsSpan().IndexOf('.');
+            var appName = name.AsSpan(0, dotIndex).ToString();
+            var libPath = Path.Combine(Consts.LibPath, appName);
+            await Store.ModelStore.ExtractAppAssemblies(appName, libPath);
 
             lock (services)
             {
                 if (!services.TryGet(name, out instance))
                 {
-                    var asm = new ServiceAssemblyLoader().LoadServiceAssembly(asmData);
+                    var asm = new ServiceAssemblyLoader(libPath).LoadServiceAssembly(asmData);
                     var sr = name.Split('.');
                     var type = asm.GetType($"{sr[0]}.ServiceLogic.{sr[1]}", true);
                     instance = (IService)Activator.CreateInstance(type);
@@ -65,7 +69,7 @@ namespace appbox.Server
                 if (Path.GetExtension(files[i]) == ".dll")
                 {
                     var sr = Path.GetFileName(files[i]).Split('.');
-                    var asm = new ServiceAssemblyLoader().LoadFromAssemblyPath(files[i]);
+                    var asm = new ServiceAssemblyLoader(debugFolder/*TODO:fix path*/).LoadFromAssemblyPath(files[i]);
                     var type = asm.GetType($"{sr[0]}.ServiceLogic.{sr[2]}", true);
                     var instance = (IService)Activator.CreateInstance(type);
                     services.TryAdd($"{sr[0]}.{sr[2]}", instance);

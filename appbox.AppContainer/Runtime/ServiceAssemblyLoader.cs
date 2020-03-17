@@ -13,6 +13,13 @@ namespace appbox.Server
     sealed class ServiceAssemblyLoader : AssemblyLoadContext
     {
 
+        private readonly string libPath;
+
+        public ServiceAssemblyLoader(string libPath)
+        {
+            this.libPath = libPath;
+        }
+
         /// <summary>
         /// 辅助方法，方便加载服务模型的Assembly
         /// </summary>
@@ -35,8 +42,6 @@ namespace appbox.Server
 
         protected override Assembly Load(AssemblyName assemblyName)
         {
-            //// Console.WriteLine("开始加载: " + assemblyName.FullName);
-
             //// var deps = DependencyContext.Default;
             //// var res = deps.CompileLibraries.Where(d => d.Name.Contains(assemblyName.Name)).ToList();
             //// if (res.Count > 0)
@@ -46,15 +51,26 @@ namespace appbox.Server
             //// }
             //// else
             //// {
-            //var depFile = $"{folderPath}{Path.DirectorySeparatorChar}{assemblyName.Name}.dll";
-            //if (File.Exists(depFile))
-            //{
-            //    Log.Debug("从文件加载依赖组件: " + assemblyName.FullName);
-            //    return this.LoadFromAssemblyPath(depFile);
-            //}
-            //// }
-            //Log.Debug("加载服务依赖组件: " + assemblyName.FullName);
+            var depFile = Path.Combine(libPath, $"{assemblyName.Name}.dll");
+            if (File.Exists(depFile))
+            {
+                Log.Debug("从文件加载依赖组件: " + assemblyName.FullName);
+                //注意：因编译服务模型从流中加载MetadataReference，所以不能用下句加载
+                //return LoadFromAssemblyPath(depFile);
+                using var fs = File.OpenRead(depFile);
+                return LoadFromStream(fs);
+            }
+            // }
+
+            Log.Debug("加载服务依赖组件: " + assemblyName.FullName);
             return Default.LoadFromAssemblyName(assemblyName);
+        }
+
+        protected override IntPtr LoadUnmanagedDll(string unmanagedDllName)
+        {
+            //TODO:fix 加载第三方原生组件
+            Log.Warn($"待实现加载非托管组件: {unmanagedDllName}");
+            return base.LoadUnmanagedDll(unmanagedDllName);
         }
     }
 }

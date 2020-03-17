@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.IO;
+using System.IO.Compression;
 using System.Threading.Tasks;
 using appbox.Models;
 using appbox.Serialization;
@@ -368,7 +369,7 @@ namespace appbox.Store
             using var conn = await db.OpenConnectionAsync();
             using var cmd = db.MakeCommand();
             cmd.Connection = conn;
-            cmd.CommandText = $"Select id From {esc}sys.Meta{esc} Where meta={meta} And id Like '{appName}%' And model={model}";
+            cmd.CommandText = $"Select id From {esc}sys.Meta{esc} Where meta={meta} And id Like '{appName}.%' And model={model}";
             Log.Debug(cmd.CommandText);
             using var reader = await cmd.ExecuteReaderAsync();
             var list = new List<string>();
@@ -380,6 +381,44 @@ namespace appbox.Store
                 list.Add(id.AsSpan(firstDot + 1, lastDot - firstDot - 1).ToString());
             }
             return list;
+        }
+
+        /// <summary>
+        /// 加载并解压应用的第三方组件至指定目录内
+        /// </summary>
+        /// <param name="appName"></param>
+        internal static async ValueTask ExtractAppAssemblies(string appName, string libPath)
+        {
+#if Windows
+            byte platform = (byte)AssemblyPlatform.Windows;
+#elif Linux
+            byte platform = (byte)AssemblyPlatform.Linux;
+#else
+            byte platform = (byte)AssemblyPlatform.OSX;
+#endif
+            byte meta = (byte)MetaAssemblyType.Application;
+            byte model = (byte)AssemblyPlatform.Common;
+
+            var db = SqlStore.Default;
+            var esc = db.NameEscaper;
+            using var conn = await db.OpenConnectionAsync();
+            using var cmd = db.MakeCommand();
+            cmd.Connection = conn;
+            cmd.CommandText = $"Select id,data From {esc}sys.Meta{esc} Where meta={meta} And id Like '{appName}.%' And (model={model} Or model={platform})";
+            Log.Debug(cmd.CommandText);
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                var id = reader.GetString(0);
+                var firstDot = id.AsSpan().IndexOf('.');
+                var asmName = id.AsSpan(firstDot + 1).ToString();
+                if (!Directory.Exists(libPath))
+                    Directory.CreateDirectory(libPath);
+                var path = Path.Combine(libPath, asmName);
+                using var fs = File.OpenWrite(path);
+                using var cs = new BrotliStream(reader.GetStream(1), CompressionMode.Decompress, true);
+                await cs.CopyToAsync(fs);
+            }
         }
 
         /// <summary>
