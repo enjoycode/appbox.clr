@@ -27,6 +27,10 @@ namespace appbox.Design
             var serviceNode = hub.DesignTree.FindModelNode(ModelType.Service, ulong.Parse(modelID));
             await PublishService.CompileServiceAsync(hub, (ServiceModel)serviceNode.Model, debugFolder);
 
+            //释放第三方组件库 TODO:暂简单实现
+            var debugLibPath = Path.Combine(debugFolder, "lib");
+            await Store.ModelStore.ExtractAppAssemblies(serviceNode.AppNode.Model.Name, debugLibPath);
+
             //启动调试进程
             var appName = serviceNode.AppNode.Model.Name;
             hub.DebugService.DebugSourcePath = $"{appName}.Services.{serviceNode.Model.Name}.cs";

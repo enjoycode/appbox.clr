@@ -64,12 +64,13 @@ namespace appbox.Server
             }
 
             var files = Directory.GetFiles(debugFolder);
+            var asmLoader = new ServiceAssemblyLoader(Path.Combine(debugFolder, "lib"));
             for (int i = 0; i < files.Length; i++)
             {
                 if (Path.GetExtension(files[i]) == ".dll")
                 {
                     var sr = Path.GetFileName(files[i]).Split('.');
-                    var asm = new ServiceAssemblyLoader(debugFolder/*TODO:fix path*/).LoadFromAssemblyPath(files[i]);
+                    var asm = asmLoader.LoadFromAssemblyPath(files[i]);
                     var type = asm.GetType($"{sr[0]}.ServiceLogic.{sr[2]}", true);
                     var instance = (IService)Activator.CreateInstance(type);
                     services.TryAdd($"{sr[0]}.{sr[2]}", instance);
