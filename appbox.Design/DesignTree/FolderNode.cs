@@ -21,26 +21,17 @@ namespace appbox.Design
             set { Folder.GetRoot().Version = value; }
         }
 
-        //public override CheckoutInfo CheckoutInfo //todo: 移除
-        //{
-        //    get
-        //    {
-        //        //注意：返回相应的模型根节点的签出
-        //        var rootNode = this.TreeView.FindModelRootNode(this.Folder.AppID, this.Folder.TargetModelType);
-        //        return rootNode.CheckoutInfo;
-        //    }
-        //    set { throw new NotSupportedException("FolderNode can not set CheckoutInfo"); }
-        //}
-
-        //public override bool IsCheckoutByMe //todo:移除
-        //{
-        //    get
-        //    {
-        //        //注意：返回相应的模型根节点
-        //        var rootNode = this.TreeView.FindModelRootNode(this.Folder.AppID, this.Folder.TargetModelType);
-        //        return rootNode.IsCheckoutByMe;
-        //    }
-        //}
+        internal override CheckoutInfo CheckoutInfo
+        {
+            get
+            {
+                //注意：返回相应的模型根节点的签出信息
+                var rootFolder = Folder.GetRoot();
+                var rootNode = DesignTree.FindModelRootNode(rootFolder.AppId, rootFolder.TargetModelType);
+                return rootNode.CheckoutInfo;
+            }
+            set { throw new NotSupportedException("FolderNode can not set CheckoutInfo"); }
+        }
 
         public FolderNode(ModelFolder folder)
         {

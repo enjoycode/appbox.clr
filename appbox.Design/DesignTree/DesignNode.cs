@@ -80,7 +80,8 @@ namespace appbox.Design
         /// <summary>
         /// 设计节点是否被当前用户签出
         /// </summary>
-        public virtual bool IsCheckoutByMe => _checkoutInfo != null && _checkoutInfo.DeveloperOuid == RuntimeContext.Current.CurrentSession.LeafOrgUnitID;
+        public bool IsCheckoutByMe => CheckoutInfo != null
+            && CheckoutInfo.DeveloperOuid == RuntimeContext.Current.CurrentSession.LeafOrgUnitID;
         #endregion
 
         public DesignNode()
@@ -156,13 +157,13 @@ namespace appbox.Design
                 writer.WriteEndArray();
             }
 
-            if (_checkoutInfo != null)
+            if (CheckoutInfo != null)
             {
                 writer.WritePropertyName("CheckoutBy");
                 if (IsCheckoutByMe)
                     writer.WriteStringValue("Me");
                 else
-                    writer.WriteStringValue(_checkoutInfo.DeveloperName);
+                    writer.WriteStringValue(CheckoutInfo.DeveloperName);
             }
 
             WriteMembers(writer, objrefs);
