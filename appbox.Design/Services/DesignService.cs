@@ -32,6 +32,7 @@ namespace appbox.Design
                 { nameof(GetPendingChanges), new GetPendingChanges() },
                 { nameof(Publish), new Publish() },
                 { nameof(DeleteNode), new DeleteNode() },
+                { nameof(DragDropNode), new DragDropNode() },
                 //Entity
                 { nameof(NewEntityModel), new NewEntityModel() },
                 { nameof(GetEntityModel), new GetEntityModel() },
