@@ -15,17 +15,15 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'DebugFuture|AnyCPU' ">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <IntermediateOutputPath>obj\Debug\netcoreapp2.2</IntermediateOutputPath>
     <DebugSymbols>true</DebugSymbols>
     <Optimize>false</Optimize>
-    <DefineConstants>TRACE;DEBUG;NETCOREAPP;NETCOREAPP2_2;FUTURE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;FUTURE</DefineConstants>
     <LangVersion>8.0</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseFuture|AnyCPU' ">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <IntermediateOutputPath>obj\Release\netcoreapp2.2</IntermediateOutputPath>
     <Optimize>true</Optimize>
-    <DefineConstants>TRACE;RELEASE;NETCOREAPP;NETCOREAPP2_2;FUTURE</DefineConstants>
+    <DefineConstants>TRACE;RELEASE;FUTURE</DefineConstants>
     <LangVersion>8.0</LangVersion>
   </PropertyGroup>
   <ItemGroup>

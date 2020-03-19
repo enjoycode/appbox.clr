@@ -5,7 +5,6 @@
     <IsWindows Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' == 'true'">true</IsWindows>
     <IsOSX Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))' == 'true'">true</IsOSX>
     <IsLinux Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'true'">true</IsLinux>
-    <AspNetCoreHostingModel>InProcess</AspNetCoreHostingModel>
     <ReleaseVersion>1.0</ReleaseVersion>
     <SynchReleaseVersion>false</SynchReleaseVersion>
   </PropertyGroup>
@@ -32,23 +31,16 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'DebugFuture|AnyCPU' ">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>8.0</LangVersion>
-    <IntermediateOutputPath>obj\Debug\netcoreapp2.2</IntermediateOutputPath>
     <Optimize>false</Optimize>
-    <DefineConstants>TRACE;DEBUG;NETCOREAPP;NETCOREAPP2_2;FUTURE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;FUTURE</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseFuture|AnyCPU' ">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>8.0</LangVersion>
-    <IntermediateOutputPath>obj\Release\netcoreapp2.2</IntermediateOutputPath>
     <Optimize>true</Optimize>
-    <DefineConstants>TRACE;RELEASE;NETCOREAPP;NETCOREAPP2_2;FUTURE</DefineConstants>
+    <DefineConstants>TRACE;RELEASE;FUTURE</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.App">
-      <PrivateAssets Condition="'%(PackageReference.Version)' == ''">all</PrivateAssets>
-      <Publish Condition="'%(PackageReference.Version)' == ''">true</Publish>
-    </PackageReference>
-    <PackageReference Include="Microsoft.AspNetCore.Razor.Design" Version="2.2.0" PrivateAssets="All" />
     <PackageReference Include="prometheus-net" Version="3.3.0" />
   </ItemGroup>
   <ItemGroup>
@@ -69,10 +61,5 @@
     <Folder Include="Utils\" />
     <Folder Include="Services\" />
     <Folder Include="Metrics\" />
-  </ItemGroup>
-  <ItemGroup>
-    <Reference Include="System.Runtime">
-      <HintPath>..\..\..\..\..\..\usr\local\share\dotnet\sdk\NuGetFallbackFolder\microsoft.netcore.app\2.2.0\ref\netcoreapp2.2\System.Runtime.dll</HintPath>
-    </Reference>
   </ItemGroup>
 </Project>

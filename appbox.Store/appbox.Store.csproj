@@ -29,18 +29,16 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'DebugFuture|AnyCPU' ">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>8.0</LangVersion>
-    <IntermediateOutputPath>obj\Debug\netcoreapp2.2</IntermediateOutputPath>
     <DebugSymbols>true</DebugSymbols>
     <Optimize>false</Optimize>
-    <DefineConstants>TRACE;DEBUG;NETCOREAPP;NETCOREAPP2_2;FUTURE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;FUTURE</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseFuture|AnyCPU' ">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>8.0</LangVersion>
-    <IntermediateOutputPath>obj\Release\netcoreapp2.2</IntermediateOutputPath>
     <DebugType></DebugType>
     <Optimize>true</Optimize>
-    <DefineConstants>TRACE;RELEASE;NETCOREAPP;NETCOREAPP2_2;FUTURE</DefineConstants>
+    <DefineConstants>TRACE;RELEASE;FUTURE</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <Folder Include="Properties\" />
@@ -73,11 +71,6 @@
     <Compile Remove="Resources\Services\MetricService.cs" />
     <Compile Remove="Resources\Services\OrgUnitService_Future.cs" />
     <Compile Remove="Resources\Services\OrgUnitService.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Reference Include="System.Runtime">
-      <HintPath>..\..\..\..\..\..\usr\local\share\dotnet\sdk\NuGetFallbackFolder\microsoft.netcore.app\2.2.0\ref\netcoreapp2.2\System.Runtime.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <None Remove="Resources\Views\PermissionTree.html" />

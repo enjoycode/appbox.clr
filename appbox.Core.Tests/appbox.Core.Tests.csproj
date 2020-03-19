@@ -17,16 +17,14 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'DebugFuture|AnyCPU' ">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>8.0</LangVersion>
-    <IntermediateOutputPath>obj\Debug\netcoreapp2.2</IntermediateOutputPath>
     <Optimize>false</Optimize>
-    <DefineConstants>TRACE;DEBUG;NETCOREAPP;NETCOREAPP2_2;FUTURE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;FUTURE</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseFuture|AnyCPU' ">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>8.0</LangVersion>
-    <IntermediateOutputPath>obj\Release\netcoreapp2.2</IntermediateOutputPath>
     <Optimize>true</Optimize>
-    <DefineConstants>TRACE;RELEASE;NETCOREAPP;NETCOREAPP2_2;FUTURE</DefineConstants>
+    <DefineConstants>TRACE;RELEASE;FUTURE</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.7.0" />

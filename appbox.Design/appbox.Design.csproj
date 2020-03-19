@@ -32,13 +32,13 @@
     <WarningsNotAsErrors></WarningsNotAsErrors>
     <DebugSymbols>true</DebugSymbols>
     <Optimize>false</Optimize>
-    <DefineConstants>TRACE;DEBUG;NETCOREAPP;NETCOREAPP2_2;FUTURE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;FUTURE</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseFuture|AnyCPU' ">
     <LangVersion>8.0</LangVersion>
     <DebugType></DebugType>
     <Optimize>true</Optimize>
-    <DefineConstants>TRACE;RELEASE;NETCOREAPP;NETCOREAPP2_2;FUTURE</DefineConstants>
+    <DefineConstants>TRACE;RELEASE;UTURE</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <Folder Include="DesignTree\" />
