@@ -86,7 +86,7 @@ namespace appbox.Design
             var newModelVersion = model.Version + 1; //用于消除版本差
             var asmVersion = $"{newModelVersion >> 24}.{(newModelVersion >> 16) & 0xFF}.{newModelVersion & 0xFFFF}";
             var versionTree = SyntaxFactory.ParseSyntaxTree(
-                $"using System.Reflection;using System.Runtime.CompilerServices;using System.Runtime.Versioning;[assembly:TargetFramework(\".NETStandard, Version = v2.0\")][assembly: AssemblyVersion(\"{asmVersion}\")]");
+                $"using System.Reflection;using System.Runtime.CompilerServices;using System.Runtime.Versioning;[assembly:TargetFramework(\".NETStandard, Version = v2.1\")][assembly: AssemblyVersion(\"{asmVersion}\")]");
             var options = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary,
                 false, null, null, null, null, forDebug ? OptimizationLevel.Debug : OptimizationLevel.Release);
             var deps = new List<MetadataReference>
