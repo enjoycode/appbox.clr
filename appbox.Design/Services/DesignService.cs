@@ -33,6 +33,7 @@ namespace appbox.Design
                 { nameof(Publish), new Publish() },
                 { nameof(DeleteNode), new DeleteNode() },
                 { nameof(DragDropNode), new DragDropNode() },
+                { nameof(FindUsages), new FindUsages() },
                 //Entity
                 { nameof(NewEntityModel), new NewEntityModel() },
                 { nameof(GetEntityModel), new GetEntityModel() },

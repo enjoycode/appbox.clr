@@ -33,18 +33,15 @@ namespace appbox.Design
             }
         }
 
-        internal static async Task<List<Reference>> FindUsagesAsync(DesignHub hub,
+        internal static Task<List<Reference>> FindUsagesAsync(DesignHub hub,
                         ModelReferenceType referenceType, string appName, string modelName, string memberName)
         {
-            switch (referenceType)
+            return referenceType switch
             {
-                case ModelReferenceType.EntityMemberName:
-                    return await FindEntityMemberReferencesAsync(hub, appName, modelName, memberName);
-                case ModelReferenceType.EntityIndexName:
-                    return await FindEntityIndexReferencesAsync(hub, appName, modelName, memberName);
-                default:
-                    throw new NotImplementedException();
-            }
+                ModelReferenceType.EntityMemberName => FindEntityMemberReferencesAsync(hub, appName, modelName, memberName),
+                ModelReferenceType.EntityIndexName => FindEntityIndexReferencesAsync(hub, appName, modelName, memberName),
+                _ => throw new NotImplementedException(referenceType.ToString()),
+            };
         }
 
         private static async Task<IList<Reference>> FindEntityReferences(DesignHub ctx, string appName, string modelName)

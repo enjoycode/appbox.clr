@@ -42,10 +42,10 @@ namespace appbox
         internal static ushort GetSeqFromMemberId(ushort memberId) => (ushort)(memberId >> MEMBERID_SEQ_OFFSET);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static uint GetAppIdFromModelId(ulong modelId) => (uint)(modelId >> 32);
+        public static uint GetAppIdFromModelId(ulong modelId) => (uint)(modelId >> MODELID_APPID_OFFSET);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ModelType GetModelTypeFromModelId(ulong modelId) => (ModelType)((modelId >> 24) & 0xFF);
+        public static ModelType GetModelTypeFromModelId(ulong modelId) => (ModelType)((modelId >> MODELID_TYPE_OFFSET) & 0xFF);
 
     }
 }
