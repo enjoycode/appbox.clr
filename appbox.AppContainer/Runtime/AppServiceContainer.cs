@@ -1,16 +1,22 @@
 ﻿using System;
-using appbox.Runtime;
-using appbox.Caching;
-using System.Reflection;
-using System.Threading.Tasks;
+using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
+using appbox.Runtime;
 
 namespace appbox.Server
 {
+
     sealed class AppServiceContainer
     {
+        private struct ServiceInfo
+        {
+            public IService Instance;
+            public ServiceAssemblyLoader Loader;
+        }
 
-        private readonly LRUCache<string, IService> services = new LRUCache<string, IService>(1024);
+        //TODO:use LRUCache
+        private readonly Dictionary<string, ServiceInfo> services = new Dictionary<string, ServiceInfo>(100);
 
         /// <summary>
         /// 根据名称获取运行时服务实例
@@ -18,9 +24,8 @@ namespace appbox.Server
         /// <param name="name">eg:sys.HelloService</param>
         public async ValueTask<IService> TryGetAsync(string name)
         {
-            IService instance;
-            if (services.TryGet(name, out instance))
-                return instance;
+            if (services.TryGetValue(name, out ServiceInfo service))
+                return service.Instance;
 
             //加载服务模型的组件
             var asmData = await Store.ModelStore.LoadServiceAssemblyAsync(name);
@@ -38,17 +43,19 @@ namespace appbox.Server
 
             lock (services)
             {
-                if (!services.TryGet(name, out instance))
+                if (!services.TryGetValue(name, out service))
                 {
-                    var asm = new ServiceAssemblyLoader(libPath).LoadServiceAssembly(asmData);
+                    var asmLoader = new ServiceAssemblyLoader(libPath);
+                    var asm = asmLoader.LoadServiceAssembly(asmData);
                     var sr = name.Split('.');
                     var type = asm.GetType($"{sr[0]}.ServiceLogic.{sr[1]}", true);
-                    instance = (IService)Activator.CreateInstance(type);
-                    services.TryAdd(name, instance);
+                    var instance = (IService)Activator.CreateInstance(type);
+                    service = new ServiceInfo { Instance = instance, Loader = asmLoader };
+                    services.TryAdd(name, service);
                     Log.Debug($"加载服务实例: {asm.FullName}");
                 }
             }
-            return instance;
+            return service.Instance;
         }
 
         /// <summary>
@@ -73,16 +80,46 @@ namespace appbox.Server
                     var asm = asmLoader.LoadFromAssemblyPath(files[i]);
                     var type = asm.GetType($"{sr[0]}.ServiceLogic.{sr[2]}", true);
                     var instance = (IService)Activator.CreateInstance(type);
-                    services.TryAdd($"{sr[0]}.{sr[2]}", instance);
+                    services.TryAdd($"{sr[0]}.{sr[2]}", new ServiceInfo { Instance = instance, Loader = asmLoader });
                     Log.Debug("Inject debug service instance:" + files[i]);
                 }
             }
         }
 
+        /// <summary>
+        /// 主要用于热更新时移除旧的服务实例
+        /// </summary>
         public bool TryRemove(string name)
         {
-            return services.TryRemove(name);
+            lock (services)
+            {
+                if (services.TryGetValue(name, out ServiceInfo service))
+                {
+                    services.Remove(name);
+                    //#if DEBUG
+                    //                    service.Loader.Unloading += OnUnloading;
+                    //#endif
+                    service.Loader.Unload();
+                    //#if DEBUG
+                    //                    service.Loader.Unloading -= OnUnloading;
+                    //#endif
+                }
+            }
+            return true;
         }
+
+        //#if DEBUG
+        //        private static void OnUnloading(System.Runtime.Loader.AssemblyLoadContext context)
+        //        {
+        //            var sb = Caching.StringBuilderCache.Acquire();
+        //            sb.AppendLine("Unloading service assemblies:");
+        //            foreach (var asm in context.Assemblies)
+        //            {
+        //                sb.AppendLine(asm.FullName);
+        //            }
+        //            Log.Warn(Caching.StringBuilderCache.GetStringAndRelease(sb));
+        //        }
+        //#endif
 
     }
 }

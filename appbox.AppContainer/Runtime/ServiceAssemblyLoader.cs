@@ -8,14 +8,16 @@ namespace appbox.Server
 {
 
     //参照说明：CoreCLR/Documentation/design-docs/assemblyloadcontext.md
-    //TODO: 等.net core 3.0时实现unload
 
+    /// <summary>
+    /// 服务实例加载器，支持unload
+    /// </summary>
     sealed class ServiceAssemblyLoader : AssemblyLoadContext
     {
 
         private readonly string libPath;
 
-        public ServiceAssemblyLoader(string libPath)
+        public ServiceAssemblyLoader(string libPath) : base(true)
         {
             this.libPath = libPath;
         }
@@ -42,15 +44,6 @@ namespace appbox.Server
 
         protected override Assembly Load(AssemblyName assemblyName)
         {
-            //// var deps = DependencyContext.Default;
-            //// var res = deps.CompileLibraries.Where(d => d.Name.Contains(assemblyName.Name)).ToList();
-            //// if (res.Count > 0)
-            //// {
-            ////     Log.Debug("从DependencyContext加载组件:" + assemblyName.FullName);
-            ////     return Assembly.Load(new AssemblyName(res.First().Name));
-            //// }
-            //// else
-            //// {
             var depFile = Path.Combine(libPath, $"{assemblyName.Name}.dll");
             if (File.Exists(depFile))
             {
@@ -60,10 +53,10 @@ namespace appbox.Server
                 using var fs = File.OpenRead(depFile);
                 return LoadFromStream(fs);
             }
-            // }
 
-            Log.Debug("加载服务依赖组件: " + assemblyName.FullName);
-            return Default.LoadFromAssemblyName(assemblyName);
+            return null; // 返回null意味着所有依赖项程序集都会加载到默认上下文中，当前上下文仅包含显式加载到其中的程序集
+            //Log.Debug("加载服务依赖组件: " + assemblyName.FullName);
+            //return Default.LoadFromAssemblyName(assemblyName);
         }
 
         protected override IntPtr LoadUnmanagedDll(string unmanagedDllName)
