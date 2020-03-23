@@ -52,26 +52,27 @@ namespace appbox.Design
         /// <summary>
         /// 根据枚举模型生成虚拟代码
         /// </summary>
-        public static string GenEnumDummyCode(EnumModel model)
+        public static string GenEnumDummyCode(EnumModel model, string appName)
         {
-            throw ExceptionHelper.NotImplemented();
-            //StringBuilder sb = new StringBuilder();
+            var sb = StringBuilderCache.Acquire();
 
-            //sb.AppendFormat("namespace {0}.Enums {{ \r\n ", model.AppID);
-            ////注意：暂去掉RealType特性 sb.AppendFormat("\t[{0}(),{1}(\"AppBox.Core.EnumValue\")] {2}", TypeHelper.EnumModelAttribute
-            ////                 , TypeHelper.RealTypeAttribute, Environment.NewLine);
-            //sb.AppendFormat("\t[{0}()]{1}", TypeHelper.EnumModelAttribute, Environment.NewLine);
-            //sb.AppendFormat("\tpublic enum {0} {{ \r\n", model.ID.Split('.')[1]);
-            //foreach (EnumModelItem item in model.Items)
-            //{
-            //    sb.AppendFormat("\t\t[{0}(\"EnumItem\")]{1} = {2},", TypeHelper.MemberAccessInterceptorAttribute
-            //                    , item.Name, item.Value.ToString());
-            //}
-            //if (model.Items.Count > 0)
-            //    sb.Remove(sb.Length - 1, 1);
-            //sb.Append("\t} \r\n}");
+            sb.Append($"namespace {appName}.Enums {{\n");
+            if (!string.IsNullOrEmpty(model.Comment))
+            {
+                sb.Append("/// <summary>\n");
+                sb.Append($"/// {model.Comment}\n");
+                sb.Append("/// </summary>\n");
+            }
+            sb.Append($"[{TypeHelper.EnumModelAttribute}()]\n");
+            sb.Append($"public enum {model.Name} {{\n");
+            for (int i = 0; i < model.Items.Count; i++)
+            {
+                if (i != 0) sb.Append(',');
+                sb.Append($"[{TypeHelper.MemberAccessInterceptorAttribute}(\"EnumItem\")]{model.Items[i].Name}={model.Items[i].Value}");
+            }
+            sb.Append("}}");
 
-            //return sb.ToString();
+            return StringBuilderCache.GetStringAndRelease(sb);
         }
 
         /// <summary>

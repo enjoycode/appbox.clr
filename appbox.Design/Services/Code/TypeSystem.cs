@@ -242,13 +242,13 @@ namespace appbox.Design
                         newSolution = Workspace.CurrentSolution.AddDocument(docId, docName, dummyCode);
                     }
                     break;
-                //case ModelType.Enum:
-                //    {
-                //        var docName = string.Format("{0}.Enums.{1}.cs", model.AppID, model.Name);
-                //        newSolution = Workspace.CurrentSolution.AddDocument(docId, docName,
-                //            CodeGenService.GenEnumDummyCode((EnumModel)model));
-                //    }
-                //    break;
+                case ModelType.Enum:
+                    {
+                        var docName = $"{appName}.Enums.{model.Name}.cs";
+                        newSolution = Workspace.CurrentSolution.AddDocument(docId, docName,
+                            CodeGenService.GenEnumDummyCode((EnumModel)model, appName));
+                    }
+                    break;
                 case ModelType.Service:
                     {
                         //注意: 服务模型先创建虚拟项目
@@ -321,10 +321,10 @@ namespace appbox.Design
                         newSolution = Workspace.CurrentSolution.WithDocumentText(docId, SourceText.From(sourceCode));
                     }
                     break;
-                //case ModelType.Enum:
-                //newSolution = Workspace.CurrentSolution.WithDocumentText(modelDocId,
-                //                    SourceText.From(CodeGenService.GenEnumDummyCode((EnumModel)model)));
-                //break;
+                case ModelType.Enum:
+                    newSolution = Workspace.CurrentSolution.WithDocumentText(docId,
+                                        SourceText.From(CodeGenService.GenEnumDummyCode((EnumModel)model, appName)));
+                    break;
                 case ModelType.Service:
                     {
                         var sourceCode = await Store.ModelStore.LoadServiceCodeAsync(model.Id);
