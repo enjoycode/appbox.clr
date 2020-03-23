@@ -86,8 +86,8 @@ namespace appbox.Serialization
             //RegisterKnownType(new UserSerializer(PayloadType.ResourceValue, typeof(ResourceValue), () => new ResourceValue()));
             RegisterKnownType(new UserSerializer(PayloadType.ApplicationModel, typeof(ApplicationModel), () => new ApplicationModel()));
             //RegisterKnownType(new UserSerializer(PayloadType.ApplicationAssembly, typeof(ApplicationAssembly), () => new ApplicationAssembly()));
-            //RegisterKnownType(new UserSerializer(PayloadType.EnumModel, typeof(EnumModel), () => new EnumModel()));
-            //RegisterKnownType(new UserSerializer(PayloadType.EnumModelItem, typeof(EnumModelItem), () => new EnumModelItem()));
+            RegisterKnownType(new UserSerializer(PayloadType.EnumModel, typeof(EnumModel), () => new EnumModel()));
+            RegisterKnownType(new UserSerializer(PayloadType.EnumModelItem, typeof(EnumModelItem), () => new EnumModelItem()));
             RegisterKnownType(new UserSerializer(PayloadType.ViewModel, typeof(ViewModel), () => new ViewModel()));
 
             //RegisterKnownType(new UserSerializer(PayloadType.ReportModel, typeof(ReportModel), () => new ReportModel()));

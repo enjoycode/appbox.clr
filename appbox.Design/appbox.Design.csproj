@@ -64,6 +64,7 @@
     <Folder Include="Omnisharp\Roslyn.CSharp\Services\Signatures\" />
     <Folder Include="Omnisharp\Roslyn.CSharp\Services\Structure\" />
     <Folder Include="Omnisharp\Abstractions\Models\" />
+    <Folder Include="Handlers\Enum\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\appbox.Core\appbox.Core.csproj" />

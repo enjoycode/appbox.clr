@@ -60,6 +60,8 @@ namespace appbox.Design
                 { nameof(OpenViewModel), new OpenViewModel() },
                 { nameof(LoadView), new LoadView() },
                 { nameof(ChangeRouteSetting), new ChangeRouteSetting() },
+                //Enum
+                { nameof(NewEnumModel), new NewEnumModel() },
                 //Permission
                 { nameof(NewPermissionModel), new NewPermissionModel() },
                 //C# 代码编辑器相关
