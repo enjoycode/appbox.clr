@@ -1,9 +1,10 @@
 ﻿using System;
+using System.Text.Json;
 using appbox.Serialization;
 
 namespace appbox.Models
 {
-    public sealed class EnumModelItem : IBinSerializable
+    public sealed class EnumModelItem : IBinSerializable, IJsonSerializable
     {
         #region ====Fields & Properties====
         public string Name { get; private set; }
@@ -50,6 +51,18 @@ namespace appbox.Models
                 }
             } while (propIndex != 0);
         }
+
+        PayloadType IJsonSerializable.JsonPayloadType => PayloadType.UnknownType;
+
+        void IJsonSerializable.WriteToJson(Utf8JsonWriter writer, WritedObjects objrefs)
+        {
+            writer.WriteString(nameof(Name), Name);
+            writer.WriteNumber(nameof(Value), Value);
+            writer.WriteString(nameof(Comment), Comment);
+        }
+
+        void IJsonSerializable.ReadFromJson(ref Utf8JsonReader reader, ReadedObjects objrefs)
+            => throw new NotSupportedException();
         #endregion
     }
 }

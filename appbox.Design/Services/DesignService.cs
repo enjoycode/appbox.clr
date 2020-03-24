@@ -62,6 +62,7 @@ namespace appbox.Design
                 { nameof(ChangeRouteSetting), new ChangeRouteSetting() },
                 //Enum
                 { nameof(NewEnumModel), new NewEnumModel() },
+                { nameof(GetEnumItems), new GetEnumItems() },
                 //Permission
                 { nameof(NewPermissionModel), new NewPermissionModel() },
                 //C# 代码编辑器相关
