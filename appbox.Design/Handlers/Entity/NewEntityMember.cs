@@ -16,12 +16,11 @@ namespace appbox.Design
             string memberName = args.GetString();
             int entityMemberType = args.GetInt32();
 
-            var node = hub.DesignTree.FindNode(DesignNodeType.EntityModelNode, modelId);
+            var node = hub.DesignTree.FindModelNode(ModelType.Entity, ulong.Parse(modelId));
             if (node == null)
                 throw new Exception("Can't find entity model node");
-            var modelNode = node as ModelNode;
-            var model = modelNode.Model as EntityModel;
-            if (!modelNode.IsCheckoutByMe)
+            var model = (EntityModel)node.Model;
+            if (!node.IsCheckoutByMe)
                 throw new Exception("Node has not checkout");
             if (!CodeHelper.IsValidIdentifier(memberName))
                 throw new Exception("Name is invalid");
@@ -29,27 +28,18 @@ namespace appbox.Design
                 throw new Exception("Name can not same as Entity name");
             if (model.Members.FindIndex(t => t.Name == memberName) >= 0) //if (model.ContainsMember(memberName))
                 throw new Exception("Name has exists");
-
-            EntityMemberModel res;
-            switch (entityMemberType)
+            EntityMemberModel res = entityMemberType switch
             {
-                case (int)EntityMemberType.DataField:
-                    res = NewDataField(model, memberName, ref args);
-                    break;
-                case (int)EntityMemberType.EntityRef:
-                    res = NewEntityRef(hub, model, memberName, ref args);
-                    break;
-                case (int)EntityMemberType.EntitySet:
-                    res = NewEntitySet(hub, model, memberName, ref args);
-                    break;
-                default:
-                    throw new NotImplementedException($"未实现的成员类型: {entityMemberType}");
-            }
+                (int)EntityMemberType.DataField => NewDataField(model, memberName, ref args),
+                (int)EntityMemberType.EntityRef => NewEntityRef(hub, model, memberName, ref args),
+                (int)EntityMemberType.EntitySet => NewEntitySet(hub, model, memberName, ref args),
+                _ => throw new NotImplementedException($"未实现的成员类型: {entityMemberType}"),
+            };
 
             // 保存到本地
-            await modelNode.SaveAsync(null);
+            await node.SaveAsync(null);
             // 更新RoslynDocument
-            await hub.TypeSystem.UpdateModelDocumentAsync(modelNode);
+            await hub.TypeSystem.UpdateModelDocumentAsync(node);
 
             return res;
         }
