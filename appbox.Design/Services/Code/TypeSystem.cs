@@ -442,6 +442,21 @@ namespace appbox.Design
 
             return semanticModel.GetDeclaredSymbol(interfaceDeclaration);
         }
+
+        internal async Task<IFieldSymbol> GetEnumItemSymbolAsync(string appName, string modelName, string memberName)
+        {
+            var doc = GetModelDocument(ModelType.Enum, appName, modelName);
+            if (doc == null) return null;
+
+            var syntaxRootNode = await doc.GetSyntaxRootAsync();
+            var semanticModel = await doc.GetSemanticModelAsync();
+
+            var enumDeclarations = syntaxRootNode.DescendantNodes().OfType<EnumDeclarationSyntax>()
+                .Where(c => c.Identifier.ValueText == modelName).ToArray();
+
+            var res = semanticModel.GetDeclaredSymbol(enumDeclarations[0]).GetMembers(memberName).SingleOrDefault();
+            return (IFieldSymbol)res;
+        }
         #endregion
 
         #region ====GetProjectErros for debug====

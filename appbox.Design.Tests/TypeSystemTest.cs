@@ -13,7 +13,7 @@ namespace appbox.Design.Tests
     {
 
         [Fact]
-        public async Task GetSymbolTest()
+        public async Task GetEntitySymbolTest()
         {
             RuntimeContext.Init(new Core.Tests.MockRuntimeContext(), 10410);
 
@@ -34,6 +34,25 @@ namespace appbox.Design.Tests
             Assert.NotNull(symbol);
             symbol = await ctx.TypeSystem.GetModelSymbolAsync(ModelType.Entity, "sys", "Emploee");
             Assert.NotNull(symbol);
+        }
+
+        [Fact]
+        public async Task GetEnumSymbolTest()
+        {
+            RuntimeContext.Init(new Core.Tests.MockRuntimeContext(), 10410);
+
+            var session = new MockDeveloperSession();
+            var ctx = new DesignHub(session);
+            var apps = new List<ApplicationModel>() { Core.Tests.TestHelper.SysAppModel };
+            var models = new List<ModelBase>
+            {
+                Core.Tests.TestHelper.OrderStatusModel,
+            };
+            await ctx.DesignTree.LoadForTest(apps, models);
+
+            var symbol = await ctx.TypeSystem.GetEnumItemSymbolAsync("sys", "OrderStatus", "Paid");
+            Assert.NotNull(symbol);
+            Assert.Equal("sys.Enums.OrderStatus.Paid", symbol.ToString());
         }
     }
 }

@@ -40,6 +40,7 @@ namespace appbox.Design
             {
                 ModelReferenceType.EntityMemberName => FindEntityMemberReferencesAsync(hub, appName, modelName, memberName),
                 ModelReferenceType.EntityIndexName => FindEntityIndexReferencesAsync(hub, appName, modelName, memberName),
+                ModelReferenceType.EnumModelItemName => FindEnumItemReferencesAsync(hub, appName, modelName, memberName),
                 _ => throw new NotImplementedException(referenceType.ToString()),
             };
         }
@@ -106,6 +107,30 @@ namespace appbox.Design
             await AddCodeReferencesAsync(ctx, ls, modelClass, null);
             //TODO:查找视图引用
             Log.Warn("查找视图等引用尚未实现.");
+            return ls;
+        }
+
+        private static async Task<List<Reference>> FindEnumItemReferencesAsync(DesignHub hub,
+                                string appName, string modelName, string memberName)
+        {
+            if (string.IsNullOrEmpty(modelName))
+                throw new ArgumentNullException(nameof(modelName), "枚举模型标识为空");
+            if (string.IsNullOrEmpty(memberName))
+                throw new ArgumentNullException(nameof(memberName), "枚举模型成员名称为空");
+
+            var ls = new List<Reference>();
+
+            //TODO:待确认是否需要查找实体模型的引用
+            //AddReferencesFromEntityModels(hub, ls, ModelReferenceType.EntityMemberName, modelID, memberName);
+
+            //获取虚拟成员及相应的资源的虚拟成员
+            var symbol = await hub.TypeSystem.GetEnumItemSymbolAsync(appName, modelName, memberName);
+            //加入所有的代码引用
+            if (symbol != null)
+                await AddCodeReferencesAsync(hub, ls, symbol.ContainingType, symbol);
+            else
+                Log.Warn($"Can't get EnumItem symbol: {appName}.{modelName}.{memberName}");
+
             return ls;
         }
 

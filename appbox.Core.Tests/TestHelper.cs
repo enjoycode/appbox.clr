@@ -26,12 +26,20 @@ namespace appbox.Core.Tests
         public static PermissionModel AdminPermissionModel { get; private set; }
         public static PermissionModel DeveloperPermissionModel { get; private set; }
 
+        public static EnumModel OrderStatusModel { get; private set; }
+
+        private const ulong SYS_ENUM_MODEL_ID = ((ulong)Consts.SYS_APP_ID << IdUtil.MODELID_APPID_OFFSET) | ((ulong)ModelType.Enum << IdUtil.MODELID_TYPE_OFFSET);
+
         static TestHelper()
         {
             SysAppModel = new ApplicationModel("appbox", Consts.SYS, Consts.SYS_APP_ID);
 
             AdminPermissionModel = new PermissionModel(Consts.SYS_PERMISSION_ADMIN_ID, "Admin");
             DeveloperPermissionModel = new PermissionModel(Consts.SYS_PERMISSION_DEVELOPER_ID, "Developer");
+
+            OrderStatusModel = new EnumModel(SYS_ENUM_MODEL_ID | (1 << IdUtil.MODELID_SEQ_OFFSET), "OrderStatus");
+            OrderStatusModel.Items.Add(new EnumModelItem("New", 0));
+            OrderStatusModel.Items.Add(new EnumModelItem("Paid", 1));
 
             EmploeeModel = new EntityModel(Consts.SYS_EMPLOEE_MODEL_ID, Consts.EMPLOEE, EntityStoreType.StoreWithMvcc);
             var name = new DataFieldModel(EmploeeModel, Consts.NAME, EntityFieldType.String);
