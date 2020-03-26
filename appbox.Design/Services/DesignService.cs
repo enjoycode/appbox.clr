@@ -64,6 +64,7 @@ namespace appbox.Design
                 { nameof(NewEnumModel), new NewEnumModel() },
                 { nameof(GetEnumItems), new GetEnumItems() },
                 { nameof(NewEnumItem), new NewEnumItem() },
+                { nameof(ChangeEnumItem), new ChangeEnumItem() },
                 //Permission
                 { nameof(NewPermissionModel), new NewPermissionModel() },
                 //C# 代码编辑器相关

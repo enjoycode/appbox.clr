@@ -9,7 +9,7 @@ namespace appbox.Models
         #region ====Fields & Properties====
         public string Name { get; private set; }
 
-        public int Value { get; private set; }
+        public int Value { get; internal set; }
 
         public string Comment { get; set; }
         #endregion
