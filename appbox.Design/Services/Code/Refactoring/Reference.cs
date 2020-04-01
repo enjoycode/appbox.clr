@@ -6,30 +6,32 @@ using System.Text.Json;
 
 namespace appbox.Design
 {
+    /// <summary>
+    /// 模型或其成员的引用者的基类，目前分为两类：
+    /// 1. 模型对模型的引用
+    /// 2. 模型内虚拟代码对模型的引用
+    /// </summary>
     abstract class Reference : IComparable<Reference>, IJsonSerializable
     {
-        public ModelType ModelType { get; private set; }
+        public ModelNode ModelNode { get; private set; }
 
-        public string ModelID { get; private set; }
-
+        /// <summary>
+        /// 用于友好显示的位置信息
+        /// </summary>
         public abstract string Location { get; }
-
-        public string JsonObjID => string.Empty;
-
-        public PayloadType JsonPayloadType => PayloadType.UnknownType;
 
         //public abstract String Expression { get; }
 
-        public Reference(ModelType modelType, string modelID)
+        public Reference(ModelNode modelNode)
         {
-            ModelType = modelType;
-            ModelID = modelID;
+            ModelNode = modelNode ?? throw new ArgumentNullException();
         }
 
         public int CompareTo(Reference other)
         {
-            if (ModelType != other.ModelType || ModelID != other.ModelID)
-                return string.Compare(ModelID, other.ModelID);
+            if (ModelNode.Model.ModelType != other.ModelNode.Model.ModelType
+                || ModelNode.Model.Id != other.ModelNode.Model.Id)
+                return ModelNode.Model.Id.CompareTo(other.ModelNode.Model.Id);
 
             return CompareSameModel(other);
         }
@@ -39,22 +41,33 @@ namespace appbox.Design
             return 0;
         }
 
+        public override string ToString()
+        {
+            return $"{ModelNode.AppNode.Model.Name}.{CodeHelper.GetPluralStringOfModelType(ModelNode.Model.ModelType)}.{ModelNode.Model.Name} at {Location}";
+        }
+
+        #region ====Serialization====
+        public PayloadType JsonPayloadType => PayloadType.UnknownType;
+
         public void WriteToJson(Utf8JsonWriter writer, WritedObjects objrefs)
         {
-            writer.WriteString("Type", ModelType.ToString());
-            writer.WriteString("Model", ModelID);
+            writer.WriteString("Type", ModelNode.Model.ModelType.ToString());
+            writer.WriteString("Model", $"{ModelNode.AppNode.Model.Name}.{ModelNode.Model.Name}");
             writer.WriteString("Location", Location);
 
             WriteMember(writer);
         }
 
-        protected virtual void WriteMember(Utf8JsonWriter writer)
-        { }
+        protected virtual void WriteMember(Utf8JsonWriter writer) { }
 
         public void ReadFromJson(ref Utf8JsonReader reader,
             ReadedObjects objrefs) => throw new NotSupportedException();
+        #endregion
     }
 
+    /// <summary>
+    /// 模型内虚拟代码的引用
+    /// </summary>
     sealed class CodeReference : Reference
     {
 
@@ -63,10 +76,7 @@ namespace appbox.Design
 
         public int Length { get; }
 
-        public override string Location
-        {
-            get { return string.Format("[{0} - {1}]", Offset, Length); }
-        }
+        public override string Location => $"[{Offset} - {Length}]";
 
         //private string _expression;
         //public override string Expression
@@ -74,8 +84,7 @@ namespace appbox.Design
         #endregion
 
         #region ====Ctor====
-        public CodeReference(ModelType modelType, string modelID, int offset, int length)
-            : base(modelType, modelID)
+        public CodeReference(ModelNode modelNode, int offset, int length) : base(modelNode)
         {
             Offset = offset;
             Length = length;
@@ -93,6 +102,7 @@ namespace appbox.Design
         public override int CompareSameModel(Reference other)
         {
             var r = (CodeReference)other;
+            //Log.Warn($"Compare CodeReference: {Offset} {r.Offset}");
             return Offset.CompareTo(r.Offset);
         }
 
@@ -101,11 +111,11 @@ namespace appbox.Design
         /// </summary>
         /// <param name="diff"></param>
         /// <param name="newName"></param>
-        internal void Rename(DesignHub hub, ModelNode node, int diff, string newName)
+        internal void Rename(DesignHub hub, int diff, string newName)
         {
-            if (node.NodeType == DesignNodeType.ServiceModelNode) //暂只支持服务模型
+            if (ModelNode.NodeType == DesignNodeType.ServiceModelNode) //暂只支持服务模型
             {
-                var document = hub.TypeSystem.Workspace.CurrentSolution.GetDocument(node.RoslynDocumentId);
+                var document = hub.TypeSystem.Workspace.CurrentSolution.GetDocument(ModelNode.RoslynDocumentId);
                 var sourceText = document.GetTextAsync().Result;
                 var startOffset = Offset + diff;
                 var endOffset = startOffset + Length;
@@ -114,24 +124,24 @@ namespace appbox.Design
                         new TextChange(new TextSpan(startOffset, endOffset - startOffset), newName)
                     });
 
-                hub.TypeSystem.Workspace.OnDocumentChanged(node.RoslynDocumentId, sourceText);
+                hub.TypeSystem.Workspace.OnDocumentChanged(ModelNode.RoslynDocumentId, sourceText);
             }
             else
             {
-                throw new NotSupportedException("CodeReference is not in ServiceModel");
+                throw new NotSupportedException("CodeReference is not from ServiceModel");
             }
         }
         #endregion
     }
 
+    /// <summary>
+    /// 模型对模型的引用，如表达式引用
+    /// </summary>
     sealed class ModelReference : Reference
     {
         public ModelReferenceInfo TargetReference { get; }
 
-        public override string Location
-        {
-            get { return TargetReference.TargetType.ToString(); }
-        }
+        public override string Location => TargetReference.TargetType.ToString();
 
         //public override string Expression
         //{
@@ -144,8 +154,8 @@ namespace appbox.Design
         //}
 
         #region ====Ctor====
-        public ModelReference(ModelType modelType, string modelID, ModelReferenceInfo modelReference)
-            : base(modelType, modelID)
+        public ModelReference(ModelNode modelNode, ModelReferenceInfo modelReference)
+            : base(modelNode)
         {
             TargetReference = modelReference;
         }

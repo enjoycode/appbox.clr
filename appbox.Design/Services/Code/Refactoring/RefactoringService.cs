@@ -72,13 +72,11 @@ namespace appbox.Design
             //AddReferencesFromEntityModels(hub, ls, ModelReferenceType.EntityMemberName, modelID, memberName);
 
             //获取虚拟成员及相应的资源的虚拟成员
-            var symbols = await hub.TypeSystem.GetEntityMemberSymbolsAsync(appName, modelName, memberName);
-            //加入所有的代码引用
-            foreach (var symbol in symbols)
-            {
-                if (symbol != null)
-                    await AddCodeReferencesAsync(hub, ls, symbol.ContainingType, symbol);
-            }
+            var symbol = await hub.TypeSystem.GetEntityMemberSymbolAsync(appName, modelName, memberName);
+            if (symbol != null)
+                await AddCodeReferencesAsync(hub, ls, symbol.ContainingType, symbol);
+            else
+                Log.Warn($"Can't get EntityMember symbol: {appName}.{modelName}.{memberName}");
 
             return ls;
         }
@@ -94,6 +92,8 @@ namespace appbox.Design
             var symbol = await hub.TypeSystem.GetEntityIndexSymbolAsync(appName, modelName, indexName);
             if (symbol != null)
                 await AddCodeReferencesAsync(hub, ls, symbol, null);
+            else
+                Log.Warn($"Can't get EntityIndex symbol: {appName}.{modelName}.{indexName}");
             return ls;
         }
 
@@ -176,7 +176,10 @@ namespace appbox.Design
                     var docName = loc.Document.Name;
                     var sr = docName.Split('.');
                     var modelType = CodeHelper.GetModelTypeFromPluralString(sr[1]);
-                    var reference = new CodeReference(modelType, $"{sr[0]}.{sr[2]}",
+                    var appNode = hub.DesignTree.FindApplicationNodeByName(sr[0]);
+                    var modelRootNode = appNode.FindModelRootNode(modelType);
+                    var modelNode = modelRootNode.FindModelNodeByName(sr[2]);
+                    var reference = new CodeReference(modelNode,
                         loc.Location.SourceSpan.Start, loc.Location.SourceSpan.Length);
                     list.Add(reference);
                 }
@@ -190,114 +193,102 @@ namespace appbox.Design
         /// <param name="modelID">Model identifier.</param>
         /// <param name="oldName">Old name.</param>
         /// <param name="newName">New name.</param>
-        internal static string[] Rename(DesignHub hub, ModelReferenceType referenceType,
-            string modelID, string oldName, string newName)
+        internal static async Task<string[]> RenameAsync(DesignHub hub, ModelReferenceType referenceType,
+            ulong modelID, string oldName, string newName)
         {
-            throw ExceptionHelper.NotImplemented();
-            ////注意：暂不用Roslyn的Renamer.RenameSymbolAsync，因为需要处理多个Symbol
+            //注意：暂不用Roslyn的Renamer.RenameSymbolAsync，因为需要处理多个Symbol
 
             //Action<List<Reference>> addSpecRefsAction = null;
-            //ModelNode sourceNode = null;
+            ModelNode sourceNode;
+            //1.先判断当前模型是否已签出
+            switch (referenceType)
+            {
+                case ModelReferenceType.EntityMemberName:
+                    sourceNode = hub.DesignTree.FindModelNode(ModelType.Entity, modelID);
+                    break;
+                default:
+                    throw new NotImplementedException($"{referenceType}");
+            }
 
-            ////1.先判断当前模型是否已签出
-            //switch (referenceType)
-            //{
-            //    case ModelReferenceType.EntityMemberName:
-            //        sourceNode = hub.DesignTree.FindModelNode(ModelType.Entity, modelID);
-            //        addSpecRefsAction = ls =>
-            //        {
-            //            var member = ((EntityModel)sourceNode.Model)[oldName];
-            //            ModelReference mr = new ModelReference(ModelType.Entity, modelID,
-            //                new ModelReferenceInfo(member.LocalizedNameResx, ModelReferencePosition.LocalizedName,
-            //                    member.Name, member.LocalizedNameResx.ID));
-            //            ls.Add(mr);
-            //        };
-            //        break;
-            //    default:
-            //        throw new NotImplementedException();
-            //}
+            if (!sourceNode.IsCheckoutByMe)
+                throw new Exception("当前模型尚未签出");
 
-            //if (!sourceNode.IsCheckoutByMe)
-            //    throw new Exception("当前模型尚未签出");
-
-            ////2.查找引用项并排序，同时判断有无签出
-            //var references = FindUsages(hub, referenceType, modelID, oldName);
-            //references.Sort();
-            //for (int i = 0; i < references.Count; i++)
-            //{
-            //    var designNode = hub.DesignTree.FindModelNode(references[i].ModelType, references[i].ModelID);
-            //    if (!designNode.IsCheckoutByMe)
-            //        throw new System.Exception($"模型[{references[i].ModelID}]尚未签出");
-            //}
+            //2.查找引用项并排序，同时判断有无签出
+            var references = await FindUsagesAsync(hub, referenceType,
+                sourceNode.AppNode.Model.Name, sourceNode.Model.Name, oldName);
+            references.Sort();
+            for (int i = 0; i < references.Count; i++)
+            {
+                if (!references[i].ModelNode.IsCheckoutByMe)
+                    throw new Exception($"模型[{references[i].ModelNode.Model.Name}]尚未签出");
+            }
 
             ////3.添加特殊引用项（如模型资源名称）
             //if (addSpecRefsAction != null)
             //    addSpecRefsAction(references);
 
-            ////4.开始重命名，注意启用事务保存
-            //using (var ts = SqlStore.Default.NewTransactionScope())
-            //{
-            //    int diff = 0; //新旧成员名称间字符数之差的累积
-            //    string fileName = string.Empty;
-            //    ModelNode node = null;
-            //    for (int i = 0; i < references.Count; i++)
-            //    {
-            //        Reference r = references[i];
-            //        if (fileName == string.Format("{0}.{1}", r.ModelType, r.ModelID)) //表示还在同一模型内
-            //        {
-            //            diff += newName.Length - oldName.Length;
-            //        }
-            //        else
-            //        {
-            //            fileName = string.Format("{0}.{1}", r.ModelType, r.ModelID); //开始Rename新的模型
-            //            diff = 0;
-            //            if (node != null && node.Model.ID != modelID)
-            //            {
-            //                FinishRenamedNode(node);
-            //            }
-            //            var names = r.ModelID.Split('.');
-            //            node = hub.DesignTree.FindModelNode(r.ModelType, names[0], names[1]);
-            //        }
+            //4.开始重命名, TODO:考虑启用事务保存
+            int diff = 0; //新旧成员名称间字符数之差的累积
+            for (int i = 0; i < references.Count; i++)
+            {
+                Reference r = references[i];
+                if (i > 0 && r.ModelNode.Model.Id == references[i - 1].ModelNode.Model.Id) //表示还在同一模型内
+                {
+                    diff += newName.Length - oldName.Length;
+                }
+                else //开始Rename新的模型
+                {
+                    //完结之前节点的重命名
+                    if (i > 0)
+                        await FinishRenamedNode(references[i - 1].ModelNode);
+                    diff = 0;
+                }
 
-            //        //判断引用类型，分别处理
-            //        ModelReference mr = r as ModelReference;
-            //        if (mr == null)
-            //            ((CodeReference)r).Rename(hub, node, diff, newName);
-            //        else
-            //            mr.TargetReference.Target.RenameReference(referenceType, mr.TargetReference.TargetType, modelID, oldName, newName);
-            //    } //end for references
+                //判断引用类型，分别处理
+                switch (r)
+                {
+                    case CodeReference cr:
+                        cr.Rename(hub, diff, newName);
+                        break;
+                    case ModelReference mr:
+                        mr.TargetReference.Target.RenameReference(referenceType,
+                            mr.TargetReference.TargetType, modelID, oldName, newName);
+                        break;
+                    default:
+                        throw new Exception($"Unknown Reference Type: {r.GetType().Name}");
+                }
 
-            //    if (node != null && node.Model.ID != modelID)
-            //    {
-            //        FinishRenamedNode(node);
-            //    }
+                if (i == references.Count - 1)
+                    await FinishRenamedNode(references[i].ModelNode);
+            } //end for references
 
-            //    //6.根据源类型进行相关的模型处理并保存
-            //    switch (referenceType)
-            //    {
-            //        case ModelReferenceType.EntityMemberName:
-            //            ((EntityModel)sourceNode.Model).RenameMember(oldName, newName);
-            //            break;
-            //        default:
-            //            throw new NotImplementedException();
-            //    }
-            //    sourceNode.Save(null);
+            //6.根据源类型进行相关的模型处理并保存，另根据源引用类型更新相应的RoslynDocument
+            var needUpdateSourceRoslyn = false; //注意:如果改为RosylnRenamer实现则不再需要更新
+            switch (referenceType)
+            {
+                case ModelReferenceType.EntityMemberName:
+                    ((EntityModel)sourceNode.Model).RenameMember(oldName, newName);
+                    needUpdateSourceRoslyn = true;
+                    break;
+                default:
+                    throw new NotImplementedException();
+            }
+            await sourceNode.SaveAsync(null);
+            if (needUpdateSourceRoslyn)
+                await hub.TypeSystem.UpdateModelDocumentAsync(sourceNode);
 
-            //    ts.Complete();
-            //}
-
-            ////最后返回处理结果，暂简单返回受影响的节点，由前端刷新
-            //return references.Select(t => t.ModelID + "-" + ((int)t.ModelType).ToString()).Distinct().ToArray();
+            //最后返回处理结果，暂简单返回受影响的节点，由前端刷新
+            return references.Select(t => t.ModelNode.Model.Id.ToString()).Distinct().ToArray();
         }
 
         /// <summary>
         /// RenameReferences的辅助方法，用于完结模型结点的重命名，并保存模型
         /// </summary>
-        private static void FinishRenamedNode(ModelNode node)
+        private static async Task FinishRenamedNode(ModelNode node)
         {
-            throw ExceptionHelper.NotImplemented();
-            //保存节点, 注意：更新需要更新的RoslynDocument已由ModelNode.Save处理
-            //node.Save(null);
+            //保存节点
+            await node.SaveAsync(null);
+            //TODO: 是否需要更新引用者的RoslynDocument
         }
 
         #region ----尝试使用Roslyn.Renamer----

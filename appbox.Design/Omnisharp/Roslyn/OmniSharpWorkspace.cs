@@ -28,23 +28,23 @@ namespace OmniSharp
 
         public override void OpenDocument(DocumentId documentId, bool activate = true)
         {
-            var doc = this.CurrentSolution.GetDocument(documentId);
+            var doc = CurrentSolution.GetDocument(documentId);
             if (doc != null)
             {
                 var text = doc.GetTextAsync(CancellationToken.None).WaitAndGetResult(CancellationToken.None);
-                this.OnDocumentOpened(documentId, text.Container, activate);
+                OnDocumentOpened(documentId, text.Container, activate);
             }
         }
 
         public override void CloseDocument(DocumentId documentId)
         {
-            var doc = this.CurrentSolution.GetDocument(documentId);
+            var doc = CurrentSolution.GetDocument(documentId);
             if (doc != null)
             {
                 var text = doc.GetTextAsync(CancellationToken.None).WaitAndGetResult(CancellationToken.None);
                 var version = doc.GetTextVersionAsync(CancellationToken.None).WaitAndGetResult(CancellationToken.None);
                 var loader = TextLoader.From(TextAndVersion.Create(text, version, doc.FilePath));
-                this.OnDocumentClosed(documentId, loader);
+                OnDocumentClosed(documentId, loader);
             }
         }
 
@@ -55,9 +55,9 @@ namespace OmniSharp
 
         public Document GetOpenedDocumentByName(string fileName)
         {
-            foreach (var id in this.GetOpenDocumentIds())
+            foreach (var id in GetOpenDocumentIds())
             {
-                var doc = this.CurrentSolution.GetDocument(id);
+                var doc = CurrentSolution.GetDocument(id);
                 if (doc.Name == fileName)
                     return doc;
             }

@@ -54,6 +54,15 @@ namespace appbox.Models
             MemberId = id;
         }
 
+        internal void RenameTo(string newName)
+        {
+            //如果已经重命名过，不要再修改_originalName
+            if (string.IsNullOrEmpty(_originalName) && PersistentState != PersistentState.Detached)
+                _originalName = Name;
+            Name = newName;
+            OnPropertyChanged();
+        }
+
         internal protected virtual void AcceptChanges()
         {
             PersistentState = PersistentState.Unchanged;

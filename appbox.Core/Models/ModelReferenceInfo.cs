@@ -67,7 +67,8 @@ namespace appbox.Models
         /// <param name="modelID"></param>
         /// <param name="oldName"></param>
         /// <param name="newName"></param>
-        void RenameReference(ModelReferenceType sourceType, ModelReferencePosition targetType, string modelID, string oldName, string newName);
+        void RenameReference(ModelReferenceType sourceType, ModelReferencePosition targetType,
+            ulong modelID, string oldName, string newName);
 
     }
 
@@ -82,7 +83,8 @@ namespace appbox.Models
 
         public string Expression { get; }
 
-        public ModelReferenceInfo(IModelReference target, ModelReferencePosition targetType, string path, string expression)
+        public ModelReferenceInfo(IModelReference target,
+            ModelReferencePosition targetType, string path, string expression)
         {
             Target = target;
             TargetType = targetType;

@@ -323,7 +323,7 @@ namespace appbox.Design
         /// <param name="name">Name.</param>
         internal ModelNode FindModelNodeByName(uint appId, ModelType type, string name)
         {
-            //TODO:***** 考虑在这里加载存储有没有相同名称的存在,或发布时检测
+            //TODO:***** 考虑在这里加载存储有没有相同名称的存在,或发布时检测，如改为全局Workspace没有此问题
             // dev1 -> load tree -> checkout -> add model -> publish
             // dev2 -> load tree                                 -> checkout -> add model with same name will pass
             var modelRootNode = FindModelRootNode(appId, type);

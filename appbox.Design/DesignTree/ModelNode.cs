@@ -84,7 +84,7 @@ namespace appbox.Design
 
         #region ====Methods====
         /// <summary>
-        /// 保存模型节点及相关资源至本地文件
+        /// 保存模型节点
         /// </summary>
         internal async Task SaveAsync(object[] modelInfos)
         {

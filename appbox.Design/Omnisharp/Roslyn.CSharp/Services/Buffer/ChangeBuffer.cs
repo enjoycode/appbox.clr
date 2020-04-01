@@ -24,7 +24,7 @@ namespace OmniSharp.Roslyn.CSharp.Services
             int endColumn = args.GetInt32() - 1;
             string newText = args.GetString();
 
-            Document document = null;
+            Document document;
             if (type == 1) //服务代码变更
             {
                 var modelNode = hub.DesignTree.FindModelNode(ModelType.Service, ulong.Parse(targetID));

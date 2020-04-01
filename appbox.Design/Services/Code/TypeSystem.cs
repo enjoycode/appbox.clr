@@ -176,7 +176,7 @@ namespace appbox.Design
                 .AddProjectReference(prjid, new ProjectReference(ModelProjectId))
                 .AddProjectReference(prjid, new ProjectReference(ServiceBaseProjectId))
                 .AddProjectReference(prjid, new ProjectReference(AsyncServiceProxyProjectId));
-                //.AddProjectReference(prjid, new ProjectReference(WorkflowModelProjectId));
+            //.AddProjectReference(prjid, new ProjectReference(WorkflowModelProjectId));
 
             if (!Workspace.TryApplyChanges(newSolution))
                 Log.Warn("Cannot create service project.");
@@ -411,8 +411,7 @@ namespace appbox.Design
         //    return modelSymbol.GetMembers(memberName).FirstOrDefault(); //暂返回第一个
         //}
 
-        //TODO: *** only one IPropertySymbol now?
-        internal async Task<IPropertySymbol[]> GetEntityMemberSymbolsAsync(string appName, string modelName, string memberName)
+        internal async Task<IPropertySymbol> GetEntityMemberSymbolAsync(string appName, string modelName, string memberName)
         {
             var doc = GetModelDocument(ModelType.Entity, appName, modelName);
             if (doc == null)
@@ -423,10 +422,7 @@ namespace appbox.Design
 
             var classDeclarations = syntaxRootNode.DescendantNodes().OfType<ClassDeclarationSyntax>()
                 .Where(c => c.Identifier.ValueText == modelName).ToArray();
-            var symbols = new IPropertySymbol[1];
-            symbols[0] = (IPropertySymbol)semanticModel.GetDeclaredSymbol(classDeclarations[0]).GetMembers(memberName).SingleOrDefault();
-            //symbols[1] = (IPropertySymbol)semanticModel.GetDeclaredSymbol(classDeclarations[1]).GetMembers(memberName).SingleOrDefault();
-            return symbols;
+            return (IPropertySymbol)semanticModel.GetDeclaredSymbol(classDeclarations[0]).GetMembers(memberName).SingleOrDefault();
         }
 
         internal async Task<INamedTypeSymbol> GetEntityIndexSymbolAsync(string appName, string modelName, string indexName)

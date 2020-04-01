@@ -34,6 +34,7 @@ namespace appbox.Design
                 { nameof(DeleteNode), new DeleteNode() },
                 { nameof(DragDropNode), new DragDropNode() },
                 { nameof(FindUsages), new FindUsages() },
+                { nameof(Rename), new Rename() },
                 //Entity
                 { nameof(NewEntityModel), new NewEntityModel() },
                 { nameof(GetEntityModel), new GetEntityModel() },
@@ -79,8 +80,6 @@ namespace appbox.Design
                 //Blob
                 { nameof(GetBlobObjects), new GetBlobObjects() }
             };
-            //handlers.Add(nameof(FindUsages), new FindUsages());
-            //handlers.Add(nameof(Rename), new Rename());
         }
 
         public async ValueTask<AnyValue> InvokeAsync(ReadOnlyMemory<char> method, InvokeArgs args)

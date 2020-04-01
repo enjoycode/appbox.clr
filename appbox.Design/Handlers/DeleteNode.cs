@@ -60,14 +60,13 @@ namespace appbox.Design
             if (usages != null && usages.Count > 0)
             {
                 //注意排除自身引用
-                var thisModelId = $"{node.AppNode.Model.Name}.{model.Name}";
-                usages = usages.Where(u => !(u.ModelType == model.ModelType && u.ModelID == thisModelId)).ToArray();
+                usages = usages.Where(u => !(u.ModelNode.Model.Id  == model.Id)).ToArray();
                 if (usages.Count > 0)
                 {
 #if DEBUG
                     foreach (var item in usages)
                     {
-                        Log.Warn($"ModelType:{item.ModelType} ID:{item.ModelID} Location:{item.Location}");
+                        Log.Warn(item.ToString());
                     }
 #endif
                     throw new Exception("Has usages, Can't delete it.");

@@ -218,6 +218,27 @@ namespace appbox.Models
         }
 
         /// <summary>
+        /// 重命名成员
+        /// </summary>
+        internal void RenameMember(string oldName, string newName)
+        {
+            CheckDesignMode();
+            if (string.IsNullOrEmpty(oldName) || string.IsNullOrEmpty(newName))
+                throw new ArgumentNullException();
+            if (oldName == newName)
+            {
+                Log.Warn("Rename: name is same");
+                return;
+            }
+
+            EntityMemberModel m = GetMember(oldName);
+            m.RenameTo(newName);
+            //TODO: 如果改为字典表以下需要重新加入
+            //Members.Remove(oldName);
+            //Members.Add(newName, m);
+        }
+
+        /// <summary>
         /// Only used for StoreInitiator
         /// </summary>
         internal void AddSysMember(EntityMemberModel member, ushort id)
