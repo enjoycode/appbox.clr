@@ -1,0 +1,167 @@
+﻿using System;
+using SkiaSharp;
+
+namespace appbox.Drawing
+{
+    public sealed class Font : IDisposable
+    {
+
+        #region ====Fields & Properties====
+        private SKTypeface skTypeface;
+        private SKFontMetrics? fontMetrics = null; //TODO: reset to null when change some property
+
+        internal SKFontMetrics FontMetrics
+        {
+            get
+            {
+                if (skTypeface == null)
+                    return new SKFontMetrics();
+                if (fontMetrics == null)
+                {
+                    using var paint = new SKPaint();
+                    paint.TextEncoding = SKTextEncoding.Utf16;
+                    ApplyToSKPaint(paint, GraphicsUnit.Pixel, 72f); //目标类型为像素 //TODO: dpi=96
+                    paint.GetFontMetrics(out SKFontMetrics metrics);
+                    fontMetrics = metrics;
+                }
+                return fontMetrics.Value;
+            }
+        }
+
+        /// <summary>
+        /// Gets the em-size of this Font measured in the units specified by the Unit property.
+        /// </summary>
+        public float Size { get; private set; }
+
+        /// <summary>
+        /// Gets the em-size, in points, of this Font.
+        /// </summary>
+        public float SizeInPoints
+        {
+            //注意：考虑大部分是Reporting使用，暂传入dpi=72
+            get { return GraphicsUnitConverter.Convert(Unit, GraphicsUnit.Point, Size, 72.0f); } 
+        }
+
+        /// <summary>
+        /// Gets the unit of measure for this Font.
+        /// </summary>
+        public GraphicsUnit Unit { get; private set; }
+
+        /// <summary>
+        /// The line spacing, in pixels, of this font.
+        /// </summary>
+        public int Height
+        {
+            get { return (int)Math.Ceiling(GetHeight()); }
+        }
+
+        /// <summary>
+        ///  临时给RichTextEditor
+        /// </summary>
+        /// <value>The FH eight.</value>
+        //public int FHeight
+        //{
+        //    get
+        //    {
+        //        var metrics = FontMetrics;
+        //        return (int)Math.Ceiling(-metrics.Ascent + metrics.Descent);
+        //    }
+        //}
+
+        public string Name => skTypeface == null ? string.Empty : skTypeface.FamilyName;
+
+        public FontStyle Style { get; private set; }
+
+        public bool Bold { get; }
+
+        public bool Italic { get; }
+
+        public bool Underline { get; }
+
+        public bool Strikeout { get; } //todo: fix upper style property
+
+        //public FontFamily FontFamily
+        //{
+        //    get
+        //    {
+        //        return null;
+        //        //throw new NotImplementedException();
+        //    }
+        //}
+        #endregion
+
+        #region ====Ctor & Dispose====
+        public Font(float size) :
+            this(null, size, FontStyle.Regular, GraphicsUnit.Point) { }
+
+        public Font(string familyName, float size) :
+            this(familyName, size, FontStyle.Regular) { }
+
+        public Font(string familyName, float size, FontStyle style) :
+            this(familyName, size, style, GraphicsUnit.Point) { }
+
+        public Font(string familyName, float size, FontStyle style, GraphicsUnit unit)
+        {
+            SKFontStyle skFontStyle = style switch
+            {
+                FontStyle.Bold => SKFontStyle.Normal,
+                FontStyle.Italic => SKFontStyle.Italic,
+                _ => SKFontStyle.Normal,
+            };
+            if (string.IsNullOrEmpty(familyName))
+                skTypeface = SKFontManager.Default.MatchCharacter('中');
+            else
+                skTypeface = SKFontManager.Default.MatchFamily(familyName, skFontStyle);
+            Size = size;
+            Style = style;
+            Unit = unit;
+        }
+        #endregion
+
+        #region ====Methods====
+        /// <summary>
+        /// Returns the line spacing, in pixels, of this font.
+        /// </summary>
+        public float GetHeight()
+        {
+            var metrics = FontMetrics;
+            return -metrics.Ascent + metrics.Descent + metrics.Leading;
+        }
+
+        internal void ApplyToSKPaint(SKPaint skPaint, GraphicsUnit targetUnit, float dpi)
+        {
+            skPaint.Typeface = skTypeface;
+            float sizePixel = GraphicsUnitConverter.Convert(Unit, targetUnit, Size, dpi); //注意:转换单位
+            skPaint.TextSize = sizePixel;
+            skPaint.IsAntialias = true;
+            skPaint.SubpixelText = true;
+        }
+        #endregion
+
+        #region ====IDisposable Support====
+        private bool disposedValue = false;
+
+        void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    if (skTypeface != null)
+                    {
+                        skTypeface.Dispose();
+                        skTypeface = null;
+                    }
+                }
+                disposedValue = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+        }
+        #endregion
+
+    }
+}

@@ -4,11 +4,25 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
 
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
   <ItemGroup>
     <Folder Include="Structs\" />
     <Folder Include="Enums\" />
+    <Folder Include="Image\" />
+    <Folder Include="Paint\" />
+    <Folder Include="Text\" />
+    <Folder Include="Skia\" />
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="Class1.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="SkiaSharp" Version="1.68.1.1" />
+    <PackageReference Include="SkiaSharp.HarfBuzz" Version="1.68.1.1" />
   </ItemGroup>
 </Project>

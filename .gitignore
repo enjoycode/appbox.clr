@@ -26,3 +26,6 @@ appbox.Store.Cassandra/obj
 appbox.Client/obj
 appbox.Client.Test/obj
 build/bin_win
+appbox.Drawing/obj
+appbox.Drawing.Tests/obj
+appbox.Reporting.Tests/obj
