@@ -18,14 +18,14 @@ namespace appbox.Drawing.Tests
             g.DrawString("Hello Future!", font, Color.Yellow, 50, 50);
             g.DrawString("你好未来!", font, Color.White, 50, 100);
 
-            using var fs = File.OpenWrite("FirstDraw.jpg");
+            using var fs = File.OpenWrite("A_FirstDraw.jpg");
             bmp.Save(fs, ImageFormat.Jpeg);
         }
 
         [Fact]
         public void DrawEmojiTest()
         {
-            var stream = SKFileWStream.OpenStream("document.pdf");
+            var stream = SKFileWStream.OpenStream("A_document.pdf");
             var document = SKDocument.CreatePdf(stream);
             var canvas = document.BeginPage(256, 256);
 

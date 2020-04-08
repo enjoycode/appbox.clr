@@ -564,58 +564,61 @@ namespace appbox.Drawing
             skPaint.Reset();
         }
 
-        //public void DrawString(string str, Font font, Color color, RectangleF rect, StringFormat format)
-        //{
-        //    //TODO: 暂用TextLayout实现
-        //    var layout = new TextLayout(str, font, format, this.DpiX);
-        //    layout.Width = GraphicsUnitConverter.Convert(this.PageUnit, GraphicsUnit.Pixel, rect.Width, this.DpiX);
-        //    layout.Height = GraphicsUnitConverter.Convert(this.PageUnit, GraphicsUnit.Pixel, rect.Height, this.DpiY);
+        public void DrawString(string str, Font font, Color color, RectangleF rect, StringFormat format)
+        {
+            //TODO: 暂用TextLayout实现
+            var layout = new TextLayout(str, font, format, DpiX)
+            {
+                Width = GraphicsUnitConverter.Convert(PageUnit, GraphicsUnit.Pixel, rect.Width, DpiX),
+                Height = GraphicsUnitConverter.Convert(PageUnit, GraphicsUnit.Pixel, rect.Height, DpiY)
+            };
 
-        //    this.DrawTextLayout(layout, color, rect.X, rect.Y);
-        //}
+            DrawTextLayout(layout, color, rect.X, rect.Y);
+        }
 
-        //public void DrawString(string str, Font font, Brush brush, RectangleF rect, StringFormat format)
-        //{
-        //    var solidBrush = brush as SolidBrush;
-        //    if (solidBrush == null)
-        //        DrawString(str, font, Color.Black, rect, format); //TODO:
-        //    else
-        //        DrawString(str, font, solidBrush.Color, rect, format);
-        //}
+        public void DrawString(string str, Font font, Brush brush, RectangleF rect, StringFormat format)
+        {
+            if (brush is SolidBrush solidBrush)
+                DrawString(str, font, solidBrush.Color, rect, format);
+            else
+                DrawString(str, font, Color.Black, rect, format); //TODO:
+        }
 
-        //public unsafe void DrawTextLayout(TextLayout layout, Color color, float x, float y)
-        //{
-        //    layout.Run();
-        //    layout.Font.ApplyToPaint(this.nativePaint, this.PageUnit, this.DpiX);
-        //    SkiaApi.sk_paint_set_color(this.nativePaint, new SKColor((uint)color.Value));
-        //    SkiaApi.sk_paint_set_text_encoding(this.nativePaint, SKTextEncoding.Utf16);
-        //    //SkiaApi.sk_paint_set_antialias(this.nativePaint, true);
-        //    SkiaApi.sk_paint_set_style(nativePaint, SKPaintStyle.Fill);
+        public unsafe void DrawTextLayout(TextLayout layout, Color color, float x, float y)
+        {
+            layout.Run();
+            layout.Font.ApplyToSKPaint(skPaint, PageUnit, DpiX);
+            skPaint.Color = new SKColor((uint)color.Value);
+            skPaint.Style = SKPaintStyle.Fill;
+            skPaint.TextEncoding = SKTextEncoding.Utf16;
+            skPaint.IsAntialias = true;
 
-        //    var cy = y + GraphicsUnitConverter.Convert(GraphicsUnit.Pixel, this.PageUnit, layout.OffsetY, this.DpiY);
-        //    fixed (char* ptr = layout.Text)
-        //    {
-        //        for (int i = 0; i < layout.lines.Count; i++)
-        //        {
-        //            cy += GraphicsUnitConverter.Convert(GraphicsUnit.Pixel, this.PageUnit, -layout.Font.FontMetrics.Ascent, this.DpiY);
-        //            var length = layout.lines[i].widths.Length;
-        //            SKPoint* pos = stackalloc SKPoint[length];
-        //            var cx = x + GraphicsUnitConverter.Convert(GraphicsUnit.Pixel, this.PageUnit, layout.lines[i].offsetX, this.DpiX);
-        //            for (int j = 0; j < length; j++)
-        //            {
-        //                pos[j].X = cx;
-        //                pos[j].Y = cy;
-        //                cx += GraphicsUnitConverter.Convert(GraphicsUnit.Pixel, this.PageUnit, layout.lines[i].widths[j], this.DpiX);
-        //            }
+            var cy = y + GraphicsUnitConverter.Convert(GraphicsUnit.Pixel, PageUnit, layout.OffsetY, DpiY);
+            fixed (char* ptr = layout.Text)
+            {
+                for (int i = 0; i < layout.lines.Count; i++)
+                {
+                    cy += GraphicsUnitConverter.Convert(GraphicsUnit.Pixel, PageUnit, -layout.Font.FontMetrics.Ascent, DpiY);
+                    var length = layout.lines[i].widths.Length;
+                    SKPoint* pos = stackalloc SKPoint[length];
+                    var cx = x + GraphicsUnitConverter.Convert(GraphicsUnit.Pixel, PageUnit, layout.lines[i].offsetX, DpiX);
+                    for (int j = 0; j < length; j++)
+                    {
+                        pos[j].X = cx;
+                        pos[j].Y = cy;
+                        cx += GraphicsUnitConverter.Convert(GraphicsUnit.Pixel, PageUnit, layout.lines[i].widths[j], DpiX);
+                    }
 
-        //            SkiaApi.sk_canvas_draw_pos_text(canvas, new IntPtr(((byte*)ptr) + layout.lines[i].startByteIndex),
-        //                                            layout.lines[i].byteLength, pos, this.nativePaint);
-        //            cy += GraphicsUnitConverter.Convert(GraphicsUnit.Pixel, this.PageUnit, layout.Font.FontMetrics.Descent + layout.Font.FontMetrics.Leading, this.DpiX);
-        //        }
-        //    }
+                    SkiaApi.sk_canvas_draw_pos_text(skCanvas.Handle, ((byte*)ptr) + layout.lines[i].startByteIndex,
+                                                    new IntPtr(layout.lines[i].byteLength), pos, skPaint.Handle);
 
-        //    //System.Diagnostics.Debug.WriteLine("Graphics.DrawTextLayout at {0},{1} with: {2}",x,y,layout.Text);
-        //}
+                    cy += GraphicsUnitConverter.Convert(GraphicsUnit.Pixel, PageUnit,
+                        layout.Font.FontMetrics.Descent + layout.Font.FontMetrics.Leading, DpiX);
+                }
+            }
+
+            //System.Diagnostics.Debug.WriteLine("Graphics.DrawTextLayout at {0},{1} with: {2}",x,y,layout.Text);
+        }
         #endregion
 
         #region ----MeasureString Methods----

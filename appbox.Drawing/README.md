@@ -35,3 +35,10 @@ skia_use_icu=true skia_use_system_icu=false skia_use_sfntly=true
 TODO
 
 > If you are updating the source using a previous checkout, make sure to run the `clean` target before building.
+
+
+# About text shaping
+目前临时用TextLayout实现布局，待SKParagraph移植至SkiaSharp重新实现或参考其实现
+https://github.com/mono/SkiaSharp.Extended/issues/28 Porting SkTextBox to support draw text in wrap
+https://github.com/flutter/flutter/issues/39420 Text shaping backend switch: SkShaper and SkParagraph
+https://github.com/ryancheung/SkiaTextRenderer/tree/master/SkiaTextRenderer

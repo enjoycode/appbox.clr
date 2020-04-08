@@ -49,29 +49,11 @@ namespace appbox.Drawing
             }
         }
 
-        public bool IsKnownColor
-        {
-            get
-            {
-                return (state & ((short)ColorType.Known)) != 0;
-            }
-        }
+        public bool IsKnownColor => (state & ((short)ColorType.Known)) != 0;
 
-        public bool IsSystemColor
-        {
-            get
-            {
-                return (state & ((short)ColorType.System)) != 0;
-            }
-        }
+        public bool IsSystemColor => (state & ((short)ColorType.System)) != 0;
 
-        public bool IsNamedColor
-        {
-            get
-            {
-                return (state & (short)(ColorType.Known | ColorType.Named)) != 0;
-            }
-        }
+        public bool IsNamedColor => (state & (short)(ColorType.Known | ColorType.Named)) != 0;
 
         internal long Value
         {

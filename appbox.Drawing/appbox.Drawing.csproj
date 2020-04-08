@@ -17,6 +17,7 @@
     <Folder Include="Paint\" />
     <Folder Include="Text\" />
     <Folder Include="Skia\" />
+    <Folder Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="Class1.cs" />

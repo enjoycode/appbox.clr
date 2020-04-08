@@ -29,3 +29,4 @@ build/bin_win
 appbox.Drawing/obj
 appbox.Drawing.Tests/obj
 appbox.Reporting.Tests/obj
+appbox.Reporting/obj
