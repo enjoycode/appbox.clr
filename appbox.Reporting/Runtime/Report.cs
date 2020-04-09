@@ -130,7 +130,7 @@ namespace appbox.Reporting.RDL
             switch (type)
             {
                 case OutputPresentationType.PDF:
-                    ip = new RenderTif(this, sg);
+                    ip = new RenderPdf(this, sg);
                     _Report.Run(ip);
                     break;
                 case OutputPresentationType.XML:
@@ -164,9 +164,9 @@ namespace appbox.Reporting.RDL
                     break;
                 case OutputPresentationType.Excel2007:
                     throw new NotImplementedException();
-                    //ip = new RenderExcel2007(this, sg);
-                    //_Report.Run(ip);
-                    //break;
+                //ip = new RenderExcel2007(this, sg);
+                //_Report.Run(ip);
+                //break;
                 case OutputPresentationType.ASPHTML:
                 case OutputPresentationType.HTML:
                 default:

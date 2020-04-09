@@ -417,7 +417,7 @@ namespace appbox.Reporting.RDL
         public PageImage(ImageFormat im, byte[] image, int w, int h)
         {
             Debug.Assert(im == ImageFormat.Jpeg || im == ImageFormat.Png || im == ImageFormat.Gif || im == ImageFormat.Wmf,
-                            "PageImage only supports Jpeg, Gif and Png and WMF image formats (Thanks HYNE!).");
+                            "PageImage only supports Jpeg, Gif and Png and WMF image formats.");
             ImgFormat = im;
             ImageData = image;
             SamplesW = w;

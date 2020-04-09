@@ -6,66 +6,71 @@ using System.IO;
 
 namespace appbox.Reporting.RDL
 {
-	///<summary>
-	///CustomReportItem describes a report item that is not natively defined in RDL.  The 
+    ///<summary>
+    /// CustomReportItem describes a report item that is not natively defined in RDL.  The 
     /// RdlEngineConfig.xml file (loaded by RdlEngineConfig.cs) contains a list of the 
     /// extensions.   RdlCri.dll is a code module that contains the built-in CustomReportItems.
     /// However, the runtime dynamically loads this so RdlCrl.dll is not required for the
     /// report engine to function properly.
-	///</summary>
-	[Serializable]
-	internal class CustomReportItem : Rectangle
-	{
+    ///</summary>
+    [Serializable]
+    internal class CustomReportItem : Rectangle
+    {
         static readonly ImageFormat IMAGEFORMAT = ImageFormat.Jpeg;
-        string _Type;   // The type of the custom report item. Interpreted by a
-						// report design tool or server.
-		XmlNode xNode;
-        System.Collections.Generic.List<CustomProperty> _Properties;
-	
-		internal CustomReportItem(ReportDefn r, ReportLink p, XmlNode xNode):base(r, p, xNode, false)
-		{
-			_Type=null;
-			ReportItems ris=null;
+
+        /// <summary>
+        /// The type of the custom report item. Interpreted by a
+        /// report design tool or server.
+        /// </summary>
+        internal string Type { get; set; }
+
+        private XmlNode xNode;
+        private List<CustomProperty> _Properties;
+
+        internal CustomReportItem(ReportDefn r, ReportLink p, XmlNode xNode) : base(r, p, xNode, false)
+        {
+            Type = null;
+            ReportItems ris = null;
             bool bVersion2 = true;
-			this.xNode = xNode;
-			// Loop thru all the child nodes
-			foreach(XmlNode xNodeLoop in xNode.ChildNodes)
-			{
-				if (xNodeLoop.NodeType != XmlNodeType.Element)
-					continue;
-				switch (xNodeLoop.Name)
-				{
-					case "Type":
-						_Type = xNodeLoop.InnerText;
-						break;
-					case "ReportItems":         // Version 1 of the specification
-						ris = new ReportItems(r, this, xNodeLoop);
+            this.xNode = xNode;
+            // Loop thru all the child nodes
+            foreach (XmlNode xNodeLoop in xNode.ChildNodes)
+            {
+                if (xNodeLoop.NodeType != XmlNodeType.Element)
+                    continue;
+                switch (xNodeLoop.Name)
+                {
+                    case "Type":
+                        Type = xNodeLoop.InnerText;
+                        break;
+                    case "ReportItems":         // Version 1 of the specification
+                        ris = new ReportItems(r, this, xNodeLoop);
                         bVersion2 = false;
-						break;
+                        break;
                     case "AltReportItem":       // Verstion 2 of the specification
                         ris = new ReportItems(r, this, xNodeLoop);
                         break;
                     case "CustomProperties":
                         _Properties = CustomProperties(xNodeLoop);
                         break;
-					default:
-						if (ReportItemElement(xNodeLoop))	// try at ReportItem level
-							break; 
-						// don't know this element - log it
-						OwnerReport.rl.LogError(4, "Unknown CustomReportItem element " + xNodeLoop.Name + " ignored.");
-						break;
-				}
-			}
-			ReportItems = ris;
+                    default:
+                        if (ReportItemElement(xNodeLoop))   // try at ReportItem level
+                            break;
+                        // don't know this element - log it
+                        OwnerReport.rl.LogError(4, "Unknown CustomReportItem element " + xNodeLoop.Name + " ignored.");
+                        break;
+                }
+            }
+            ReportItems = ris;
             if (bVersion2 && ris != null)
             {
-			    if (ris.Items.Count != 1)
-				    OwnerReport.rl.LogError(8, "Only one element is allowed within an AltReportItem.");
+                if (ris.Items.Count != 1)
+                    OwnerReport.rl.LogError(8, "Only one element is allowed within an AltReportItem.");
             }
 
-			if (_Type == null)
-				OwnerReport.rl.LogError(8, "CustomReportItem requires the Type element.");
-		}
+            if (Type == null)
+                OwnerReport.rl.LogError(8, "CustomReportItem requires the Type element.");
+        }
 
         override internal void FinalPass()
         {
@@ -85,12 +90,12 @@ namespace appbox.Reporting.RDL
             ICustomReportItem cri = null;
             try
             {
-                cri = RdlEngineConfig.CreateCustomReportItem(_Type);
+                cri = RdlEngineConfig.CreateCustomReportItem(Type);
             }
             catch (Exception ex)
             {   // Not an error since we'll simply use the ReportItems
-                OwnerReport.rl.LogError(4, string.Format("CustomReportItem load of {0} failed: {1}", 
-                    _Type, ex.Message));
+                OwnerReport.rl.LogError(4, string.Format("CustomReportItem load of {0} failed: {1}",
+                    Type, ex.Message));
             }
             finally
             {
@@ -104,154 +109,154 @@ namespace appbox.Reporting.RDL
         override internal void Run(IPresent ip, Row row)
         {
             throw new NotImplementedException();
-    //        Report rpt = ip.Report();
+            //        Report rpt = ip.Report();
 
-    //        ICustomReportItem cri = null;
-    //        try
-    //        {
-    //            cri = RdlEngineConfig.CreateCustomReportItem(_Type);
-				//Type a = cri.GetType();
-				//Bitmap bm = null;
-				//SetProperties(rpt, row, cri);
-				//int width = WidthCalc(rpt, null) -
-				//	(Style == null ? 0 :
-				//		(Style.EvalPaddingLeftPx(rpt, row) + Style.EvalPaddingRightPx(rpt, row)));
-				//int height = RSize.PixelsFromPoints(this.HeightOrOwnerHeight) -
-				//	(Style == null ? 0 :
-				//		(Style.EvalPaddingTopPx(rpt, row) + Style.EvalPaddingBottomPx(rpt, row)));
-				//bm = new Bitmap(width, height);
-				//cri.DrawImage(ref bm);
+            //        ICustomReportItem cri = null;
+            //        try
+            //        {
+            //            cri = RdlEngineConfig.CreateCustomReportItem(_Type);
+            //Type a = cri.GetType();
+            //Bitmap bm = null;
+            //SetProperties(rpt, row, cri);
+            //int width = WidthCalc(rpt, null) -
+            //	(Style == null ? 0 :
+            //		(Style.EvalPaddingLeftPx(rpt, row) + Style.EvalPaddingRightPx(rpt, row)));
+            //int height = RSize.PixelsFromPoints(this.HeightOrOwnerHeight) -
+            //	(Style == null ? 0 :
+            //		(Style.EvalPaddingTopPx(rpt, row) + Style.EvalPaddingBottomPx(rpt, row)));
+            //bm = new Bitmap(width, height);
+            //cri.DrawImage(ref bm);
 
-				//MemoryStream ostrm = new MemoryStream();
-				//// 06122007AJM Changed to use high quality JPEG encoding
-				////bm.Save(ostrm, IMAGEFORMAT);	// generate a jpeg   TODO: get png to work with pdf
-				//appbox.Drawing.Imaging.ImageCodecInfo[] info;
-				//info = ImageCodecInfo.GetImageEncoders();
-				//EncoderParameters encoderParameters;
-				//encoderParameters = new EncoderParameters(1);
-				//// 20022008 AJM GJL - Using centralised image quality
-				//encoderParameters.Param[0] = new EncoderParameter(Encoder.Quality, ImageQualityManager.CustomImageQuality);
-				//appbox.Drawing.Imaging.ImageCodecInfo codec = null;
-				//for(int i = 0; i < info.Length; i++) {
-				//	if(info[i].FormatDescription == "JPEG") {
-				//		codec = info[i];
-				//		break;
-				//	}
-				//}
-				//bm.Save(ostrm, codec, encoderParameters);
+            //MemoryStream ostrm = new MemoryStream();
+            //// 06122007AJM Changed to use high quality JPEG encoding
+            ////bm.Save(ostrm, IMAGEFORMAT);	// generate a jpeg   TODO: get png to work with pdf
+            //appbox.Drawing.Imaging.ImageCodecInfo[] info;
+            //info = ImageCodecInfo.GetImageEncoders();
+            //EncoderParameters encoderParameters;
+            //encoderParameters = new EncoderParameters(1);
+            //// 20022008 AJM GJL - Using centralised image quality
+            //encoderParameters.Param[0] = new EncoderParameter(Encoder.Quality, ImageQualityManager.CustomImageQuality);
+            //appbox.Drawing.Imaging.ImageCodecInfo codec = null;
+            //for(int i = 0; i < info.Length; i++) {
+            //	if(info[i].FormatDescription == "JPEG") {
+            //		codec = info[i];
+            //		break;
+            //	}
+            //}
+            //bm.Save(ostrm, codec, encoderParameters);
 
-				//ip.Image(new Image(rpt.ReportDefinition, this, xNode), row, null, ostrm);
-				//ostrm.Close();
-    //        }
-    //        catch (Exception ex)
-    //        {
-    //            rpt.rl.LogError(8, string.Format("Exception in CustomReportItem handling.\n{0}\n{1}", ex.Message, ex.StackTrace));
-    //        }
-    //        finally
-    //        {
-    //            if (cri != null)
-    //                cri.Dispose();
-    //        }
-    //        return;
+            //ip.Image(new Image(rpt.ReportDefinition, this, xNode), row, null, ostrm);
+            //ostrm.Close();
+            //        }
+            //        catch (Exception ex)
+            //        {
+            //            rpt.rl.LogError(8, string.Format("Exception in CustomReportItem handling.\n{0}\n{1}", ex.Message, ex.StackTrace));
+            //        }
+            //        finally
+            //        {
+            //            if (cri != null)
+            //                cri.Dispose();
+            //        }
+            //        return;
         }
 
         override internal void RunPage(Pages pgs, Row row)
         {
             throw new NotImplementedException();
-//            Report rpt = pgs.Report;
+            //            Report rpt = pgs.Report;
 
-//            if (IsHidden(pgs.Report, row))
-//                return;
+            //            if (IsHidden(pgs.Report, row))
+            //                return;
 
-//            SetPagePositionBegin(pgs);
+            //            SetPagePositionBegin(pgs);
 
-//            // Build the Chart bitmap, along with data regions
-//            Page p = pgs.CurrentPage;
-//            ICustomReportItem cri = null;
-//            Bitmap bm = null;
-//            try
-//            {
-//                cri = RdlEngineConfig.CreateCustomReportItem(_Type);
-//                SetProperties(pgs.Report, row, cri);
-                
-//                int width = WidthCalc(rpt, pgs.G) - 
-//                    (Style == null? 0 :
-//                        (Style.EvalPaddingLeftPx(rpt, row) + Style.EvalPaddingRightPx(rpt, row)));
-//                int height = RSize.PixelsFromPoints(this.HeightOrOwnerHeight) -
-//                    (Style == null? 0 :
-//                        (Style.EvalPaddingTopPx(rpt, row) + Style.EvalPaddingBottomPx(rpt, row)));
-//                bm = new Bitmap(width, height);
-//                cri.DrawImage(ref bm);
+            //            // Build the Chart bitmap, along with data regions
+            //            Page p = pgs.CurrentPage;
+            //            ICustomReportItem cri = null;
+            //            Bitmap bm = null;
+            //            try
+            //            {
+            //                cri = RdlEngineConfig.CreateCustomReportItem(_Type);
+            //                SetProperties(pgs.Report, row, cri);
 
-//                MemoryStream ostrm = new MemoryStream();
-//                // 06122007AJM Changed to use high quality JPEG encoding
-//                //bm.Save(ostrm, IMAGEFORMAT);	// generate a jpeg   TODO: get png to work with pdf
-//                appbox.Drawing.Imaging.ImageCodecInfo[] info;
-//                info = ImageCodecInfo.GetImageEncoders();
-//                EncoderParameters encoderParameters;
-//                encoderParameters = new EncoderParameters(1);
-//                // 20022008 AJM GJL - Using centralised image quality
-//                encoderParameters.Param[0] = new EncoderParameter(Encoder.Quality, ImageQualityManager.CustomImageQuality);
-//                appbox.Drawing.Imaging.ImageCodecInfo codec = null;
-//                for (int i = 0; i < info.Length; i++)
-//                {
-//                    if (info[i].FormatDescription == "JPEG")
-//                    {
-//                        codec = info[i];
-//                        break;
-//                    }
-//                }
-//                bm.Save(ostrm, codec, encoderParameters);
+            //                int width = WidthCalc(rpt, pgs.G) - 
+            //                    (Style == null? 0 :
+            //                        (Style.EvalPaddingLeftPx(rpt, row) + Style.EvalPaddingRightPx(rpt, row)));
+            //                int height = RSize.PixelsFromPoints(this.HeightOrOwnerHeight) -
+            //                    (Style == null? 0 :
+            //                        (Style.EvalPaddingTopPx(rpt, row) + Style.EvalPaddingBottomPx(rpt, row)));
+            //                bm = new Bitmap(width, height);
+            //                cri.DrawImage(ref bm);
 
-//                byte[] ba = ostrm.ToArray();
-//                ostrm.Close();
-//                PageImage pi = new PageImage(IMAGEFORMAT, ba, width, height);	// Create an image
-//                pi.Sizing = ImageSizingEnum.Clip;
-////                RunPageRegionBegin(pgs);
+            //                MemoryStream ostrm = new MemoryStream();
+            //                // 06122007AJM Changed to use high quality JPEG encoding
+            //                //bm.Save(ostrm, IMAGEFORMAT);	// generate a jpeg   TODO: get png to work with pdf
+            //                appbox.Drawing.Imaging.ImageCodecInfo[] info;
+            //                info = ImageCodecInfo.GetImageEncoders();
+            //                EncoderParameters encoderParameters;
+            //                encoderParameters = new EncoderParameters(1);
+            //                // 20022008 AJM GJL - Using centralised image quality
+            //                encoderParameters.Param[0] = new EncoderParameter(Encoder.Quality, ImageQualityManager.CustomImageQuality);
+            //                appbox.Drawing.Imaging.ImageCodecInfo codec = null;
+            //                for (int i = 0; i < info.Length; i++)
+            //                {
+            //                    if (info[i].FormatDescription == "JPEG")
+            //                    {
+            //                        codec = info[i];
+            //                        break;
+            //                    }
+            //                }
+            //                bm.Save(ostrm, codec, encoderParameters);
 
-//                SetPagePositionAndStyle(rpt, pi, row);
+            //                byte[] ba = ostrm.ToArray();
+            //                ostrm.Close();
+            //                PageImage pi = new PageImage(IMAGEFORMAT, ba, width, height);	// Create an image
+            //                pi.Sizing = ImageSizingEnum.Clip;
+            ////                RunPageRegionBegin(pgs);
 
-//                if (pgs.CurrentPage.YOffset + pi.Y + pi.H >= pgs.BottomOfPage && !pgs.CurrentPage.IsEmpty())
-//                {	// force page break if it doesn't fit on the page
-//                    pgs.NextOrNew();
-//                    pgs.CurrentPage.YOffset = OwnerReport.TopOfPage;
-//                    if (this.YParents != null)
-//                        pi.Y = 0;
-//                }
+            //                SetPagePositionAndStyle(rpt, pi, row);
 
-//                p = pgs.CurrentPage;
+            //                if (pgs.CurrentPage.YOffset + pi.Y + pi.H >= pgs.BottomOfPage && !pgs.CurrentPage.IsEmpty())
+            //                {	// force page break if it doesn't fit on the page
+            //                    pgs.NextOrNew();
+            //                    pgs.CurrentPage.YOffset = OwnerReport.TopOfPage;
+            //                    if (this.YParents != null)
+            //                        pi.Y = 0;
+            //                }
 
-//                p.AddObject(pi);	// Put image onto the current page
+            //                p = pgs.CurrentPage;
 
-//  //              RunPageRegionEnd(pgs);
-//// I don't know why we need move offset after draw. If we do it, barcode if it first in list all text shifted.
-//// If it broken something, write to Gankov
-///*                if (!this.PageBreakAtEnd && !IsTableOrMatrixCell(rpt))
-//                {
-//                    float newY = pi.Y + pi.H;
-//                    p.YOffset += newY;	// bump the y location
-//                } */
-//                SetPagePositionEnd(pgs, pi.Y + pi.H);
-//            }
-//            catch (Exception ex)
-//            {
-//                rpt.rl.LogError(8, string.Format("Exception in CustomReportItem handling: {0}", ex.Message));
-//            }
-//            finally
-//            {
-//                if (cri != null)
-//                    cri.Dispose();
-//            }
+            //                p.AddObject(pi);	// Put image onto the current page
 
-//            return;
+            //  //              RunPageRegionEnd(pgs);
+            //// I don't know why we need move offset after draw. If we do it, barcode if it first in list all text shifted.
+            //// If it broken something, write to Gankov
+            ///*                if (!this.PageBreakAtEnd && !IsTableOrMatrixCell(rpt))
+            //                {
+            //                    float newY = pi.Y + pi.H;
+            //                    p.YOffset += newY;	// bump the y location
+            //                } */
+            //                SetPagePositionEnd(pgs, pi.Y + pi.H);
+            //            }
+            //            catch (Exception ex)
+            //            {
+            //                rpt.rl.LogError(8, string.Format("Exception in CustomReportItem handling: {0}", ex.Message));
+            //            }
+            //            finally
+            //            {
+            //                if (cri != null)
+            //                    cri.Dispose();
+            //            }
+
+            //            return;
         }
 
-        void SetProperties(Report rpt, Row row, ICustomReportItem cri)
+        private void SetProperties(Report rpt, Row row, ICustomReportItem cri)
         {
             if (_Properties == null || _Properties.Count == 0)  // Any properties specified?
                 return;
 
-            System.Collections.Generic.Dictionary<string, object> dict =
+            Dictionary<string, object> dict =
                 new Dictionary<string, object>(_Properties.Count);
             foreach (CustomProperty cp in _Properties)
             {
@@ -266,13 +271,7 @@ namespace appbox.Reporting.RDL
             cri.SetProperties(dict);
         }
 
-		internal string Type
-		{
-			get { return  _Type; }
-			set {  _Type = value; }
-		}
-
-        List<CustomProperty> CustomProperties(XmlNode xNode)
+        private List<CustomProperty> CustomProperties(XmlNode xNode)
         {
             if (!xNode.HasChildNodes)
                 return null;
@@ -294,10 +293,11 @@ namespace appbox.Reporting.RDL
             }
             return cps;
         }
-        CustomProperty CustomProperty(XmlNode xNode)
+
+        private CustomProperty CustomProperty(XmlNode xNode)
         {
-            Expression name=null;
-            Expression val=null;
+            Expression name = null;
+            Expression val = null;
             CustomProperty cp = null;
             foreach (XmlNode xNodeLoop in xNode.ChildNodes)
             {
@@ -320,28 +320,27 @@ namespace appbox.Reporting.RDL
             {
                 cp = new CustomProperty(name, val);
             }
-            return cp;            
-        }
-	}
-
-    class CustomProperty
-    {
-        Expression _Name;           // name of the property
-        Expression _Value;          // value of the property
-        internal CustomProperty(Expression name, Expression val)
-        {
-            _Name = name;
-            _Value = val;
-        }
-        internal Expression Name
-        {
-            get { return _Name; }
-        }
-
-        internal Expression Value
-        {
-            get { return _Value; }
+            return cp;
         }
     }
-    
+
+    sealed class CustomProperty
+    {
+        /// <summary>
+        /// name of the property
+        /// </summary>
+        internal Expression Name { get; }
+
+        /// <summary>
+        /// value of the property
+        /// </summary>
+        internal Expression Value { get; }
+
+        internal CustomProperty(Expression name, Expression val)
+        {
+            Name = name;
+            Value = val;
+        }
+    }
+
 }

@@ -9,42 +9,30 @@ namespace appbox.Reporting.RDL
 {
 
     ///<summary> 
-    /// Renders a report to TIF.   This is a page oriented formatting renderer. 
+    /// Renders a report to PDF.   This is a page oriented formatting renderer. 
     ///</summary> 
-    internal class RenderTif : IPresent
+    internal class RenderPdf : IPresent
     {
-        Report r;               // report 
-        Stream tw;               // where the output is going 
-
-        Bitmap _tif;
-
-        float DpiX;
-        float DpiY;
-
-        bool _RenderColor;
-
-        public RenderTif(Report rep, IStreamGen sg)
-        {
-            r = rep;
-            tw = sg.GetStream();
-            _RenderColor = true;
-        }
-
-        public void Dispose() { }
+        private readonly Report r;  // report 
+        private readonly Stream tw; // where the output is going
+        private float DpiX;
+        private float DpiY;
 
         /// <summary>
         /// Set RenderColor to false if you want to create a fax compatible tiff in black and white
         /// </summary>
-        internal bool RenderColor
+        internal bool RenderColor { get; set; }
+
+        public RenderPdf(Report rep, IStreamGen sg)
         {
-            get { return _RenderColor; }
-            set { _RenderColor = value; }
+            r = rep;
+            tw = sg.GetStream();
+            RenderColor = true;
         }
 
-        public Report Report()
-        {
-            return r;
-        }
+        public void Dispose() { }
+
+        public Report Report() => r;
 
         public bool IsPagingNeeded()
         {
@@ -156,7 +144,7 @@ namespace appbox.Reporting.RDL
             }
         }
 
-        private void ProcessHtml(PageTextHtml pth, appbox.Drawing.Graphics g)
+        private void ProcessHtml(PageTextHtml pth, Graphics g)
         {
             pth.Build(g);            // Builds the subobjects that make up the html 
             ProcessPage(g, pth);
@@ -586,28 +574,15 @@ namespace appbox.Reporting.RDL
                 return;
 
             StyleInfo si = pi.SI;
-
             DrawLine(si.BColorTop, si.BStyleTop, si.BWidthTop, g, r.X, r.Y, r.Right, r.Y);
-
             DrawLine(si.BColorRight, si.BStyleRight, si.BWidthRight, g, r.Right, r.Y, r.Right, r.Bottom);
-
             DrawLine(si.BColorLeft, si.BStyleLeft, si.BWidthLeft, g, r.X, r.Y, r.X, r.Bottom);
-
             DrawLine(si.BColorBottom, si.BStyleBottom, si.BWidthBottom, g, r.X, r.Bottom, r.Right, r.Bottom);
-
-            return;
-
         }
 
-        internal float PixelsX(float x)
-        {
-            return x * DpiX / 72.0f;
-        }
+        internal float PixelsX(float x) => x * DpiX / 72.0f;
 
-        internal float PixelsY(float y)
-        {
-            return y * DpiY / 72.0f;
-        }
+        internal float PixelsY(float y) => y * DpiY / 72.0f;
 
         // Body: main container for the report 
         public void BodyStart(Body b)
@@ -745,7 +720,7 @@ namespace appbox.Reporting.RDL
         {
         }
 
-        public void Image(appbox.Reporting.RDL.Image i, Row r, string mimeType, Stream ior)
+        public void Image(RDL.Image i, Row r, string mimeType, Stream ior)
         {
         }
 
