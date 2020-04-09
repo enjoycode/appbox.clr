@@ -11,7 +11,7 @@ namespace appbox.Drawing
         #region ====IDisposable Support====
         private bool disposedValue = false;
 
-        protected virtual void DisposeInternal() { }
+        protected virtual void DisposeSKObject() { }
 
         protected void Dispose(bool disposing)
         {
@@ -19,7 +19,7 @@ namespace appbox.Drawing
             {
                 if (disposing)
                 {
-                    DisposeInternal();
+                    DisposeSKObject();
                 }
 
                 disposedValue = true;
