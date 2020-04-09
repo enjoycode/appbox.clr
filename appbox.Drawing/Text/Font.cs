@@ -132,7 +132,7 @@ namespace appbox.Drawing
         {
             skPaint.Typeface = skTypeface;
             float sizePixel = GraphicsUnitConverter.Convert(Unit, targetUnit, Size, dpi); //注意:转换单位
-            skPaint.TextSize = sizePixel;
+            skPaint.TextSize = sizePixel; //TODO: 转换与System.Drawing不一致 20 -> 15，待修改
             skPaint.IsAntialias = true;
             skPaint.SubpixelText = true;
         }
