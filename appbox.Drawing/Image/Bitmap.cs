@@ -4,7 +4,7 @@ using SkiaSharp;
 
 namespace appbox.Drawing
 {
-    public class Bitmap : Image, IDisposable
+    public class Bitmap : Image
     {
         internal SKBitmap skBitmap;
 
@@ -17,6 +17,8 @@ namespace appbox.Drawing
             skBitmap.Erase(new SKColor(255, 255, 255, 0)); //用于清除画布
         }
 
+        internal Bitmap(SKBitmap skBitmap) { this.skBitmap = skBitmap; }
+
         public override void Save(Stream stream, ImageFormat format)
         {
             using var wstream = new SKManagedWStream(stream, false);
@@ -27,30 +29,13 @@ namespace appbox.Drawing
             }
         }
 
-        #region ====IDisposable Support====
-        private bool disposedValue = false;
-
-        protected virtual void Dispose(bool disposing)
+        protected override void DisposeSKObject()
         {
-            if (!disposedValue)
+            if (skBitmap != null)
             {
-                if (disposing)
-                {
-                    if (skBitmap != null)
-                    {
-                        skBitmap.Dispose();
-                        skBitmap = null;
-                    }
-                }
-
-                disposedValue = true;
+                skBitmap.Dispose();
+                skBitmap = null;
             }
         }
-
-        public void Dispose()
-        {
-            Dispose(true);
-        }
-        #endregion
     }
 }

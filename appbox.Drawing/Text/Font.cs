@@ -5,6 +5,7 @@ namespace appbox.Drawing
 {
     public sealed class Font : IDisposable
     {
+        public static readonly string DefaultFontFamilyName = SKFontManager.Default.MatchCharacter('中').FamilyName;
 
         #region ====Fields & Properties====
         private SKTypeface skTypeface;
@@ -39,7 +40,7 @@ namespace appbox.Drawing
         public float SizeInPoints
         {
             //注意：考虑大部分是Reporting使用，暂传入dpi=72
-            get { return GraphicsUnitConverter.Convert(Unit, GraphicsUnit.Point, Size, 72.0f); } 
+            get { return GraphicsUnitConverter.Convert(Unit, GraphicsUnit.Point, Size, 72.0f); }
         }
 
         /// <summary>
@@ -80,6 +81,8 @@ namespace appbox.Drawing
 
         public bool Strikeout { get; } //todo: fix upper style property
 
+        public string FamilyName => skTypeface.FamilyName;
+
         //public FontFamily FontFamily
         //{
         //    get
@@ -92,13 +95,16 @@ namespace appbox.Drawing
 
         #region ====Ctor & Dispose====
         public Font(float size) :
-            this(null, size, FontStyle.Regular, GraphicsUnit.Point) { }
+            this(null, size, FontStyle.Regular, GraphicsUnit.Point)
+        { }
 
         public Font(string familyName, float size) :
-            this(familyName, size, FontStyle.Regular) { }
+            this(familyName, size, FontStyle.Regular)
+        { }
 
         public Font(string familyName, float size, FontStyle style) :
-            this(familyName, size, style, GraphicsUnit.Point) { }
+            this(familyName, size, style, GraphicsUnit.Point)
+        { }
 
         public Font(string familyName, float size, FontStyle style, GraphicsUnit unit)
         {
@@ -126,6 +132,12 @@ namespace appbox.Drawing
         {
             var metrics = FontMetrics;
             return -metrics.Ascent + metrics.Descent + metrics.Leading;
+        }
+
+        public float GetHeight(Graphics graphics)
+        {
+            //TODO:转换单位
+            return GetHeight();
         }
 
         internal void ApplyToSKPaint(SKPaint skPaint, GraphicsUnit targetUnit, float dpi)

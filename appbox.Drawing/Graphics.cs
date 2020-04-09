@@ -16,6 +16,11 @@ namespace appbox.Drawing
             }
             throw new NotImplementedException();
         }
+
+        public static Graphics FromCanvas(SKCanvas canvas)
+        {
+            return new Graphics(canvas, 1, 1, 72, 72);
+        }
         #endregion
 
         #region ====Fields & Properties====
@@ -329,6 +334,11 @@ namespace appbox.Drawing
             skPaint.Reset();
         }
 
+        public void FillRectangle(Color color, float x, float y, float width, float height)
+        {
+            FillRectangle(color, new RectangleF(x, y, width, height));
+        }
+
         public void FillRectangle(Color color, Rectangle rect)
         {
             FillRectangle(color, new RectangleF(rect.X, rect.Y, rect.Width, rect.Height));
@@ -516,6 +526,14 @@ namespace appbox.Drawing
             FillPath(brush, path);
         }
 
+        public void DrawPolygon(Color color, float width, PointF[] points)
+        {
+            using var path = new GraphicsPath();
+            path.AddLines(points);
+            path.CloseFigure();
+            DrawPath(color, width, path);
+        }
+
         public void FillPolygon(Color color, PointF[] points)
         {
             using var path = new GraphicsPath();
@@ -624,10 +642,27 @@ namespace appbox.Drawing
         #region ----MeasureString Methods----
         public SizeF MeasureString(string text, Font font)
         {
-            throw new NotImplementedException();
-            //var res = TextRenderer.MeasureText(text, font, this.DpiX);
-            //return new SizeF(GraphicsUnitConverter.Convert(GraphicsUnit.Pixel, PageUnit, res.Width, DpiX),
-            //                 GraphicsUnitConverter.Convert(GraphicsUnit.Pixel, PageUnit, res.Height, DpiY));
+            using var paint = new SKPaint();
+            paint.TextEncoding = SKTextEncoding.Utf16;
+            font.ApplyToSKPaint(paint, PageUnit, DpiX);
+
+            SKRect bounds = SKRect.Empty;
+            var width = paint.MeasureText(text, ref bounds);
+            return new SizeF(width, font.GetHeight(this));
+        }
+
+        public SizeF MeasureString(string text, Font font, float maxWidth, StringFormat format)
+        {
+            return MeasureString(text, font, new SizeF(maxWidth, float.MaxValue), format);
+        }
+
+        public SizeF MeasureString(string text, Font font, SizeF maxSize, StringFormat format)
+        {
+            //TODO:暂用TextLayout来处理
+            var layout = new TextLayout(text, font, format, DpiX);
+            layout.Width = maxSize.Width;
+            layout.Height = maxSize.Height;
+            return layout.GetInkSize(); //TODO:单位转换处理
         }
         #endregion
 
@@ -836,10 +871,7 @@ namespace appbox.Drawing
             }
         }
 
-        public void Dispose()
-        {
-            Dispose(true);
-        }
+        public void Dispose() => Dispose(true);
         #endregion
 
     }

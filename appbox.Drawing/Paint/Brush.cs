@@ -18,18 +18,12 @@ namespace appbox.Drawing
             if (!disposedValue)
             {
                 if (disposing)
-                {
                     DisposeSKObject();
-                }
-
                 disposedValue = true;
             }
         }
 
-        public void Dispose()
-        {
-            Dispose(true);
-        }
+        public void Dispose() => Dispose(true);
         #endregion
 
     }

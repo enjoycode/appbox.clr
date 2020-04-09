@@ -7,7 +7,7 @@ namespace appbox.Drawing
 
         public static StringFormat GenericDefault = new StringFormat();
         public static StringFormat GenericTypographic = CreateGenericTypographic();
-        private static StringFormat CreateGenericTypographic()
+        public static StringFormat CreateGenericTypographic()
         {
             StringFormatFlags formatFlags = StringFormatFlags.FitBlackBox
                 | StringFormatFlags.LineLimit | StringFormatFlags.NoClip;
