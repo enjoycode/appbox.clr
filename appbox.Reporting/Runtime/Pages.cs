@@ -13,10 +13,10 @@ namespace appbox.Reporting.RDL
     ///</summary>
     public class Pages : IEnumerable
     {
-        Bitmap _bm;                     // bitmap to build graphics object 
-        Graphics _g;                    // graphics object
-        List<Page> _pages;              // array of pages
-        Page _currentPage;              // the current page; 1st page if null
+        private Bitmap _bm;                     // bitmap to build graphics object 
+        private Graphics _g;                    // graphics object
+        private readonly List<Page> _pages;     // array of pages
+        private Page _currentPage;              // the current page; 1st page if null
 
         /// <summary>
         /// the bottom of the page

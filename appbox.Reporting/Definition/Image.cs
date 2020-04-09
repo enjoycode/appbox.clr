@@ -13,22 +13,46 @@ namespace appbox.Reporting.RDL
     [Serializable]
     internal class Image : ReportItem
     {
-        ImageSourceEnum _ImageSource;   // Identifies the source of the image:
-        Expression _Value;      // See Source. Expected datatype is string or
-                                // binary, depending on Source. If the Value is
-                                // null, no image is displayed.
-        Expression _MIMEType;   // (string) An expression, the value of which is the
-                                //	MIMEType for the image.
-                                //	Valid values are: image/bmp, image/jpeg,
-                                //	image/gif, image/png, image/x-png
-                                // Required if Source = Database. Ignored otherwise.
-        ImageSizingEnum _Sizing;    // Defines the behavior if the image does not fit within the specified size.
+        /// <summary>
+        /// Identifies the source of the image
+        /// </summary>
+        internal ImageSourceEnum ImageSource { get; set; }
 
-        bool _ConstantImage;	// true if Image is a constant at runtime
+        /// <summary>
+        /// See Source. Expected datatype is string or
+        /// binary, depending on Source. If the Value is
+        /// null, no image is displayed.
+        /// </summary>
+        internal Expression Value { get; set; }
 
-        string _EmbeddedImageData; // only for RenderHtml and embeddedImage. we need the embedded image code for html.
+        /// <summary>
+        /// (string) An expression, the value of which is the
+        ///	MIMEType for the image.
+        ///	Valid values are: image/bmp, image/jpeg,
+        ///	image/gif, image/png, image/x-png
+        /// Required if Source = Database. Ignored otherwise.
+        /// </summary>
+        internal Expression MIMEType { get; set; }
 
-        private string imageUrl; //Added from forum, User: solidstate  
+        /// <summary>
+        /// Defines the behavior if the image does not fit within the specified size.
+        /// </summary>
+        internal ImageSizingEnum Sizing { get; set; }
+
+        /// <summary>
+        /// true if Image is a constant at runtime
+        /// </summary>
+        internal bool ConstantImage { get; private set; }
+
+        /// <summary>
+        /// only for RenderHtml and embeddedImage. we need the embedded image code for html.
+        /// </summary>
+        internal string EmbeddedImageData { get; private set; }
+
+        /// <summary>
+        /// Only gets set for Images which contain urls rather than coming from the database etc..
+        /// </summary>
+        public string ImageUrl { get; private set; }
 
         private static void CopyStream(Stream src, Stream dst)
         {
@@ -41,22 +65,13 @@ namespace appbox.Reporting.RDL
             }
         }
 
-        /// <summary>
-        /// Only gets set for Images which contain urls rather than coming from the database etc..
-        /// </summary>
-        public string ImageUrl
-        {
-            get { return imageUrl; }
-            private set { imageUrl = value; }
-        }
-
         internal Image(ReportDefn r, ReportLink p, XmlNode xNode) : base(r, p, xNode)
         {
-            _ImageSource = ImageSourceEnum.Unknown;
-            _Value = null;
-            _MIMEType = null;
-            _Sizing = ImageSizingEnum.AutoSize;
-            _ConstantImage = false;
+            ImageSource = ImageSourceEnum.Unknown;
+            Value = null;
+            MIMEType = null;
+            Sizing = ImageSizingEnum.AutoSize;
+            ConstantImage = false;
 
             // Loop thru all the child nodes
             foreach (XmlNode xNodeLoop in xNode.ChildNodes)
@@ -66,16 +81,16 @@ namespace appbox.Reporting.RDL
                 switch (xNodeLoop.Name)
                 {
                     case "Source":
-                        _ImageSource = RDL.ImageSource.GetStyle(xNodeLoop.InnerText);
+                        ImageSource = RDL.ImageSource.GetStyle(xNodeLoop.InnerText);
                         break;
                     case "Value":
-                        _Value = new Expression(r, this, xNodeLoop, ExpressionType.Variant);
+                        Value = new Expression(r, this, xNodeLoop, ExpressionType.Variant);
                         break;
                     case "MIMEType":
-                        _MIMEType = new Expression(r, this, xNodeLoop, ExpressionType.String);
+                        MIMEType = new Expression(r, this, xNodeLoop, ExpressionType.String);
                         break;
                     case "Sizing":
-                        _Sizing = ImageSizing.GetStyle(xNodeLoop.InnerText, OwnerReport.rl);
+                        Sizing = ImageSizing.GetStyle(xNodeLoop.InnerText, OwnerReport.rl);
                         break;
                     default:
                         if (ReportItemElement(xNodeLoop))   // try at ReportItem level
@@ -85,9 +100,9 @@ namespace appbox.Reporting.RDL
                         break;
                 }
             }
-            if (_ImageSource == ImageSourceEnum.Unknown)
+            if (ImageSource == ImageSourceEnum.Unknown)
                 OwnerReport.rl.LogError(8, "Image requires a Source element.");
-            if (_Value == null)
+            if (Value == null)
                 OwnerReport.rl.LogError(8, "Image requires the Value element.");
         }
 
@@ -96,11 +111,11 @@ namespace appbox.Reporting.RDL
         {
             base.FinalPass();
 
-            _Value.FinalPass();
-            if (_MIMEType != null)
-                _MIMEType.FinalPass();
+            Value.FinalPass();
+            if (MIMEType != null)
+                MIMEType.FinalPass();
 
-            _ConstantImage = this.IsConstant();
+            ConstantImage = this.IsConstant();
 
             return;
         }
@@ -109,9 +124,9 @@ namespace appbox.Reporting.RDL
         bool IsConstant()
         {
 
-            if (_Value.IsConstant())
+            if (Value.IsConstant())
             {
-                if (_MIMEType == null || _MIMEType.IsConstant())
+                if (MIMEType == null || MIMEType.IsConstant())
                 {
                     //					if (this.Style == null || this.Style.ConstantStyle)
                     //						return true;
@@ -125,13 +140,11 @@ namespace appbox.Reporting.RDL
         {
             base.Run(ip, row);
 
-            string mtype = null;
             Stream strm = null;
             try
             {
-                strm = GetImageStream(ip.Report(), row, out mtype);
-
-                ip.Image(this, row, mtype, strm);
+                strm = GetImageStream(ip.Report(), row, out string mtype);
+                ip.Image(this, row, null, strm);
             }
             catch
             {
@@ -169,7 +182,7 @@ namespace appbox.Reporting.RDL
                 // reuse most of the work; only position will likely change
                 PageImage pi = new PageImage(wc.PgImage.ImgFormat, wc.PgImage.ImageData, wc.PgImage.SamplesW, wc.PgImage.SamplesH);
                 pi.Name = wc.PgImage.Name;              // this is name it will be shared under
-                pi.Sizing = _Sizing;
+                pi.Sizing = Sizing;
                 SetPagePositionAndStyle(r, pi, row);
                 pgs.CurrentPage.AddObject(pi);
                 SetPagePositionEnd(pgs, pi.Y + pi.H);
@@ -224,11 +237,11 @@ namespace appbox.Reporting.RDL
                 byte[] ba = ostrm.ToArray();
                 ostrm.Close();
                 PageImage pi = new PageImage(imf, ba, width, height);
-                pi.Sizing = _Sizing;
+                pi.Sizing = Sizing;
                 SetPagePositionAndStyle(r, pi, row);
 
                 pgs.CurrentPage.AddObject(pi);
-                if (_ConstantImage)
+                if (ConstantImage)
                 {
                     wc.PgImage = pi;
                     // create unique name; PDF generation uses this to optimize the saving of the image only once
@@ -258,26 +271,26 @@ namespace appbox.Reporting.RDL
             Stream strm = null;
             try
             {
-                switch (this.ImageSource)
+                switch (ImageSource)
                 {
                     case ImageSourceEnum.Database:
-                        if (_MIMEType == null)
+                        if (MIMEType == null)
                             return null;
-                        mtype = _MIMEType.EvaluateString(rpt, row);
-                        object o = _Value.Evaluate(rpt, row);
+                        mtype = MIMEType.EvaluateString(rpt, row);
+                        object o = Value.Evaluate(rpt, row);
                         strm = new MemoryStream((byte[])o);
                         break;
                     case ImageSourceEnum.Embedded:
-                        string name = _Value.EvaluateString(rpt, row);
+                        string name = Value.EvaluateString(rpt, row);
                         EmbeddedImage ei = (EmbeddedImage)OwnerReport.LUEmbeddedImages[name];
                         mtype = ei.MIMEType;
                         byte[] ba = Convert.FromBase64String(ei.ImageData);
-                        _EmbeddedImageData = ei.ImageData; // we need this for html embedded image
+                        EmbeddedImageData = ei.ImageData; // we need this for html embedded image
                         strm = new MemoryStream(ba);
                         break;
                     case ImageSourceEnum.External:
                         //Added Image URL from forum, User: solidstate
-                        string fname = this.ImageUrl = _Value.EvaluateString(rpt, row);
+                        string fname = ImageUrl = Value.EvaluateString(rpt, row);
                         mtype = GetMimeType(fname);
                         if (fname.StartsWith("http:") ||
                             fname.StartsWith("file:") ||
@@ -288,7 +301,7 @@ namespace appbox.Reporting.RDL
                             strm = wres.GetResponseStream();
                         }
                         else
-                            strm = new FileStream(fname, System.IO.FileMode.Open, FileAccess.Read);
+                            strm = new FileStream(fname, FileMode.Open, FileAccess.Read);
                         break;
                     default:
                         return null;
@@ -301,46 +314,11 @@ namespace appbox.Reporting.RDL
                     strm.Close();
                     strm = null;
                 }
-                rpt.rl.LogError(4, string.Format("Unable to load image. {0}", e.Message));
+                rpt.rl.LogError(4, $"Unable to load image. {e.Message}");
             }
 
             return strm;
         }
-
-        internal ImageSourceEnum ImageSource
-        {
-            get { return _ImageSource; }
-            set { _ImageSource = value; }
-        }
-
-        internal Expression Value
-        {
-            get { return _Value; }
-            set { _Value = value; }
-        }
-
-        internal Expression MIMEType
-        {
-            get { return _MIMEType; }
-            set { _MIMEType = value; }
-        }
-
-        internal ImageSizingEnum Sizing
-        {
-            get { return _Sizing; }
-            set { _Sizing = value; }
-        }
-
-        internal bool ConstantImage
-        {
-            get { return _ConstantImage; }
-        }
-
-        internal string EmbeddedImageData
-        {
-            get { return _EmbeddedImageData; }
-        }
-
 
         static internal string GetMimeType(string file)
         {
