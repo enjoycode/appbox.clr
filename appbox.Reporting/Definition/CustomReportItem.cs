@@ -8,15 +8,12 @@ namespace appbox.Reporting.RDL
 {
     ///<summary>
     /// CustomReportItem describes a report item that is not natively defined in RDL.  The 
-    /// RdlEngineConfig.xml file (loaded by RdlEngineConfig.cs) contains a list of the 
-    /// extensions.   RdlCri.dll is a code module that contains the built-in CustomReportItems.
-    /// However, the runtime dynamically loads this so RdlCrl.dll is not required for the
-    /// report engine to function properly.
+    /// RdlEngineConfig.xml file (loaded by RdlEngineConfig.cs) contains a list of the extensions.
     ///</summary>
     [Serializable]
     internal class CustomReportItem : Rectangle
     {
-        static readonly ImageFormat IMAGEFORMAT = ImageFormat.Jpeg;
+        //static readonly ImageFormat IMAGEFORMAT = ImageFormat.Jpeg;
 
         /// <summary>
         /// The type of the custom report item. Interpreted by a
@@ -24,8 +21,8 @@ namespace appbox.Reporting.RDL
         /// </summary>
         internal string Type { get; set; }
 
-        private XmlNode xNode;
-        private List<CustomProperty> _Properties;
+        private readonly XmlNode xNode;
+        private readonly List<CustomProperty> _Properties;
 
         internal CustomReportItem(ReportDefn r, ReportLink p, XmlNode xNode) : base(r, p, xNode, false)
         {
@@ -57,7 +54,7 @@ namespace appbox.Reporting.RDL
                         if (ReportItemElement(xNodeLoop))   // try at ReportItem level
                             break;
                         // don't know this element - log it
-                        OwnerReport.rl.LogError(4, "Unknown CustomReportItem element " + xNodeLoop.Name + " ignored.");
+                        OwnerReport.rl.LogError(4, $"Unknown CustomReportItem element {xNodeLoop.Name} ignored.");
                         break;
                 }
             }
@@ -94,8 +91,7 @@ namespace appbox.Reporting.RDL
             }
             catch (Exception ex)
             {   // Not an error since we'll simply use the ReportItems
-                OwnerReport.rl.LogError(4, string.Format("CustomReportItem load of {0} failed: {1}",
-                    Type, ex.Message));
+                OwnerReport.rl.LogError(4, $"CustomReportItem load of {Type} failed: {ex.Message}");
             }
             finally
             {
@@ -162,93 +158,63 @@ namespace appbox.Reporting.RDL
 
         override internal void RunPage(Pages pgs, Row row)
         {
-            throw new NotImplementedException();
-            //            Report rpt = pgs.Report;
+            Report rpt = pgs.Report;
+            if (IsHidden(rpt, row))
+                return;
 
-            //            if (IsHidden(pgs.Report, row))
-            //                return;
+            SetPagePositionBegin(pgs);
 
-            //            SetPagePositionBegin(pgs);
+            // Build the Chart bitmap, along with data regions
+            ICustomReportItem cri = null;
+            try
+            {
+                cri = RdlEngineConfig.CreateCustomReportItem(Type);
+                SetProperties(pgs.Report, row, cri);
 
-            //            // Build the Chart bitmap, along with data regions
-            //            Page p = pgs.CurrentPage;
-            //            ICustomReportItem cri = null;
-            //            Bitmap bm = null;
-            //            try
-            //            {
-            //                cri = RdlEngineConfig.CreateCustomReportItem(_Type);
-            //                SetProperties(pgs.Report, row, cri);
+                int width = WidthCalc(rpt, pgs.G) -
+                    (Style == null ? 0 :
+                        (Style.EvalPaddingLeftPx(rpt, row) + Style.EvalPaddingRightPx(rpt, row)));
+                int height = RSize.PixelsFromPoints(HeightOrOwnerHeight) -
+                    (Style == null ? 0 :
+                        (Style.EvalPaddingTopPx(rpt, row) + Style.EvalPaddingBottomPx(rpt, row)));
+                var skbmp = cri.DrawImage(width, height);
+                var bm = new Bitmap(skbmp);
 
-            //                int width = WidthCalc(rpt, pgs.G) - 
-            //                    (Style == null? 0 :
-            //                        (Style.EvalPaddingLeftPx(rpt, row) + Style.EvalPaddingRightPx(rpt, row)));
-            //                int height = RSize.PixelsFromPoints(this.HeightOrOwnerHeight) -
-            //                    (Style == null? 0 :
-            //                        (Style.EvalPaddingTopPx(rpt, row) + Style.EvalPaddingBottomPx(rpt, row)));
-            //                bm = new Bitmap(width, height);
-            //                cri.DrawImage(ref bm);
+                PageImage pi = new PageImage(bm, width, height);   // Create an image
+                pi.Sizing = ImageSizingEnum.Clip;
+                //RunPageRegionBegin(pgs);
 
-            //                MemoryStream ostrm = new MemoryStream();
-            //                // 06122007AJM Changed to use high quality JPEG encoding
-            //                //bm.Save(ostrm, IMAGEFORMAT);	// generate a jpeg   TODO: get png to work with pdf
-            //                appbox.Drawing.Imaging.ImageCodecInfo[] info;
-            //                info = ImageCodecInfo.GetImageEncoders();
-            //                EncoderParameters encoderParameters;
-            //                encoderParameters = new EncoderParameters(1);
-            //                // 20022008 AJM GJL - Using centralised image quality
-            //                encoderParameters.Param[0] = new EncoderParameter(Encoder.Quality, ImageQualityManager.CustomImageQuality);
-            //                appbox.Drawing.Imaging.ImageCodecInfo codec = null;
-            //                for (int i = 0; i < info.Length; i++)
-            //                {
-            //                    if (info[i].FormatDescription == "JPEG")
-            //                    {
-            //                        codec = info[i];
-            //                        break;
-            //                    }
-            //                }
-            //                bm.Save(ostrm, codec, encoderParameters);
+                SetPagePositionAndStyle(rpt, pi, row);
 
-            //                byte[] ba = ostrm.ToArray();
-            //                ostrm.Close();
-            //                PageImage pi = new PageImage(IMAGEFORMAT, ba, width, height);	// Create an image
-            //                pi.Sizing = ImageSizingEnum.Clip;
-            ////                RunPageRegionBegin(pgs);
+                if (pgs.CurrentPage.YOffset + pi.Y + pi.H >= pgs.BottomOfPage && !pgs.CurrentPage.IsEmpty())
+                {   // force page break if it doesn't fit on the page
+                    pgs.NextOrNew();
+                    pgs.CurrentPage.YOffset = OwnerReport.TopOfPage;
+                    if (YParents != null)
+                        pi.Y = 0;
+                }
 
-            //                SetPagePositionAndStyle(rpt, pi, row);
+                pgs.CurrentPage.AddObject(pi);    // Put image onto the current page
 
-            //                if (pgs.CurrentPage.YOffset + pi.Y + pi.H >= pgs.BottomOfPage && !pgs.CurrentPage.IsEmpty())
-            //                {	// force page break if it doesn't fit on the page
-            //                    pgs.NextOrNew();
-            //                    pgs.CurrentPage.YOffset = OwnerReport.TopOfPage;
-            //                    if (this.YParents != null)
-            //                        pi.Y = 0;
-            //                }
-
-            //                p = pgs.CurrentPage;
-
-            //                p.AddObject(pi);	// Put image onto the current page
-
-            //  //              RunPageRegionEnd(pgs);
-            //// I don't know why we need move offset after draw. If we do it, barcode if it first in list all text shifted.
-            //// If it broken something, write to Gankov
-            ///*                if (!this.PageBreakAtEnd && !IsTableOrMatrixCell(rpt))
-            //                {
-            //                    float newY = pi.Y + pi.H;
-            //                    p.YOffset += newY;	// bump the y location
-            //                } */
-            //                SetPagePositionEnd(pgs, pi.Y + pi.H);
-            //            }
-            //            catch (Exception ex)
-            //            {
-            //                rpt.rl.LogError(8, string.Format("Exception in CustomReportItem handling: {0}", ex.Message));
-            //            }
-            //            finally
-            //            {
-            //                if (cri != null)
-            //                    cri.Dispose();
-            //            }
-
-            //            return;
+                // RunPageRegionEnd(pgs);
+                // I don't know why we need move offset after draw. If we do it, barcode if it first in list all text shifted.
+                // If it broken something, write to Gankov
+                /*  if (!this.PageBreakAtEnd && !IsTableOrMatrixCell(rpt))
+                    {
+                        float newY = pi.Y + pi.H;
+                        pgs.CurrentPage.YOffset += newY;	// bump the y location
+                    } */
+                SetPagePositionEnd(pgs, pi.Y + pi.H);
+            }
+            catch (Exception ex)
+            {
+                rpt.rl.LogError(8, $"Exception in CustomReportItem handling: {ex.Message}");
+            }
+            finally
+            {
+                if (cri != null)
+                    cri.Dispose();
+            }
         }
 
         private void SetProperties(Report rpt, Row row, ICustomReportItem cri)

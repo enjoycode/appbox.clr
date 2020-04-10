@@ -76,12 +76,7 @@ namespace appbox.Reporting.RDL
         /// EBN 31/03/2014
         /// Cross object
         /// </summary>
-        private CrossDelegate _SubReportGetContent = new CrossDelegate();
-        public CrossDelegate SubReportGetContent
-        {
-            get { return _SubReportGetContent; }
-            set { _SubReportGetContent = value; }
-        }
+        public CrossDelegate SubReportGetContent { get; set; } = new CrossDelegate();
 
         // Constructor
         internal ReportDefn(XmlNode xNode, ReportLog replog, string folder,

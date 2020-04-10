@@ -55,6 +55,19 @@
           <FontWeight>Bold</FontWeight>
         </Style>
       </Textbox>
+      <CustomReportItem>
+         <Type>BarCode128</Type>
+         <Top>.1in</Top>
+         <Left>2.5in</Left>
+         <Height>8mm</Height>
+         <Width>40mm</Width>
+         <CustomProperties>
+            <CustomProperty>
+                <Name>Code</Name>
+                <Value>No12345678</Value>
+            </CustomProperty>
+         </CustomProperties>
+      </CustomReportItem>
     </ReportItems>
     <PrintOnFirstPage>true</PrintOnFirstPage>
     <PrintOnLastPage>true</PrintOnLastPage>

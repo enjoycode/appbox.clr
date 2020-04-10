@@ -164,14 +164,11 @@ namespace appbox.Reporting.RDL
             bool bHidden = IsHidden(r, row);
 
             WorkClass wc = GetWC(r);
-            string mtype = null;
-            Stream strm = null;
-            Drawing.Image im = null;
 
             SetPagePositionBegin(pgs);
             if (bHidden)
             {
-                PageImage pi = new PageImage(ImageFormat.Jpeg, null, 0, 0);
+                PageImage pi = new PageImage(null, 0, 0);
                 SetPagePositionAndStyle(r, pi, row);
                 SetPagePositionEnd(pgs, pi.Y + pi.H);
                 return;
@@ -180,7 +177,7 @@ namespace appbox.Reporting.RDL
             if (wc.PgImage != null)
             {   // have we already generated this one
                 // reuse most of the work; only position will likely change
-                PageImage pi = new PageImage(wc.PgImage.ImgFormat, wc.PgImage.ImageData, wc.PgImage.SamplesW, wc.PgImage.SamplesH);
+                PageImage pi = new PageImage(wc.PgImage.Image, wc.PgImage.SamplesW, wc.PgImage.SamplesH);
                 pi.Name = wc.PgImage.Name;              // this is name it will be shared under
                 pi.Sizing = Sizing;
                 SetPagePositionAndStyle(r, pi, row);
@@ -191,52 +188,16 @@ namespace appbox.Reporting.RDL
 
             try
             {
-                strm = GetImageStream(r, row, out mtype);
+                using var strm = GetImageStream(r, row, out string mtype);
                 if (strm == null)
                 {
-                    r.rl.LogError(4, string.Format("Unable to load image {0}.", this.Name.Nm));
+                    r.rl.LogError(4, $"Unable to load image {Name.Nm}.");
                     return;
                 }
-                im = appbox.Drawing.Image.FromStream(strm);
+                var im = Drawing.Image.FromStream(strm);
                 int height = im.Height;
                 int width = im.Width;
-                MemoryStream ostrm = new MemoryStream();
-                strm.Position = 0;
-                ImageFormat imf;
-                switch (mtype.ToLower())
-                {
-                    case "image/jpeg":
-                        imf = ImageFormat.Jpeg;
-                        CopyStream(strm, ostrm);
-                        break;
-                    case "image/png":
-                        imf = ImageFormat.Png;
-                        CopyStream(strm, ostrm);
-                        break;
-                    default: // from old code where all images convert to jpeg, i don't know why. May be need delete it and add all support formats.
-                        throw new NotImplementedException();
-                        //imf = ImageFormat.Jpeg;
-                        //appbox.Drawing.Imaging.ImageCodecInfo[] info;
-                        //info = ImageCodecInfo.GetImageEncoders();
-                        //EncoderParameters encoderParameters;
-                        //encoderParameters = new EncoderParameters(1);
-                        //encoderParameters.Param[0] = new EncoderParameter(Encoder.Quality, ImageQualityManager.EmbeddedImageQuality);
-                        //appbox.Drawing.Imaging.ImageCodecInfo codec = null;
-                        //for (int i = 0; i < info.Length; i++)
-                        //{
-                        //	if (info[i].FormatDescription == "JPEG")
-                        //	{
-                        //		codec = info[i];
-                        //		break;
-                        //	}
-                        //}
-                        //im.Save(ostrm, codec, encoderParameters);
-                        //break;
-                }
-
-                byte[] ba = ostrm.ToArray();
-                ostrm.Close();
-                PageImage pi = new PageImage(imf, ba, width, height);
+                PageImage pi = new PageImage(im, width, height);
                 pi.Sizing = Sizing;
                 SetPagePositionAndStyle(r, pi, row);
 
@@ -255,17 +216,9 @@ namespace appbox.Reporting.RDL
                 // image failed to load, continue processing
                 r.rl.LogError(4, "Image load failed.  " + e.Message);
             }
-            finally
-            {
-                if (strm != null)
-                    strm.Close();
-                if (im != null)
-                    im.Dispose();
-            }
-            return;
         }
 
-        Stream GetImageStream(Report rpt, Row row, out string mtype)
+        private Stream GetImageStream(Report rpt, Row row, out string mtype)
         {
             mtype = null;
             Stream strm = null;

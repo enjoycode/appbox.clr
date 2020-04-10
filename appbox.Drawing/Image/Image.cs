@@ -13,6 +13,9 @@ namespace appbox.Drawing
             return new Bitmap(bmp);
         }
 
+        /// <summary>
+        /// Width of pixels
+        /// </summary>
         public int Width
         {
             get
@@ -26,6 +29,9 @@ namespace appbox.Drawing
             }
         }
 
+        /// <summary>
+        /// Height of pixels
+        /// </summary>
         public int Height
         {
             get
@@ -38,6 +44,9 @@ namespace appbox.Drawing
                 return 0;
             }
         }
+
+        public float HorizontalResolution => 72f; //TODO:
+        public float VerticalResolution => 72f; //TODO:
 
         public abstract void Save(Stream stream, ImageFormat format);
 

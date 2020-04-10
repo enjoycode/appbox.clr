@@ -5,12 +5,8 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Reflection;
 using System.Data;
-using System.Data.SqlClient;
-using System.Data.OleDb;
-using System.Data.Odbc;
 using System.IO;
 using appbox.Reporting.Resources;
-using appbox.Reporting.RDL;
 
 namespace appbox.Reporting.RDL
 {
@@ -26,15 +22,9 @@ namespace appbox.Reporting.RDL
 
         // Compression entries
         static CompressionConfig _Compression = null;
-        static string _DirectoryLoadedFrom = null;
 
-        static public string DirectoryLoadedFrom
-        {
-            get
-            {
-                return _DirectoryLoadedFrom;
-            }
-        }
+        static public string DirectoryLoadedFrom { get; private set; } = null;
+
         // initializes when no init available
         static public void RdlEngineConfigInit()
         {
@@ -60,14 +50,14 @@ namespace appbox.Reporting.RDL
                 if (dir == null)
                     continue;
 
-                PlatformID pid = System.Environment.OSVersion.Platform;
+                PlatformID pid = Environment.OSVersion.Platform;
                 if (pid == PlatformID.Unix)
                 {
-                    file = System.IO.Path.Combine(dir, "RdlEngineConfig.Linux.xml");
+                    file = Path.Combine(dir, "RdlEngineConfig.Linux.xml");
                 }
                 else
                 {
-                    file = System.IO.Path.Combine(dir, "RdlEngineConfig.xml");
+                    file = Path.Combine(dir, "RdlEngineConfig.xml");
                 }
 
                 
@@ -79,11 +69,11 @@ namespace appbox.Reporting.RDL
                         return;         // we've already inited with this file 
                     xDoc.Load(file);
                     bLoaded = true;
-                    _DirectoryLoadedFrom = dir;
+                    DirectoryLoadedFrom = dir;
                 }
                 catch (Exception ex)
                 {   // can't do much about failures; no place to report them 
-                    System.Console.WriteLine("Error opening RdlEngineConfig.xml: {0}", ex.Message);
+                    Console.WriteLine("Error opening RdlEngineConfig.xml: {0}", ex.Message);
                 }
                 if (bLoaded)
                     break;
@@ -121,33 +111,33 @@ namespace appbox.Reporting.RDL
   <CustomReportItems>
       <CustomReportItem>
          <Type>BarCode EAN-13</Type>
-         <CodeModule>RdlCri.dll</CodeModule>
-         <ClassName>appbox.Reporting.CRI.BarCodeEAN13</ClassName>
+         <CodeModule>appbox.Reporting.dll</CodeModule>
+         <ClassName>appbox.Reporting.BarCodeEAN13</ClassName>
       </CustomReportItem>
       <CustomReportItem>
          <Type>BarCode Bookland</Type>
-         <CodeModule>RdlCri.dll</CodeModule>
-         <ClassName>appbox.Reporting.CRI.BarCodeBookland</ClassName>
+         <CodeModule>appbox.Reporting.dll</CodeModule>
+         <ClassName>appbox.Reporting.BarCodeBookland</ClassName>
       </CustomReportItem>
       <CustomReportItem>
          <Type>QR Code</Type>
-         <CodeModule>RdlCri.dll</CodeModule>
-         <ClassName>appbox.Reporting.CRI.QrCode</ClassName>
+         <CodeModule>appbox.Reporting.dll</CodeModule>
+         <ClassName>appbox.Reporting.QrCode</ClassName>
       </CustomReportItem>
       <CustomReportItem>
          <Type>BarCode39</Type>
-         <CodeModule>RdlCri.dll</CodeModule>
-         <ClassName>appbox.Reporting.CRI.BarCode39</ClassName>
+         <CodeModule>appbox.Reporting.dll</CodeModule>
+         <ClassName>appbox.Reporting.BarCode39</ClassName>
       </CustomReportItem>
       <CustomReportItem>
          <Type>BarCode128</Type>
-         <CodeModule>RdlCri.dll</CodeModule>
-         <ClassName>appbox.Reporting.CRI.BarCode128</ClassName>
+         <CodeModule>appbox.Reporting.dll</CodeModule>
+         <ClassName>appbox.Reporting.BarCode128</ClassName>
       </CustomReportItem>
       <CustomReportItem>
          <Type>BarCodeEAN8</Type>
-         <CodeModule>RdlCri.dll</CodeModule>
-         <ClassName>appbox.Reporting.CRI.BarCodeEAN8</ClassName>
+         <CodeModule>appbox.Reporting.dll</CodeModule>
+         <ClassName>appbox.Reporting.BarCodeEAN8</ClassName>
       </CustomReportItem>
    </CustomReportItems>
 </config>";
@@ -397,8 +387,6 @@ namespace appbox.Reporting.RDL
                     {         // if never initialized; we should init 
                         RdlEngineConfigInit();
                     }
-
-
 
                     Console.WriteLine("Attempt to find provider");
                     SqlConfigEntry sce = SqlEntries[provider] as SqlConfigEntry;
@@ -650,8 +638,6 @@ namespace appbox.Reporting.RDL
                 return;
 
             object returnVal = _FinishMethodInfo.Invoke(strm, null);
-
-            return;
         }
 
         internal byte[] GetArray(MemoryStream ms)
@@ -822,7 +808,7 @@ namespace appbox.Reporting.RDL
         }
     }
 
-    internal class CustomReportItemEntry
+    internal sealed class CustomReportItemEntry
     {
         internal string ItemName;
         internal Type Type;

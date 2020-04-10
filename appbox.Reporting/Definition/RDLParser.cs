@@ -10,13 +10,51 @@ namespace appbox.Reporting.RDL
     /// </summary>
     public class RDLParser
     {
-        XmlDocument _RdlDocument;   // the RDL XML syntax
+        private XmlDocument _RdlDocument;
+        /// <summary>
+        /// the RDL XML syntax
+        /// </summary>
+        internal XmlDocument RdlDocument
+        {
+            get { return _RdlDocument; }
+            set
+            {
+                // With a new document existing report is not valid
+                _RdlDocument = value;
+                bPassed = false;
+                _Report = null;
+            }
+        }
+
         bool bPassed = false;       // has Report passed definition
         Report _Report = null;  // The report; complete if bPassed true
-        NeedPassword _DataSourceReferencePassword;  // password for decrypting data source reference file
-        string _Folder;         // folder that will contain report; needed when DataSourceReference used
-        string _overwriteConnectionString; // ConnectionString to be overwrite
-        bool _overwriteInSubreport;// ConnectionString overwrite in subreport too
+
+        /// <summary>
+        /// Get the compiled report.
+        /// Only return a report if it has been fully constructed
+        /// </summary>
+        public Report Report => bPassed ? _Report : null;
+
+        /// <summary>
+        /// For shared data sources, the DataSourceReferencePassword is the user phrase
+        /// used to decrypt the report.
+        /// </summary>
+        public NeedPassword DataSourceReferencePassword { get; set; }
+
+        /// <summary>
+        /// Folder is the location of the report.
+        /// </summary>
+        public string Folder { get; set; }
+
+        /// <summary>
+        /// ConnectionString to overwrite
+        /// </summary>
+        public string OverwriteConnectionString { get; set; }
+
+        /// <summary>
+        /// overwrite ConnectionString in subreport
+        /// </summary>
+        public bool OverwriteInSubreport { get; set; }
 
         /// <summary>
         /// EBN 31/03/2014
@@ -32,7 +70,7 @@ namespace appbox.Reporting.RDL
         /// definition that will be used at runtime.  It validates
         /// that the syntax is correct according to the specification.
         /// </summary>
-        public RDLParser(String xml)
+        public RDLParser(string xml)
         {
             try
             {
@@ -54,33 +92,6 @@ namespace appbox.Reporting.RDL
         public RDLParser(XmlDocument xml) // preparsed XML
         {
             _RdlDocument = xml;
-        }
-
-        internal XmlDocument RdlDocument
-        {
-            get { return _RdlDocument; }
-            set
-            {
-                // With a new document existing report is not valid
-                _RdlDocument = value;
-                bPassed = false;
-                _Report = null;
-            }
-        }
-
-        /// <summary>
-        /// Get the compiled report.
-        /// </summary>
-        public Report Report
-        {
-            // Only return a report if it has been fully constructed
-            get
-            {
-                if (bPassed)
-                    return _Report;
-                else
-                    return null;
-            }
         }
 
         /// <summary>
@@ -108,50 +119,13 @@ namespace appbox.Reporting.RDL
 
             ReportLog rl = new ReportLog();     // create a report log
 
-            ReportDefn rd = new ReportDefn(xNode, rl, _Folder, _DataSourceReferencePassword,
+            ReportDefn rd = new ReportDefn(xNode, rl, Folder, DataSourceReferencePassword,
                 oc, OnSubReportGetContent, OverwriteConnectionString, OverwriteInSubreport);
             _Report = new Report(rd);
 
             bPassed = true;
 
             return _Report;
-        }
-
-        /// <summary>
-        /// For shared data sources, the DataSourceReferencePassword is the user phrase
-        /// used to decrypt the report.
-        /// </summary>
-        public NeedPassword DataSourceReferencePassword
-        {
-            get { return _DataSourceReferencePassword; }
-            set { _DataSourceReferencePassword = value; }
-        }
-
-        /// <summary>
-        /// Folder is the location of the report.
-        /// </summary>
-        public string Folder
-        {
-            get { return _Folder; }
-            set { _Folder = value; }
-        }
-
-        /// <summary>
-        /// ConnectionString to overwrite
-        /// </summary>
-        public string OverwriteConnectionString
-        {
-            get { return _overwriteConnectionString; }
-            set { _overwriteConnectionString = value; }
-        }
-
-        /// <summary>
-        /// overwrite ConnectionString in subreport
-        /// </summary>
-        public bool OverwriteInSubreport
-        {
-            get { return _overwriteInSubreport; }
-            set { _overwriteInSubreport = value; }
         }
 
     }

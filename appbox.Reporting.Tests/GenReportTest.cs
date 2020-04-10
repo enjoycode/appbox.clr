@@ -41,7 +41,7 @@ namespace appbox.Reporting.Tests
             report.RunGetData(null); //必须在手工设定数据源后执行
 
             //输出为pdf
-            var outFile = System.IO.Path.Combine(AppContext.BaseDirectory, "TestReport.pdf");
+            var outFile = System.IO.Path.Combine(AppContext.BaseDirectory, "A_TestReport.pdf");
             using var sg = new RDL.OneFileStreamGen(outFile, true);
             report.RunRender(sg, RDL.OutputPresentationType.PDF);
         }

@@ -32,7 +32,7 @@ namespace appbox.Drawing
         private float deviceScaleY = 1;
         private float deviceOffsetX = 0;
         private float deviceOffsetY = 0;
-        private Rectangle deviceClip = Rectangle.Empty;
+        //private Rectangle deviceClip = Rectangle.Empty;
 
         private GraphicsUnit pageUnit = GraphicsUnit.Pixel;
         public GraphicsUnit PageUnit
@@ -248,9 +248,9 @@ namespace appbox.Drawing
             //else
             //{
             //    //Console.WriteLine("rect={0} deviceClip={1} mode={2}", rect, deviceClip, combineMode);
-            //    var skRect = Convert(rect);
-            //    var skOp = ToSKClipOperation(combineMode);
-            //    SkiaApi.sk_canvas_clip_rect_with_operation(canvas, ref skRect, skOp, false);
+            var skRect = Convert(rect);
+            var skOp = ToSKClipOperation(combineMode);
+            skCanvas.ClipRect(skRect, skOp, antialias: false);
             //}
         }
 
@@ -703,21 +703,22 @@ namespace appbox.Drawing
         //    DrawImage(image, point.X, point.Y);
         //}
 
-        ///// <summary>
-        ///// Draws the specified Image at the specified location and with the specified size.
-        ///// </summary>
-        //public void DrawImage(Image image, Rectangle rect)
-        //{
-        //    DrawImage(image, new RectangleF(rect.X, rect.Y, rect.Width, rect.Height), new RectangleF(0, 0, image.Width, image.Height));
-        //}
+        /// <summary>
+        /// Draws the specified Image at the specified location and with the specified size.
+        /// </summary>
+        public void DrawImage(Image image, Rectangle rect)
+        {
+            DrawImage(image, new RectangleF(rect.X, rect.Y, rect.Width, rect.Height),
+                new RectangleF(0, 0, image.Width, image.Height));
+        }
 
-        ///// <summary>
-        ///// Draws the specified Image at the specified location and with the specified size.
-        ///// </summary>
-        //public void DrawImage(Image image, RectangleF rect)
-        //{
-        //    DrawImage(image, rect, new RectangleF(0, 0, image.Width, image.Height));
-        //}
+        /// <summary>
+        /// Draws the specified Image at the specified location and with the specified size.
+        /// </summary>
+        public void DrawImage(Image image, RectangleF rect)
+        {
+            DrawImage(image, rect, new RectangleF(0, 0, image.Width, image.Height));
+        }
 
         ///// <summary>
         ///// Draws the specified Image at the specified location and with the specified size.
@@ -727,27 +728,17 @@ namespace appbox.Drawing
         //    DrawImage(image, new RectangleF(x, y, width, height), new RectangleF(0, 0, image.Width, image.Height));
         //}
 
-        //public void DrawImage(Image image, RectangleF dest, RectangleF src)
-        //{
-        //    if (image is Bitmap)
-        //    {
-        //        if (image.HiDpi)
-        //            src = new RectangleF(src.X, src.Y, src.Width * 2, src.Height * 2);
+        public void DrawImage(Image image, RectangleF dest, RectangleF src)
+        {
+            if (image is Bitmap bmp)
+            {
+                //if (image.HiDpi)
+                //    src = new RectangleF(src.X, src.Y, src.Width * 2, src.Height * 2);
 
-        //        var nativeBitmap = ((Bitmap)image).NativeBitmap;
-        //        if (nativeBitmap != IntPtr.Zero)
-        //        {
-        //            var dstRect = Convert(dest);
-        //            var srcRect = Convert(src);
-        //            SkiaApi.sk_paint_set_color(this.nativePaint, new SKColor(0x10, 0x10, 0x10)); //todo:: 临时解决RichTextEditor图片绘制看不见现象
-        //            SkiaApi.sk_canvas_draw_bitmap_rect(canvas, nativeBitmap, ref srcRect, ref dstRect, this.nativePaint);
-        //        }
-        //        else
-        //        {
-        //            Log.Debug("Bitmap.NativeHandle is IntPtr.Zero");
-        //        }
-        //    }
-        //}
+                //skPaint.Color = new SKColor(0x10, 0x10, 0x10); //TODO:临时解决RichTextEditor图片绘制看不见现象
+                skCanvas.DrawBitmap(bmp.skBitmap, Convert(src), Convert(dest));
+            }
+        }
         #endregion
 
         #region ----Draw Line Methods----

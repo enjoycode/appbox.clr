@@ -116,7 +116,7 @@ namespace appbox.Reporting.RDL
                 }
                 else if (pi is PageRectangle)
                 {
-                    this.DrawBackground(g, rect, pi.SI);
+                    DrawBackground(g, rect, pi.SI);
                 }
                 else if (pi is PageEllipse)
                 {
@@ -414,95 +414,65 @@ namespace appbox.Reporting.RDL
 
         private void DrawImage(PageImage pi, Graphics g, RectangleF r)
         {
-            Stream strm = null;
-            Drawing.Image im = null;
-            try
+            var im = pi.Image;
+            float height, width;      // some work variables 
+            StyleInfo si = pi.SI;
+
+            // adjust drawing rectangle based on padding 
+            RectangleF r2 = new RectangleF(r.Left + PixelsX(si.PaddingLeft),
+                r.Top + PixelsY(si.PaddingTop),
+                r.Width - PixelsX(si.PaddingLeft + si.PaddingRight),
+                r.Height - PixelsY(si.PaddingTop + si.PaddingBottom));
+
+            Drawing.Rectangle ir;   // int work rectangle 
+            switch (pi.Sizing)
             {
-                strm = new MemoryStream(pi.ImageData);
-                im = Drawing.Image.FromStream(strm);
-                DrawImageSized(pi, im, g, r);
+                case ImageSizingEnum.AutoSize:
+                    // Note: GDI+ will stretch an image when you only provide 
+                    //  the left/top coordinates.  This seems pretty stupid since 
+                    //  it results in the image being out of focus even though 
+                    //  you don't want the image resized. 
+                    if (g.DpiX == im.HorizontalResolution && g.DpiY == im.VerticalResolution)
+                        ir = new Drawing.Rectangle(Convert.ToInt32(r2.Left), Convert.ToInt32(r2.Top),
+                                                        im.Width, im.Height);
+                    else
+                        ir = new Drawing.Rectangle(Convert.ToInt32(r2.Left), Convert.ToInt32(r2.Top),
+                                           Convert.ToInt32(r2.Width), Convert.ToInt32(r2.Height));
+                    g.DrawImage(im, ir);
+                    break;
+                case ImageSizingEnum.Clip:
+                    g.Save();
+                    g.SetClip(r2, CombineMode.Intersect);
+                    if (g.DpiX == im.HorizontalResolution && g.DpiY == im.VerticalResolution)
+                        ir = new Drawing.Rectangle(Convert.ToInt32(r2.Left), Convert.ToInt32(r2.Top),
+                                                        im.Width, im.Height);
+                    else
+                        ir = new Drawing.Rectangle(Convert.ToInt32(r2.Left), Convert.ToInt32(r2.Top),
+                                           Convert.ToInt32(r2.Width), Convert.ToInt32(r2.Height));
+                    g.DrawImage(im, ir);
+                    g.Restore();
+                    break;
+                case ImageSizingEnum.FitProportional:
+                    float ratioIm = im.Height / (float)im.Width;
+                    float ratioR = r2.Height / r2.Width;
+                    height = r2.Height;
+                    width = r2.Width;
+                    if (ratioIm > ratioR)
+                    {   // this means the rectangle width must be corrected 
+                        width = height * (1 / ratioIm);
+                    }
+                    else if (ratioIm < ratioR)
+                    {   // this means the ractangle height must be corrected 
+                        height = width * ratioIm;
+                    }
+                    r2 = new RectangleF(r2.X, r2.Y, width, height);
+                    g.DrawImage(im, r2);
+                    break;
+                case ImageSizingEnum.Fit:
+                default:
+                    g.DrawImage(im, r2);
+                    break;
             }
-            finally
-            {
-                if (strm != null)
-                    strm.Close();
-                if (im != null)
-                    im.Dispose();
-            }
-
-        }
-
-        private void DrawImageSized(PageImage pi, Drawing.Image im, Graphics g, RectangleF r)
-        {
-            throw new NotImplementedException();
-            //float height, width;      // some work variables 
-            //StyleInfo si = pi.SI;
-
-            //// adjust drawing rectangle based on padding 
-            //RectangleF r2 = new RectangleF(r.Left + PixelsX(si.PaddingLeft),
-            //    r.Top + PixelsY(si.PaddingTop),
-            //    r.Width - PixelsX(si.PaddingLeft + si.PaddingRight),
-            //    r.Height - PixelsY(si.PaddingTop + si.PaddingBottom));
-
-            //Drawing.Rectangle ir;   // int work rectangle 
-            //switch (pi.Sizing)
-            //{
-            //    case ImageSizingEnum.AutoSize:
-            //        // Note: GDI+ will stretch an image when you only provide 
-            //        //  the left/top coordinates.  This seems pretty stupid since 
-            //        //  it results in the image being out of focus even though 
-            //        //  you don't want the image resized. 
-            //        if (g.DpiX == im.HorizontalResolution &&
-            //            g.DpiY == im.VerticalResolution)
-            //        {
-            //            ir = new appbox.Drawing.Rectangle(Convert.ToInt32(r2.Left), Convert.ToInt32(r2.Top),
-            //                                            im.Width, im.Height);
-            //        }
-            //        else
-            //            ir = new appbox.Drawing.Rectangle(Convert.ToInt32(r2.Left), Convert.ToInt32(r2.Top),
-            //                               Convert.ToInt32(r2.Width), Convert.ToInt32(r2.Height));
-            //        g.DrawImage(im, ir);
-
-            //        break;
-            //    case ImageSizingEnum.Clip:
-            //        Region saveRegion = g.Clip;
-            //        Region clipRegion = new Region(g.Clip.GetRegionData());
-            //        clipRegion.Intersect(r2);
-            //        g.Clip = clipRegion;
-            //        if (g.DpiX == im.HorizontalResolution &&
-            //            g.DpiY == im.VerticalResolution)
-            //        {
-            //            ir = new appbox.Drawing.Rectangle(Convert.ToInt32(r2.Left), Convert.ToInt32(r2.Top),
-            //                                            im.Width, im.Height);
-            //        }
-            //        else
-            //            ir = new appbox.Drawing.Rectangle(Convert.ToInt32(r2.Left), Convert.ToInt32(r2.Top),
-            //                               Convert.ToInt32(r2.Width), Convert.ToInt32(r2.Height));
-            //        g.DrawImage(im, ir);
-            //        g.Clip = saveRegion;
-            //        break;
-            //    case ImageSizingEnum.FitProportional:
-            //        float ratioIm = (float)im.Height / (float)im.Width;
-            //        float ratioR = r2.Height / r2.Width;
-            //        height = r2.Height;
-            //        width = r2.Width;
-            //        if (ratioIm > ratioR)
-            //        {   // this means the rectangle width must be corrected 
-            //            width = height * (1 / ratioIm);
-            //        }
-            //        else if (ratioIm < ratioR)
-            //        {   // this means the ractangle height must be corrected 
-            //            height = width * ratioIm;
-            //        }
-            //        r2 = new RectangleF(r2.X, r2.Y, width, height);
-            //        g.DrawImage(im, r2);
-            //        break;
-            //    case ImageSizingEnum.Fit:
-            //    default:
-            //        g.DrawImage(im, r2);
-            //        break;
-            //}
-            //return;
         }
 
         private void DrawBackground(Graphics g, RectangleF rect, StyleInfo si)

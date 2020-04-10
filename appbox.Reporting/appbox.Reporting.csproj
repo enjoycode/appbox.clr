@@ -9,9 +9,12 @@
     <Folder Include="Resources\" />
     <Folder Include="Utility\" />
     <Folder Include="Runtime\" />
+    <Folder Include="Barcode\" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="System.CodeDom" Version="4.7.0" />
+    <PackageReference Include="ZXing.Net" Version="0.16.5" />
+    <PackageReference Include="ZXing.Net.Bindings.SkiaSharp" Version="0.16.9" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Update="Resources\Strings.resx">

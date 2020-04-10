@@ -414,24 +414,16 @@ namespace appbox.Reporting.RDL
 
     public class PageImage : PageItem, ICloneable
     {
-        public PageImage(ImageFormat im, byte[] image, int w, int h)
+        public PageImage(Drawing.Image image, int w, int h)
         {
-            Debug.Assert(im == ImageFormat.Jpeg || im == ImageFormat.Png || im == ImageFormat.Gif || im == ImageFormat.Wmf,
-                            "PageImage only supports Jpeg, Gif and Png and WMF image formats.");
-            ImgFormat = im;
-            ImageData = image;
+            Image = image;
             SamplesW = w;
             SamplesH = h;
             Repeat = ImageRepeat.NoRepeat;
             Sizing = ImageSizingEnum.AutoSize;
         }
 
-        public byte[] ImageData { get; }
-
-        /// <summary>
-        /// type of image; png, jpeg are supported
-        /// </summary>
-        public ImageFormat ImgFormat { get; }
+        public Drawing.Image Image { get; }
 
         /// <summary>
         /// name of object if constant image

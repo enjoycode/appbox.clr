@@ -8,11 +8,11 @@ namespace appbox.Reporting.RDL
     ///</summary>
     internal abstract class ChartBase : IDisposable
     {
-        protected Chart _ChartDefn; // GJL 14082008 Using Vector Graphics
+        protected Chart _ChartDefn;
         MatrixCellEntry[,] _DataDefn;
         protected Bitmap _bm;
-        protected Metafile _mf; // GJL 14082008 Using Vector Graphics
-        public System.IO.MemoryStream _aStream; // GJL 14082008 Using Vector Graphics
+        protected Metafile _mf;
+        //public System.IO.MemoryStream _aStream;
         protected ChartLayout Layout;
         Brush[] _SeriesBrush;
         ChartMarkerEnum[] _SeriesMarker;

@@ -11,7 +11,7 @@ namespace appbox.Reporting.RDL
     [Serializable]
     internal class Chart : DataRegion
     {
-        static readonly ImageFormat IMAGEFORMAT = ImageFormat.Jpeg;
+        //static readonly ImageFormat IMAGEFORMAT = ImageFormat.Jpeg;
         ChartTypeEnum _Type;	// Generic Type of the chart Default: Column
         Expression _Subtype;    // Available subtypes (and default subtype) depends on Type //AJM GJL 14022008 Allowing Expressions
         SeriesGroupings _SeriesGroupings;   // Set of series groupings for the chart
@@ -38,6 +38,7 @@ namespace appbox.Reporting.RDL
         internal Expression _showTooltipsX;
         internal Expression _ToolTipYFormat;
         internal Expression _ToolTipXFormat;
+
         internal Chart(ReportDefn r, ReportLink p, XmlNode xNode) : base(r, p, xNode)
         {
 
@@ -240,7 +241,6 @@ namespace appbox.Reporting.RDL
                 if (cb != null)
                     cb.Dispose();
             }
-            return;
         }
 
         override internal void RunPage(Pages pgs, Row row)

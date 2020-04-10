@@ -8,6 +8,11 @@ namespace appbox.Drawing
     {
         internal SKBitmap skBitmap;
 
+        /// <summary>
+        /// Create Bitmap
+        /// </summary>
+        /// <param name="width">pixel</param>
+        /// <param name="height">pixel</param>
         public Bitmap(int width, int height) : this(width, height, PixelFormat.Format32bppRgb) { }
 
         public Bitmap(int width, int height, PixelFormat format)
@@ -17,7 +22,7 @@ namespace appbox.Drawing
             skBitmap.Erase(new SKColor(255, 255, 255, 0)); //用于清除画布
         }
 
-        internal Bitmap(SKBitmap skBitmap) { this.skBitmap = skBitmap; }
+        public Bitmap(SKBitmap skBitmap) { this.skBitmap = skBitmap; }
 
         public override void Save(Stream stream, ImageFormat format)
         {
