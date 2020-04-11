@@ -220,14 +220,12 @@ namespace appbox.Reporting.RDL
 
         static internal float PointsFromPixels(Graphics g, int x)
         {
-            float result = x * POINTSIZED / g.DpiX; // convert to points from pixels
-            return result;
+            return x * POINTSIZED / g.DpiX; // convert to points from pixels
         }
 
         static internal float PointsFromPixels(Graphics g, float x)
         {
-            float result = x * POINTSIZED / g.DpiX; // convert to points from pixels
-            return result;
+            return x * POINTSIZED / g.DpiX; // convert to points from pixels
         }
 
         /// <summary>

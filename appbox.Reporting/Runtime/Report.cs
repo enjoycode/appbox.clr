@@ -318,7 +318,6 @@ namespace appbox.Reporting.RDL
             return;
         }
 
-
         /// <summary>
         /// Build the Pages for this report.
         /// </summary>
