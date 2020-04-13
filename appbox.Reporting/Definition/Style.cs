@@ -14,114 +14,228 @@ namespace appbox.Reporting.RDL
     {
         internal static readonly string DefaultFontFamily = Font.DefaultFontFamilyName;
 
-        StyleBorderColor _BorderColor;  // Color of the border
-        StyleBorderStyle _BorderStyle;  // Style of the border
-        StyleBorderWidth _BorderWidth;  // Width of the border
-        Expression _BackgroundColor;    //(Color) Color of the background
-                                        // If omitted, the background is transparent
-        Expression _BackgroundGradientType; // The type of background gradient
-        Expression _BackgroundGradientEndColor; //(Color) End color for the background gradient. If
-                                                // omitted, there is no gradient.
-        StyleBackgroundImage _BackgroundImage;  // A background image for the report item.
-                                                // If omitted, there is no background image.
-        Expression _FontStyle;      // (Enum FontStyle) Font style Default: Normal
-        Expression _FontFamily;     //(string)Name of the font family
-        Expression _FontSize;       //(Size) Point size of the font
-                                    // Default: 10 pt. Min: 1 pt. Max: 200 pt.
-        Expression _FontWeight;     //(Enum FontWeight) Thickness of the font
-        Expression _Format;         //(string) .NET Framework formatting string1
-                                    //	Note: Locale-dependent currency
-                                    //	formatting (format code �C�) is based on
-                                    //	the language setting for the report item
-                                    //	Locale-dependent date formatting is
-                                    //	supported and should be based on the
-                                    //	language property of the ReportItem.
-                                    //	Default: No formatting.
-        Expression _TextDecoration; // (Enum TextDecoration) Special text formatting Default: none
-        Expression _TextAlign;      // (Enum TextAlign) Horizontal alignment of the text Default: General
+        #region ====Properties====
+        /// <summary>
+        /// Color of the border
+        /// </summary>
+        internal StyleBorderColor BorderColor { get; set; }
 
-        Expression _VerticalAlign;  // (Enum VerticalAlign)	Vertical alignment of the text Default: Top
-        Expression _Color;          // (Color) The foreground color	Default: Black
-        Expression _PaddingLeft;    // (Size)Padding between the left edge of the
-                                    // report item and its contents1
-                                    // Default: 0 pt. Max: 1000 pt.
-        Expression _PaddingRight;   // (Size) Padding between the right edge of the
-                                    // report item and its contents
-                                    // Default: 0 pt. Max: 1000 pt.
-        Expression _PaddingTop;     // (Size) Padding between the top edge of the
-                                    // report item and its contents
-                                    // Default: 0 pt. Max: 1000 pt.
-        Expression _PaddingBottom;  // (Size) Padding between the top edge of the
-                                    //	report item and its contents
-                                    // Default: 0 pt. Max: 1000 pt
-        Expression _LineHeight;     // (Size) Height of a line of text
-                                    // Default: Report output format determines
-                                    // line height based on font size
-                                    // Min: 1 pt. Max: 1000 pt.
-        Expression _Direction;      // (Enum Direction) Indicates whether text is written left-to-right (default)
-                                    // or right-to-left.
-                                    // Does not impact the alignment of text
-                                    // unless using General alignment.
-        Expression _WritingMode;    // (Enum WritingMode) Indicates whether text is written
-                                    // horizontally or vertically.
-        Expression _Language;       // (Language) The primary language of the text.
-                                    // Default is Report.Language.
-        Expression _UnicodeBiDirectional;   // (Enum UnicodeBiDirection) 
-                                            // Indicates the level of embedding with
-                                            // respect to the Bi-directional algorithm. Default: normal
-        Expression _Calendar;       // (Enum Calendar)
-                                    //	Indicates the calendar to use for
-                                    //	formatting dates. Must be compatible in
-                                    //	.NET framework with the Language
-                                    //	setting.
-        Expression _NumeralLanguage;    // (Language) The digit format to use as described by its
-                                        // primary language. Any language is legal.
-                                        // Default is the Language property.
-        Expression _NumeralVariant; //(Integer) The variant of the digit format to use.
-                                    // Currently defined values are:
-                                    // 1: default, follow Unicode context rules
-                                    // 2: 0123456789
-                                    // 3: traditional digits for the script as
-                                    //     defined in GDI+. Currently supported for:
-                                    //		ar | bn | bo | fa | gu | hi | kn | kok | lo | mr |
-                                    //		ms | or | pa | sa | ta | te | th | ur and variants.
-                                    // 4: ko, ja, zh-CHS, zh-CHT only
-                                    // 5: ko, ja, zh-CHS, zh-CHT only
-                                    // 6: ko, ja, zh-CHS, zh-CHT only [Wide
-                                    //     versions of regular digits]
-                                    // 7: ko only
-        bool _ConstantStyle;        //  true if all Style elements are constant
+        /// <summary>
+        /// Style of the border
+        /// </summary>
+        internal StyleBorderStyle BorderStyle { get; set; }
+
+        /// <summary>
+        /// Width of the border
+        /// </summary>
+        internal StyleBorderWidth BorderWidth { get; set; }
+
+        /// <summary>
+        /// (Color) Color of the background
+        /// If omitted, the background is transparent
+        /// </summary>
+        internal Expression BackgroundColor { get; set; }
+
+        /// <summary>
+        /// The type of background gradient
+        /// </summary>
+        internal Expression BackgroundGradientType { get; set; }
+
+        /// <summary>
+        /// (Color) End color for the background gradient.
+        /// If omitted, there is no gradient.
+        /// </summary>
+        internal Expression BackgroundGradientEndColor { get; set; }
+
+        /// <summary>
+        /// A background image for the report item.
+        /// If omitted, there is no background image.
+        /// </summary>
+        internal StyleBackgroundImage BackgroundImage { get; set; }
+
+        /// <summary>
+        /// true if all Style elements are constant
+        /// </summary>
+        internal bool ConstantStyle { get; private set; }
+
+        /// <summary>
+        /// (Enum FontStyle) Font style Default: Normal
+        /// </summary>
+        internal Expression FontStyle { get; set; }
+
+        /// <summary>
+        /// (string)Name of the font family
+        /// </summary>
+        internal Expression FontFamily { get; set; }
+
+        /// <summary>
+        /// (Size) Point size of the font
+        /// Default: 10 pt. Min: 1 pt. Max: 200 pt.
+        /// </summary>
+        internal Expression FontSize { get; set; }
+
+        /// <summary>
+        /// (Enum FontWeight) Thickness of the font
+        /// </summary>
+        internal Expression FontWeight { get; set; }
+
+        /// <summary>
+        /// (string) .NET Framework formatting string1
+        ///	Note: Locale-dependent currency
+        ///	formatting (format code �C�) is based on
+        ///	the language setting for the report item
+        ///	Locale-dependent date formatting is
+        ///	supported and should be based on the
+        ///	language property of the ReportItem.
+        ///	Default: No formatting.
+        /// </summary>
+        internal Expression Format { get; set; }
+
+        /// <summary>
+        /// (Enum TextDecoration) Special text formatting Default: none
+        /// </summary>
+        internal Expression TextDecoration { get; set; }
+
+        /// <summary>
+        /// (Enum TextAlign) Horizontal alignment of the text Default: General
+        /// </summary>
+        internal Expression TextAlign { get; set; }
+
+        /// <summary>
+        /// (Enum VerticalAlign) Vertical alignment of the text Default: Top
+        /// </summary>
+        internal Expression VerticalAlign { get; set; }
+
+        /// <summary>
+        /// (Color) The foreground color	Default: Black
+        /// </summary>
+        internal Expression Color { get; set; }
+
+        /// <summary>
+        /// (Size)Padding between the left edge of the
+        /// report item and its contents1
+        /// Default: 0 pt. Max: 1000 pt.
+        /// </summary>
+        internal Expression PaddingLeft { get; set; }
+
+        /// <summary>
+        /// (Size) Padding between the right edge of the
+        /// report item and its contents
+        /// Default: 0 pt. Max: 1000 pt.
+        /// </summary>
+        internal Expression PaddingRight { get; set; }
+
+        /// <summary>
+        /// (Size) Padding between the top edge of the
+        /// report item and its contents
+        /// Default: 0 pt. Max: 1000 pt.
+        /// </summary>
+        internal Expression PaddingTop { get; set; }
+
+        /// <summary>
+        /// (Size) Padding between the top edge of the
+        ///	report item and its contents
+        /// Default: 0 pt. Max: 1000 pt
+        /// </summary>
+        internal Expression PaddingBottom { get; set; }
+
+        /// <summary>
+        /// (Size) Height of a line of text
+        /// Default: Report output format determines
+        /// line height based on font size
+        /// Min: 1 pt. Max: 1000 pt.
+        /// </summary>
+        internal Expression LineHeight { get; set; }
+
+        /// <summary>
+        /// (Enum Direction) Indicates whether text is written left-to-right (default)
+        /// or right-to-left.
+        /// Does not impact the alignment of text unless using General alignment.
+        /// </summary>
+        internal Expression Direction { get; set; }
+
+        /// <summary>
+        /// (Enum WritingMode) Indicates whether text is written
+        /// horizontally or vertically.
+        /// </summary>
+        internal Expression WritingMode { get; set; }
+
+        /// <summary>
+        /// (Language) The primary language of the text.
+        /// Default is Report.Language.
+        /// </summary>
+        internal Expression Language { get; set; }
+
+        /// <summary>
+        /// (Enum UnicodeBiDirection) 
+        /// Indicates the level of embedding with
+        /// respect to the Bi-directional algorithm. Default: normal
+        /// </summary>
+        internal Expression UnicodeBiDirectional { get; set; }
+
+        /// <summary>
+        /// (Enum Calendar)
+        ///	Indicates the calendar to use for
+        ///	formatting dates. Must be compatible in
+        ///	.NET framework with the Language setting.
+        /// </summary>
+        internal Expression Calendar { get; set; }
+
+        /// <summary>
+        /// (Language) The digit format to use as described by its
+        /// primary language. Any language is legal.
+        /// Default is the Language property.
+        /// </summary>
+        internal Expression NumeralLanguage { get; set; }
+
+        /// <summary>
+        /// (Integer) The variant of the digit format to use.
+        /// Currently defined values are:
+        /// 1: default, follow Unicode context rules
+        /// 2: 0123456789
+        /// 3: traditional digits for the script as
+        ///     defined in GDI+. Currently supported for:
+        ///		ar | bn | bo | fa | gu | hi | kn | kok | lo | mr |
+        ///		ms | or | pa | sa | ta | te | th | ur and variants.
+        /// 4: ko, ja, zh-CHS, zh-CHT only
+        /// 5: ko, ja, zh-CHS, zh-CHT only
+        /// 6: ko, ja, zh-CHS, zh-CHT only [Wide
+        ///     versions of regular digits]
+        /// 7: ko only
+        /// </summary>
+        internal Expression NumeralVariant { get; set; }
+        #endregion
 
         internal Style(ReportDefn r, ReportLink p, XmlNode xNode) : base(r, p)
         {
-            _BorderColor = null;
-            _BorderStyle = null;
-            _BorderWidth = null;
-            _BackgroundColor = null;
-            _BackgroundGradientType = null;
-            _BackgroundGradientEndColor = null;
-            _BackgroundImage = null;
-            _FontStyle = null;
-            _FontFamily = null;
-            _FontSize = null;
-            _FontWeight = null;
-            _Format = null;
-            _TextDecoration = null;
-            _TextAlign = null;
-            _VerticalAlign = null;
-            _Color = null;
-            _PaddingLeft = null;
-            _PaddingRight = null;
-            _PaddingTop = null;
-            _PaddingBottom = null;
-            _LineHeight = null;
-            _Direction = null;
-            _WritingMode = null;
-            _Language = null;
-            _UnicodeBiDirectional = null;
-            _Calendar = null;
-            _NumeralLanguage = null;
-            _NumeralVariant = null;
+            BorderColor = null;
+            BorderStyle = null;
+            BorderWidth = null;
+            BackgroundColor = null;
+            BackgroundGradientType = null;
+            BackgroundGradientEndColor = null;
+            BackgroundImage = null;
+            FontStyle = null;
+            FontFamily = null;
+            FontSize = null;
+            FontWeight = null;
+            Format = null;
+            TextDecoration = null;
+            TextAlign = null;
+            VerticalAlign = null;
+            Color = null;
+            PaddingLeft = null;
+            PaddingRight = null;
+            PaddingTop = null;
+            PaddingBottom = null;
+            LineHeight = null;
+            Direction = null;
+            WritingMode = null;
+            Language = null;
+            UnicodeBiDirectional = null;
+            Calendar = null;
+            NumeralLanguage = null;
+            NumeralVariant = null;
 
             // Loop thru all the child nodes
             foreach (XmlNode xNodeLoop in xNode.ChildNodes)
@@ -131,88 +245,88 @@ namespace appbox.Reporting.RDL
                 switch (xNodeLoop.Name)
                 {
                     case "BorderColor":
-                        _BorderColor = new StyleBorderColor(r, this, xNodeLoop);
+                        BorderColor = new StyleBorderColor(r, this, xNodeLoop);
                         break;
                     case "BorderStyle":
-                        _BorderStyle = new StyleBorderStyle(r, this, xNodeLoop);
+                        BorderStyle = new StyleBorderStyle(r, this, xNodeLoop);
                         break;
                     case "BorderWidth":
-                        _BorderWidth = new StyleBorderWidth(r, this, xNodeLoop);
+                        BorderWidth = new StyleBorderWidth(r, this, xNodeLoop);
                         break;
                     case "BackgroundColor":
-                        _BackgroundColor = new Expression(r, this, xNodeLoop, ExpressionType.Color);
+                        BackgroundColor = new Expression(r, this, xNodeLoop, ExpressionType.Color);
                         break;
                     case "BackgroundGradientType":
-                        _BackgroundGradientType = new Expression(r, this, xNodeLoop, ExpressionType.Enum);
+                        BackgroundGradientType = new Expression(r, this, xNodeLoop, ExpressionType.Enum);
                         break;
                     case "BackgroundGradientEndColor":
-                        _BackgroundGradientEndColor = new Expression(r, this, xNodeLoop, ExpressionType.Color);
+                        BackgroundGradientEndColor = new Expression(r, this, xNodeLoop, ExpressionType.Color);
                         break;
                     case "BackgroundImage":
-                        _BackgroundImage = new StyleBackgroundImage(r, this, xNodeLoop);
+                        BackgroundImage = new StyleBackgroundImage(r, this, xNodeLoop);
                         break;
                     case "FontStyle":
-                        _FontStyle = new Expression(r, this, xNodeLoop, ExpressionType.Enum);
+                        FontStyle = new Expression(r, this, xNodeLoop, ExpressionType.Enum);
                         break;
                     case "FontFamily":
-                        _FontFamily = new Expression(r, this, xNodeLoop, ExpressionType.String);
+                        FontFamily = new Expression(r, this, xNodeLoop, ExpressionType.String);
                         break;
                     case "FontSize":
-                        _FontSize = new Expression(r, this, xNodeLoop, ExpressionType.ReportUnit);
+                        FontSize = new Expression(r, this, xNodeLoop, ExpressionType.ReportUnit);
                         break;
                     case "FontWeight":
-                        _FontWeight = new Expression(r, this, xNodeLoop, ExpressionType.Enum);
+                        FontWeight = new Expression(r, this, xNodeLoop, ExpressionType.Enum);
                         break;
                     case "Format":
-                        _Format = new Expression(r, this, xNodeLoop, ExpressionType.String);
+                        Format = new Expression(r, this, xNodeLoop, ExpressionType.String);
                         break;
                     case "TextDecoration":
-                        _TextDecoration = new Expression(r, this, xNodeLoop, ExpressionType.Enum);
+                        TextDecoration = new Expression(r, this, xNodeLoop, ExpressionType.Enum);
                         break;
                     case "TextAlign":
-                        _TextAlign = new Expression(r, this, xNodeLoop, ExpressionType.Enum);
+                        TextAlign = new Expression(r, this, xNodeLoop, ExpressionType.Enum);
                         break;
                     case "VerticalAlign":
-                        _VerticalAlign = new Expression(r, this, xNodeLoop, ExpressionType.Enum);
+                        VerticalAlign = new Expression(r, this, xNodeLoop, ExpressionType.Enum);
                         break;
                     case "Color":
-                        _Color = new Expression(r, this, xNodeLoop, ExpressionType.Color);
+                        Color = new Expression(r, this, xNodeLoop, ExpressionType.Color);
                         break;
                     case "PaddingLeft":
-                        _PaddingLeft = new Expression(r, this, xNodeLoop, ExpressionType.ReportUnit);
+                        PaddingLeft = new Expression(r, this, xNodeLoop, ExpressionType.ReportUnit);
                         break;
                     case "PaddingRight":
-                        _PaddingRight = new Expression(r, this, xNodeLoop, ExpressionType.ReportUnit);
+                        PaddingRight = new Expression(r, this, xNodeLoop, ExpressionType.ReportUnit);
                         break;
                     case "PaddingTop":
-                        _PaddingTop = new Expression(r, this, xNodeLoop, ExpressionType.ReportUnit);
+                        PaddingTop = new Expression(r, this, xNodeLoop, ExpressionType.ReportUnit);
                         break;
                     case "PaddingBottom":
-                        _PaddingBottom = new Expression(r, this, xNodeLoop, ExpressionType.ReportUnit);
+                        PaddingBottom = new Expression(r, this, xNodeLoop, ExpressionType.ReportUnit);
                         break;
                     case "LineHeight":
-                        _LineHeight = new Expression(r, this, xNodeLoop, ExpressionType.ReportUnit);
+                        LineHeight = new Expression(r, this, xNodeLoop, ExpressionType.ReportUnit);
                         break;
                     case "Direction":
-                        _Direction = new Expression(r, this, xNodeLoop, ExpressionType.Enum);
+                        Direction = new Expression(r, this, xNodeLoop, ExpressionType.Enum);
                         break;
                     case "WritingMode":
-                        _WritingMode = new Expression(r, this, xNodeLoop, ExpressionType.Enum);
+                        WritingMode = new Expression(r, this, xNodeLoop, ExpressionType.Enum);
                         break;
                     case "Language":
-                        _Language = new Expression(r, this, xNodeLoop, ExpressionType.Language);
+                        Language = new Expression(r, this, xNodeLoop, ExpressionType.Language);
                         break;
                     case "UnicodeBiDirectional":
-                        _UnicodeBiDirectional = new Expression(r, this, xNodeLoop, ExpressionType.Enum);
+                        UnicodeBiDirectional = new Expression(r, this, xNodeLoop, ExpressionType.Enum);
                         break;
                     case "Calendar":
-                        _Calendar = new Expression(r, this, xNodeLoop, ExpressionType.Enum);
+                        Calendar = new Expression(r, this, xNodeLoop, ExpressionType.Enum);
                         break;
                     case "NumeralLanguage":
-                        _NumeralLanguage = new Expression(r, this, xNodeLoop, ExpressionType.Language);
+                        NumeralLanguage = new Expression(r, this, xNodeLoop, ExpressionType.Language);
                         break;
                     case "NumeralVariant":
-                        _NumeralVariant = new Expression(r, this, xNodeLoop, ExpressionType.Integer);
+                        NumeralVariant = new Expression(r, this, xNodeLoop, ExpressionType.Integer);
                         break;
                     default:
                         // don't know this element - log it
@@ -225,64 +339,64 @@ namespace appbox.Reporting.RDL
         // Handle parsing of function in final pass
         override internal void FinalPass()
         {
-            if (_BorderColor != null)
-                _BorderColor.FinalPass();
-            if (_BorderStyle != null)
-                _BorderStyle.FinalPass();
-            if (_BorderWidth != null)
-                _BorderWidth.FinalPass();
-            if (_BackgroundColor != null)
-                _BackgroundColor.FinalPass();
-            if (_BackgroundGradientType != null)
-                _BackgroundGradientType.FinalPass();
-            if (_BackgroundGradientEndColor != null)
-                _BackgroundGradientEndColor.FinalPass();
-            if (_BackgroundImage != null)
-                _BackgroundImage.FinalPass();
-            if (_FontStyle != null)
-                _FontStyle.FinalPass();
-            if (_FontFamily != null)
-                _FontFamily.FinalPass();
-            if (_FontSize != null)
-                _FontSize.FinalPass();
-            if (_FontWeight != null)
-                _FontWeight.FinalPass();
-            if (_Format != null)
-                _Format.FinalPass();
-            if (_TextDecoration != null)
-                _TextDecoration.FinalPass();
-            if (_TextAlign != null)
-                _TextAlign.FinalPass();
-            if (_VerticalAlign != null)
-                _VerticalAlign.FinalPass();
-            if (_Color != null)
-                _Color.FinalPass();
-            if (_PaddingLeft != null)
-                _PaddingLeft.FinalPass();
-            if (_PaddingRight != null)
-                _PaddingRight.FinalPass();
-            if (_PaddingTop != null)
-                _PaddingTop.FinalPass();
-            if (_PaddingBottom != null)
-                _PaddingBottom.FinalPass();
-            if (_LineHeight != null)
-                _LineHeight.FinalPass();
-            if (_Direction != null)
-                _Direction.FinalPass();
-            if (_WritingMode != null)
-                _WritingMode.FinalPass();
-            if (_Language != null)
-                _Language.FinalPass();
-            if (_UnicodeBiDirectional != null)
-                _UnicodeBiDirectional.FinalPass();
-            if (_Calendar != null)
-                _Calendar.FinalPass();
-            if (_NumeralLanguage != null)
-                _NumeralLanguage.FinalPass();
-            if (_NumeralVariant != null)
-                _NumeralVariant.FinalPass();
+            if (BorderColor != null)
+                BorderColor.FinalPass();
+            if (BorderStyle != null)
+                BorderStyle.FinalPass();
+            if (BorderWidth != null)
+                BorderWidth.FinalPass();
+            if (BackgroundColor != null)
+                BackgroundColor.FinalPass();
+            if (BackgroundGradientType != null)
+                BackgroundGradientType.FinalPass();
+            if (BackgroundGradientEndColor != null)
+                BackgroundGradientEndColor.FinalPass();
+            if (BackgroundImage != null)
+                BackgroundImage.FinalPass();
+            if (FontStyle != null)
+                FontStyle.FinalPass();
+            if (FontFamily != null)
+                FontFamily.FinalPass();
+            if (FontSize != null)
+                FontSize.FinalPass();
+            if (FontWeight != null)
+                FontWeight.FinalPass();
+            if (Format != null)
+                Format.FinalPass();
+            if (TextDecoration != null)
+                TextDecoration.FinalPass();
+            if (TextAlign != null)
+                TextAlign.FinalPass();
+            if (VerticalAlign != null)
+                VerticalAlign.FinalPass();
+            if (Color != null)
+                Color.FinalPass();
+            if (PaddingLeft != null)
+                PaddingLeft.FinalPass();
+            if (PaddingRight != null)
+                PaddingRight.FinalPass();
+            if (PaddingTop != null)
+                PaddingTop.FinalPass();
+            if (PaddingBottom != null)
+                PaddingBottom.FinalPass();
+            if (LineHeight != null)
+                LineHeight.FinalPass();
+            if (Direction != null)
+                Direction.FinalPass();
+            if (WritingMode != null)
+                WritingMode.FinalPass();
+            if (Language != null)
+                Language.FinalPass();
+            if (UnicodeBiDirectional != null)
+                UnicodeBiDirectional.FinalPass();
+            if (Calendar != null)
+                Calendar.FinalPass();
+            if (NumeralLanguage != null)
+                NumeralLanguage.FinalPass();
+            if (NumeralVariant != null)
+                NumeralVariant.FinalPass();
 
-            _ConstantStyle = IsConstant();
+            ConstantStyle = IsConstant();
             return;
         }
 
@@ -923,97 +1037,97 @@ namespace appbox.Reporting.RDL
             if (this.Parent is Table || this.Parent is Matrix)
                 sb.Append("border-collapse:collapse;"); // collapse the borders
 
-            if (_BorderColor != null)
-                sb.Append(_BorderColor.GetCSS(rpt, row, bDefaults));
+            if (BorderColor != null)
+                sb.Append(BorderColor.GetCSS(rpt, row, bDefaults));
             else if (bDefaults)
                 sb.Append(StyleBorderColor.GetCSSDefaults());
 
-            if (_BorderStyle != null)
-                sb.Append(_BorderStyle.GetCSS(rpt, row, bDefaults));
+            if (BorderStyle != null)
+                sb.Append(BorderStyle.GetCSS(rpt, row, bDefaults));
             else if (bDefaults)
                 sb.Append(StyleBorderStyle.GetCSSDefaults());
 
-            if (_BorderWidth != null)
-                sb.Append(_BorderWidth.GetCSS(rpt, row, bDefaults));
+            if (BorderWidth != null)
+                sb.Append(BorderWidth.GetCSS(rpt, row, bDefaults));
             else if (bDefaults)
                 sb.Append(StyleBorderWidth.GetCSSDefaults());
 
-            if (_BackgroundColor != null)
-                sb.AppendFormat(NumberFormatInfo.InvariantInfo, "background-color:{0};", _BackgroundColor.EvaluateString(rpt, row));
+            if (BackgroundColor != null)
+                sb.AppendFormat(NumberFormatInfo.InvariantInfo, "background-color:{0};", BackgroundColor.EvaluateString(rpt, row));
             else if (bDefaults)
                 sb.Append("background-color:transparent;");
 
-            if (_BackgroundImage != null)
-                sb.Append(_BackgroundImage.GetCSS(rpt, row, bDefaults));
+            if (BackgroundImage != null)
+                sb.Append(BackgroundImage.GetCSS(rpt, row, bDefaults));
             else if (bDefaults)
                 sb.Append(StyleBackgroundImage.GetCSSDefaults());
 
-            if (_FontStyle != null)
-                sb.AppendFormat(NumberFormatInfo.InvariantInfo, "font-style:{0};", _FontStyle.EvaluateString(rpt, row));
+            if (FontStyle != null)
+                sb.AppendFormat(NumberFormatInfo.InvariantInfo, "font-style:{0};", FontStyle.EvaluateString(rpt, row));
             else if (bDefaults)
                 sb.Append("font-style:normal;");
 
-            if (_FontFamily != null)
-                sb.AppendFormat(NumberFormatInfo.InvariantInfo, "font-family:{0};", _FontFamily.EvaluateString(rpt, row));
+            if (FontFamily != null)
+                sb.AppendFormat(NumberFormatInfo.InvariantInfo, "font-family:{0};", FontFamily.EvaluateString(rpt, row));
             else if (bDefaults)
                 sb.Append($"font-family:{DefaultFontFamily};");
 
-            if (_FontSize != null)
-                sb.AppendFormat(NumberFormatInfo.InvariantInfo, "font-size:{0};", _FontSize.EvaluateString(rpt, row));
+            if (FontSize != null)
+                sb.AppendFormat(NumberFormatInfo.InvariantInfo, "font-size:{0};", FontSize.EvaluateString(rpt, row));
             else if (bDefaults)
                 sb.Append("font-size:10pt;");
 
-            if (_FontWeight != null)
-                sb.AppendFormat(NumberFormatInfo.InvariantInfo, "font-weight:{0};", _FontWeight.EvaluateString(rpt, row));
+            if (FontWeight != null)
+                sb.AppendFormat(NumberFormatInfo.InvariantInfo, "font-weight:{0};", FontWeight.EvaluateString(rpt, row));
             else if (bDefaults)
                 sb.Append("font-weight:normal;");
 
-            if (_TextDecoration != null)
-                sb.AppendFormat(NumberFormatInfo.InvariantInfo, "text-decoration:{0};", _TextDecoration.EvaluateString(rpt, row));
+            if (TextDecoration != null)
+                sb.AppendFormat(NumberFormatInfo.InvariantInfo, "text-decoration:{0};", TextDecoration.EvaluateString(rpt, row));
             else if (bDefaults)
                 sb.Append("text-decoration:none;");
 
-            if (_TextAlign != null)
-                sb.AppendFormat(NumberFormatInfo.InvariantInfo, "text-align:{0};", _TextAlign.EvaluateString(rpt, row));
+            if (TextAlign != null)
+                sb.AppendFormat(NumberFormatInfo.InvariantInfo, "text-align:{0};", TextAlign.EvaluateString(rpt, row));
             else if (bDefaults)
                 sb.Append("");  // no CSS default for text align
 
-            if (_VerticalAlign != null)
-                sb.AppendFormat(NumberFormatInfo.InvariantInfo, "vertical-align:{0};", _VerticalAlign.EvaluateString(rpt, row));
+            if (VerticalAlign != null)
+                sb.AppendFormat(NumberFormatInfo.InvariantInfo, "vertical-align:{0};", VerticalAlign.EvaluateString(rpt, row));
             else if (bDefaults)
                 sb.Append("vertical-align:top;");
 
-            if (_Color != null)
-                sb.AppendFormat(NumberFormatInfo.InvariantInfo, "color:{0};", _Color.EvaluateString(rpt, row));
+            if (Color != null)
+                sb.AppendFormat(NumberFormatInfo.InvariantInfo, "color:{0};", Color.EvaluateString(rpt, row));
             else if (bDefaults)
                 sb.Append("color:black;");
 
-            if (_PaddingLeft != null)
-                sb.AppendFormat(NumberFormatInfo.InvariantInfo, "padding-left:{0};", _PaddingLeft.EvaluateString(rpt, row));
+            if (PaddingLeft != null)
+                sb.AppendFormat(NumberFormatInfo.InvariantInfo, "padding-left:{0};", PaddingLeft.EvaluateString(rpt, row));
             else if (bDefaults)
                 sb.Append("padding-left:0pt;");
 
-            if (_PaddingRight != null)
-                sb.AppendFormat(NumberFormatInfo.InvariantInfo, "padding-right:{0};", _PaddingRight.EvaluateString(rpt, row));
+            if (PaddingRight != null)
+                sb.AppendFormat(NumberFormatInfo.InvariantInfo, "padding-right:{0};", PaddingRight.EvaluateString(rpt, row));
             else if (bDefaults)
                 sb.Append("padding-right:0pt;");
 
-            if (_PaddingTop != null)
-                sb.AppendFormat(NumberFormatInfo.InvariantInfo, "padding-top:{0};", _PaddingTop.EvaluateString(rpt, row));
+            if (PaddingTop != null)
+                sb.AppendFormat(NumberFormatInfo.InvariantInfo, "padding-top:{0};", PaddingTop.EvaluateString(rpt, row));
             else if (bDefaults)
                 sb.Append("padding-top:0pt;");
 
-            if (_PaddingBottom != null)
-                sb.AppendFormat(NumberFormatInfo.InvariantInfo, "padding-bottom:{0};", _PaddingBottom.EvaluateString(rpt, row));
+            if (PaddingBottom != null)
+                sb.AppendFormat(NumberFormatInfo.InvariantInfo, "padding-bottom:{0};", PaddingBottom.EvaluateString(rpt, row));
             else if (bDefaults)
                 sb.Append("padding-bottom:0pt;");
 
-            if (_LineHeight != null)
-                sb.AppendFormat(NumberFormatInfo.InvariantInfo, "line-height:{0};", _LineHeight.EvaluateString(rpt, row));
+            if (LineHeight != null)
+                sb.AppendFormat(NumberFormatInfo.InvariantInfo, "line-height:{0};", LineHeight.EvaluateString(rpt, row));
             else if (bDefaults)
                 sb.Append("line-height:normal;");
 
-            if (this._ConstantStyle)        // We'll only do this work once
+            if (this.ConstantStyle)        // We'll only do this work once
             {                               //   when all are constant
                 wc.CssStyle = sb.ToString();
                 return wc.CssStyle;
@@ -1078,9 +1192,9 @@ namespace appbox.Reporting.RDL
             }
             si.BackgroundGradientType = EvalBackgroundGradientType(rpt, r);
             si.BackgroundGradientEndColor = this.EvalBackgroundGradientEndColor(rpt, r);
-            if (_BackgroundImage != null)
+            if (BackgroundImage != null)
             {
-                si.BackgroundImage = _BackgroundImage.GetPageImage(rpt, r);
+                si.BackgroundImage = BackgroundImage.GetPageImage(rpt, r);
             }
             else
                 si.BackgroundImage = null;
@@ -1107,7 +1221,7 @@ namespace appbox.Reporting.RDL
             si.NumeralLanguage = this.EvalNumeralLanguage(rpt, r);
             si.NumeralVariant = this.EvalNumeralVariant(rpt, r);
 
-            if (this._ConstantStyle)        // We'll only do this work once
+            if (this.ConstantStyle)        // We'll only do this work once
             {
                 wc.StyleInfo = si;          //   when all are constant
                 si = (StyleInfo)wc.StyleInfo.Clone();
@@ -1196,110 +1310,110 @@ namespace appbox.Reporting.RDL
         {
             bool rc = true;
 
-            if (_BorderColor != null)
-                rc = _BorderColor.IsConstant();
+            if (BorderColor != null)
+                rc = BorderColor.IsConstant();
 
             if (!rc)
                 return false;
 
-            if (_BorderStyle != null)
-                rc = _BorderStyle.IsConstant();
+            if (BorderStyle != null)
+                rc = BorderStyle.IsConstant();
 
             if (!rc)
                 return false;
 
-            if (_BorderWidth != null)
-                rc = _BorderWidth.IsConstant();
+            if (BorderWidth != null)
+                rc = BorderWidth.IsConstant();
 
             if (!rc)
                 return false;
 
-            if (_BackgroundColor != null)
-                rc = _BackgroundColor.IsConstant();
+            if (BackgroundColor != null)
+                rc = BackgroundColor.IsConstant();
 
             if (!rc)
                 return false;
 
-            if (_BackgroundImage != null)
-                rc = _BackgroundImage.IsConstant();
+            if (BackgroundImage != null)
+                rc = BackgroundImage.IsConstant();
 
             if (!rc)
                 return false;
 
-            if (_FontStyle != null)
-                rc = _FontStyle.IsConstant();
+            if (FontStyle != null)
+                rc = FontStyle.IsConstant();
 
             if (!rc)
                 return false;
 
-            if (_FontFamily != null)
-                rc = _FontFamily.IsConstant();
+            if (FontFamily != null)
+                rc = FontFamily.IsConstant();
 
             if (!rc)
                 return false;
 
-            if (_FontSize != null)
-                rc = _FontSize.IsConstant();
+            if (FontSize != null)
+                rc = FontSize.IsConstant();
 
             if (!rc)
                 return false;
 
-            if (_FontWeight != null)
-                rc = _FontWeight.IsConstant();
+            if (FontWeight != null)
+                rc = FontWeight.IsConstant();
 
             if (!rc)
                 return false;
 
-            if (_TextDecoration != null)
-                rc = _TextDecoration.IsConstant();
+            if (TextDecoration != null)
+                rc = TextDecoration.IsConstant();
 
             if (!rc)
                 return false;
 
-            if (_TextAlign != null)
-                rc = _TextAlign.IsConstant();
+            if (TextAlign != null)
+                rc = TextAlign.IsConstant();
 
             if (!rc)
                 return false;
 
-            if (_VerticalAlign != null)
-                rc = _VerticalAlign.IsConstant();
+            if (VerticalAlign != null)
+                rc = VerticalAlign.IsConstant();
 
             if (!rc)
                 return false;
 
-            if (_Color != null)
-                rc = _Color.IsConstant();
+            if (Color != null)
+                rc = Color.IsConstant();
 
             if (!rc)
                 return false;
 
-            if (_PaddingLeft != null)
-                rc = _PaddingLeft.IsConstant();
+            if (PaddingLeft != null)
+                rc = PaddingLeft.IsConstant();
 
             if (!rc)
                 return false;
 
-            if (_PaddingRight != null)
-                rc = _PaddingRight.IsConstant();
+            if (PaddingRight != null)
+                rc = PaddingRight.IsConstant();
 
             if (!rc)
                 return false;
 
-            if (_PaddingTop != null)
-                rc = _PaddingTop.IsConstant();
+            if (PaddingTop != null)
+                rc = PaddingTop.IsConstant();
 
             if (!rc)
                 return false;
 
-            if (_PaddingBottom != null)
-                rc = _PaddingBottom.IsConstant();
+            if (PaddingBottom != null)
+                rc = PaddingBottom.IsConstant();
 
             if (!rc)
                 return false;
 
-            if (_LineHeight != null)
-                rc = _LineHeight.IsConstant();
+            if (LineHeight != null)
+                rc = LineHeight.IsConstant();
 
             if (!rc)
                 return false;
@@ -1324,84 +1438,31 @@ namespace appbox.Reporting.RDL
             return rt;
         }
 
-        internal StyleBorderColor BorderColor
-        {
-            get { return _BorderColor; }
-            set { _BorderColor = value; }
-        }
-
-        internal StyleBorderStyle BorderStyle
-        {
-            get { return _BorderStyle; }
-            set { _BorderStyle = value; }
-        }
-
-        internal StyleBorderWidth BorderWidth
-        {
-            get { return _BorderWidth; }
-            set { _BorderWidth = value; }
-        }
-
-        internal Expression BackgroundColor
-        {
-            get { return _BackgroundColor; }
-            set { _BackgroundColor = value; }
-        }
-
         internal Color EvalBackgroundColor(Report rpt, Row row)
         {
-            if (_BackgroundColor == null)
+            if (BackgroundColor == null)
                 return Drawing.Color.Empty;
 
-            string c = _BackgroundColor.EvaluateString(rpt, row);
+            string c = BackgroundColor.EvaluateString(rpt, row);
             return XmlUtil.ColorFromHtml(c, Drawing.Color.Empty, rpt);
-        }
-
-        internal Expression BackgroundGradientType
-        {
-            get { return _BackgroundGradientType; }
-            set { _BackgroundGradientType = value; }
         }
 
         internal BackgroundGradientTypeEnum EvalBackgroundGradientType(Report rpt, Row r)
         {
-            if (_BackgroundGradientType == null)
+            if (BackgroundGradientType == null)
                 return BackgroundGradientTypeEnum.None;
 
-            string bgt = _BackgroundGradientType.EvaluateString(rpt, r);
+            string bgt = BackgroundGradientType.EvaluateString(rpt, r);
             return StyleInfo.GetBackgroundGradientType(bgt, BackgroundGradientTypeEnum.None);
-        }
-
-        internal Expression BackgroundGradientEndColor
-        {
-            get { return _BackgroundGradientEndColor; }
-            set { _BackgroundGradientEndColor = value; }
         }
 
         internal Color EvalBackgroundGradientEndColor(Report rpt, Row r)
         {
-            if (_BackgroundGradientEndColor == null)
+            if (BackgroundGradientEndColor == null)
                 return Drawing.Color.Empty;
 
-            string c = _BackgroundGradientEndColor.EvaluateString(rpt, r);
+            string c = BackgroundGradientEndColor.EvaluateString(rpt, r);
             return XmlUtil.ColorFromHtml(c, Drawing.Color.Empty, rpt);
-        }
-
-        internal StyleBackgroundImage BackgroundImage
-        {
-            get { return _BackgroundImage; }
-            set { _BackgroundImage = value; }
-        }
-
-        internal bool ConstantStyle
-        {
-            get { return _ConstantStyle; }
-        }
-
-        internal Expression FontStyle
-        {
-            get { return _FontStyle; }
-            set { _FontStyle = value; }
         }
 
         internal bool IsFontItalic(Report rpt, Row r)
@@ -1414,54 +1475,36 @@ namespace appbox.Reporting.RDL
 
         internal FontStyleEnum EvalFontStyle(Report rpt, Row row)
         {
-            if (_FontStyle == null)
+            if (FontStyle == null)
                 return FontStyleEnum.Normal;
 
-            string fs = _FontStyle.EvaluateString(rpt, row);
+            string fs = FontStyle.EvaluateString(rpt, row);
             return StyleInfo.GetFontStyle(fs, FontStyleEnum.Normal);
-        }
-
-        internal Expression FontFamily
-        {
-            get { return _FontFamily; }
-            set { _FontFamily = value; }
         }
 
         internal string EvalFontFamily(Report rpt, Row row)
         {
-            if (_FontFamily == null)
+            if (FontFamily == null)
                 return DefaultFontFamily;
 
-            return _FontFamily.EvaluateString(rpt, row);
-        }
-
-        internal Expression FontSize
-        {
-            get { return _FontSize; }
-            set { _FontSize = value; }
+            return FontFamily.EvaluateString(rpt, row);
         }
 
         internal float EvalFontSize(Report rpt, Row row)
         {
-            if (_FontSize == null)
+            if (FontSize == null)
                 return 10;
 
             string pts;
-            pts = _FontSize.EvaluateString(rpt, row);
+            pts = FontSize.EvaluateString(rpt, row);
             RSize sz = new RSize(this.OwnerReport, pts);
 
             return sz.Points;
         }
 
-        internal Expression FontWeight
-        {
-            get { return _FontWeight; }
-            set { _FontWeight = value; }
-        }
-
         internal FontWeightEnum EvalFontWeight(Report rpt, Row row)
         {
-            if (_FontWeight == null)
+            if (FontWeight == null)
                 return FontWeightEnum.Normal;
 
             string weight = this.FontWeight.EvaluateString(rpt, row);
@@ -1489,306 +1532,203 @@ namespace appbox.Reporting.RDL
             }
         }
 
-        internal Expression Format
-        {
-            get { return _Format; }
-            set { _Format = value; }
-        }
-
         internal string EvalFormat(Report rpt, Row row)
         {
-            if (_Format == null)
+            if (Format == null)
                 return "General";
 
-            string f = _Format.EvaluateString(rpt, row);
+            string f = Format.EvaluateString(rpt, row);
 
             if (f == null || f.Length == 0)
                 return "General";
             return f;
         }
 
-
-        internal Expression TextDecoration
-        {
-            get { return _TextDecoration; }
-            set { _TextDecoration = value; }
-        }
-
         internal TextDecorationEnum EvalTextDecoration(Report rpt, Row r)
         {
-            if (_TextDecoration == null)
+            if (TextDecoration == null)
                 return TextDecorationEnum.None;
 
-            string td = _TextDecoration.EvaluateString(rpt, r);
+            string td = TextDecoration.EvaluateString(rpt, r);
             return StyleInfo.GetTextDecoration(td, TextDecorationEnum.None);
-        }
-
-        internal Expression TextAlign
-        {
-            get { return _TextAlign; }
-            set { _TextAlign = value; }
         }
 
         internal TextAlignEnum EvalTextAlign(Report rpt, Row row)
         {
-            if (_TextAlign == null)
+            if (TextAlign == null)
                 return TextAlignEnum.General;
 
-            string a = _TextAlign.EvaluateString(rpt, row);
+            string a = TextAlign.EvaluateString(rpt, row);
             return StyleInfo.GetTextAlign(a, TextAlignEnum.General);
-        }
-
-        internal Expression VerticalAlign
-        {
-            get { return _VerticalAlign; }
-            set { _VerticalAlign = value; }
         }
 
         internal VerticalAlignEnum EvalVerticalAlign(Report rpt, Row row)
         {
-            if (_VerticalAlign == null)
+            if (VerticalAlign == null)
                 return VerticalAlignEnum.Top;
 
-            string v = _VerticalAlign.EvaluateString(rpt, row);
+            string v = VerticalAlign.EvaluateString(rpt, row);
             return StyleInfo.GetVerticalAlign(v, VerticalAlignEnum.Top);
-        }
-
-        internal Expression Color
-        {
-            get { return _Color; }
-            set { _Color = value; }
         }
 
         internal Color EvalColor(Report rpt, Row row)
         {
-            if (_Color == null)
+            if (Color == null)
                 return Drawing.Color.Black;
 
-            string c = _Color.EvaluateString(rpt, row);
+            string c = Color.EvaluateString(rpt, row);
             return XmlUtil.ColorFromHtml(c, Drawing.Color.Black, rpt);
-        }
-
-        internal Expression PaddingLeft
-        {
-            get { return _PaddingLeft; }
-            set { _PaddingLeft = value; }
         }
 
         internal float EvalPaddingLeft(Report rpt, Row row)
         {
-            if (_PaddingLeft == null)
+            if (PaddingLeft == null)
                 return 0;
 
-            string v = _PaddingLeft.EvaluateString(rpt, row);
+            string v = PaddingLeft.EvaluateString(rpt, row);
             RSize rz = new RSize(OwnerReport, v);
             return rz.Points;
         }
 
         internal int EvalPaddingLeftPx(Report rpt, Row row)
         {
-            if (_PaddingLeft == null)
+            if (PaddingLeft == null)
                 return 0;
 
-            string v = _PaddingLeft.EvaluateString(rpt, row);
+            string v = PaddingLeft.EvaluateString(rpt, row);
             RSize rz = new RSize(OwnerReport, v);
             return rz.PixelsX;
         }
 
-        internal Expression PaddingRight
-        {
-            get { return _PaddingRight; }
-            set { _PaddingRight = value; }
-        }
-
         internal float EvalPaddingRight(Report rpt, Row row)
         {
-            if (_PaddingRight == null)
+            if (PaddingRight == null)
                 return 0;
 
-            string v = _PaddingRight.EvaluateString(rpt, row);
+            string v = PaddingRight.EvaluateString(rpt, row);
             RSize rz = new RSize(OwnerReport, v);
             return rz.Points;
         }
 
         internal int EvalPaddingRightPx(Report rpt, Row row)
         {
-            if (_PaddingRight == null)
+            if (PaddingRight == null)
                 return 0;
 
-            string v = _PaddingRight.EvaluateString(rpt, row);
+            string v = PaddingRight.EvaluateString(rpt, row);
             RSize rz = new RSize(OwnerReport, v);
             return rz.PixelsX;
         }
 
-        internal Expression PaddingTop
-        {
-            get { return _PaddingTop; }
-            set { _PaddingTop = value; }
-        }
-
         internal float EvalPaddingTop(Report rpt, Row row)
         {
-            if (_PaddingTop == null)
+            if (PaddingTop == null)
                 return 0;
 
-            string v = _PaddingTop.EvaluateString(rpt, row);
+            string v = PaddingTop.EvaluateString(rpt, row);
             RSize rz = new RSize(OwnerReport, v);
             return rz.Points;
         }
 
         internal int EvalPaddingTopPx(Report rpt, Row row)
         {
-            if (_PaddingTop == null)
+            if (PaddingTop == null)
                 return 0;
 
-            string v = _PaddingTop.EvaluateString(rpt, row);
+            string v = PaddingTop.EvaluateString(rpt, row);
             RSize rz = new RSize(OwnerReport, v);
             return rz.PixelsY;
         }
 
-        internal Expression PaddingBottom
-        {
-            get { return _PaddingBottom; }
-            set { _PaddingBottom = value; }
-        }
-
         internal float EvalPaddingBottom(Report rpt, Row row)
         {
-            if (_PaddingBottom == null)
+            if (PaddingBottom == null)
                 return 0;
 
-            string v = _PaddingBottom.EvaluateString(rpt, row);
+            string v = PaddingBottom.EvaluateString(rpt, row);
             RSize rz = new RSize(OwnerReport, v);
             return rz.Points;
         }
 
         internal int EvalPaddingBottomPx(Report rpt, Row row)
         {
-            if (_PaddingBottom == null)
+            if (PaddingBottom == null)
                 return 0;
 
-            string v = _PaddingBottom.EvaluateString(rpt, row);
+            string v = PaddingBottom.EvaluateString(rpt, row);
             RSize rz = new RSize(OwnerReport, v);
             return rz.PixelsY;
         }
 
-        internal Expression LineHeight
-        {
-            get { return _LineHeight; }
-            set { _LineHeight = value; }
-        }
-
         internal float EvalLineHeight(Report rpt, Row r)
         {
-            if (_LineHeight == null)
+            if (LineHeight == null)
                 return float.NaN;
 
-            string sz = _LineHeight.EvaluateString(rpt, r);
+            string sz = LineHeight.EvaluateString(rpt, r);
             RSize rz = new RSize(OwnerReport, sz);
             return rz.Points;
         }
 
-        internal Expression Direction
-        {
-            get { return _Direction; }
-            set { _Direction = value; }
-        }
-
         internal DirectionEnum EvalDirection(Report rpt, Row r)
         {
-            if (_Direction == null)
+            if (Direction == null)
                 return DirectionEnum.LTR;
 
-            string d = _Direction.EvaluateString(rpt, r);
+            string d = Direction.EvaluateString(rpt, r);
             return StyleInfo.GetDirection(d, DirectionEnum.LTR);
-        }
-
-        internal Expression WritingMode
-        {
-            get { return _WritingMode; }
-            set { _WritingMode = value; }
         }
 
         internal WritingModeEnum EvalWritingMode(Report rpt, Row r)
         {
-            if (_WritingMode == null)
+            if (WritingMode == null)
                 return WritingModeEnum.lr_tb;
 
-            string w = _WritingMode.EvaluateString(rpt, r);
+            string w = WritingMode.EvaluateString(rpt, r);
 
             return StyleInfo.GetWritingMode(w, WritingModeEnum.lr_tb);
         }
 
-        internal Expression Language
-        {
-            get { return _Language; }
-            set { _Language = value; }
-        }
-
         internal string EvalLanguage(Report rpt, Row r)
         {
-            if (_Language == null)
+            if (Language == null)
                 return OwnerReport.EvalLanguage(rpt, r);
 
-            return _Language.EvaluateString(rpt, r);
-        }
-
-        internal Expression UnicodeBiDirectional
-        {
-            get { return _UnicodeBiDirectional; }
-            set { _UnicodeBiDirectional = value; }
+            return Language.EvaluateString(rpt, r);
         }
 
         internal UnicodeBiDirectionalEnum EvalUnicodeBiDirectional(Report rpt, Row r)
         {
-            if (_UnicodeBiDirectional == null)
+            if (UnicodeBiDirectional == null)
                 return UnicodeBiDirectionalEnum.Normal;
 
-            string u = _UnicodeBiDirectional.EvaluateString(rpt, r);
+            string u = UnicodeBiDirectional.EvaluateString(rpt, r);
             return StyleInfo.GetUnicodeBiDirectional(u, UnicodeBiDirectionalEnum.Normal);
-        }
-
-        internal Expression Calendar
-        {
-            get { return _Calendar; }
-            set { _Calendar = value; }
         }
 
         internal CalendarEnum EvalCalendar(Report rpt, Row r)
         {
-            if (_Calendar == null)
+            if (Calendar == null)
                 return CalendarEnum.Gregorian;
 
-            string c = _Calendar.EvaluateString(rpt, r);
+            string c = Calendar.EvaluateString(rpt, r);
             return StyleInfo.GetCalendar(c, CalendarEnum.Gregorian);
-        }
-
-        internal Expression NumeralLanguage
-        {
-            get { return _NumeralLanguage; }
-            set { _NumeralLanguage = value; }
         }
 
         internal string EvalNumeralLanguage(Report rpt, Row r)
         {
-            if (_NumeralLanguage == null)
+            if (NumeralLanguage == null)
                 return EvalLanguage(rpt, r);
 
-            return _NumeralLanguage.EvaluateString(rpt, r);
-        }
-
-        internal Expression NumeralVariant
-        {
-            get { return _NumeralVariant; }
-            set { _NumeralVariant = value; }
+            return NumeralLanguage.EvaluateString(rpt, r);
         }
 
         internal int EvalNumeralVariant(Report rpt, Row r)
         {
-            if (_NumeralVariant == null)
+            if (NumeralVariant == null)
                 return 1;
 
-            int v = (int)_NumeralVariant.EvaluateDouble(rpt, r);
+            int v = (int)NumeralVariant.EvaluateDouble(rpt, r);
             if (v < 1 || v > 7)     // correct for bad data
                 v = 1;
             return v;

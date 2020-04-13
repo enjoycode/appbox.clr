@@ -11,392 +11,40 @@ namespace appbox.Reporting.RDL
     [Serializable]
     internal class ReportItem : ReportLink, IComparable
     {
-        Name _Name;         // Name of the report item
-        Style _Style;       // Style information for the element
-        Action _Action;     // An action (e.g. a hyperlink) associated with
-                            // the ReportItem
-        RSize _Top;         // The distance of the item from the top of the
-                            // containing object.
-                            // Defaults to 0 if omitted.
-        RSize _Left;        // The distance of the item from the left of the
-                            // containing object.  Defaults to 0 if omitted.
-        RSize _Height;      // Height of the item. Negative sizes allowed
-                            // only for lines (The height/width gives the
-                            // offset of the endpoint of the line from the start
-                            // point).
-                            //Defaults to the height of the containing object
-                            //minus Top if omitted.
-        RSize _Width;       // Width of the item. Negative sizes allowed
-                            // only for lines.
-                            // Defaults to the width of the containing object
-                            // minus Left if omitted.
-        int _ZIndex;        // Drawing order of the report item within the
-                            // containing object. Items with lower indices
-                            // are drawn first (appearing behind items with
-                            // higher indices). Items with equal indices
-                            // have an unspecified order.
-                            // Default: 0 Min: 0 Max: 2147483647
-        Visibility _Visibility; // Indicates if the item should be hidden.
-        Expression _ToolTip;    // (string) A textual label for the report item. Used for
-                                // such things as including TITLE and ALT
-                                // attributes in HTML reports.
-        Expression _Label;  // A label to identify an instance of a report item
-                            // (Variant) within the client UI (to provide a user-friendly
-                            // label for searching)
-                            //Hierarchical listing of report item and group
-                            //labels within the UI (the Document Map)
-                            //should reflect the object containment
-                            //hierarchy in the report definition. Peer items
-                            //should be listed in left-to-right top-to-bottom
-                            //order.
-                            //If the expression returns null, no item is added
-                            //to the Document Map. Not used for report
-                            //items in the page header or footer.
-        string _LinkToChild;    // The name of a report item contained directly
-                                //within this report item that is the target
-                                //location for the Document Map label (if any).
-                                //Ignored if Label is not present. Used only for
-                                //Rectangle.
-        Expression _Bookmark; // (string)A bookmark that can be linked to via a
-                              // Bookmark action
-        string _RepeatWith; // The name of a data region that this report item
-                            // should be repeated with if that data region
-                            // spans multiple pages.
-                            //The data region must be in the same
-                            //ReportItems collection as this ReportItem
-                            //(Since data regions are not allowed in page
-                            //headers/footers, this means RepeatWith will
-                            //be unusable in page headers/footers).
-                            //Not allowed if this report item is a data
-                            //region, subreport or rectangle that contains a
-                            //data region or subreport.
-        Custom _Custom;     // Custom information to be handed to a report
-                            //  output component.
-        string _DataElementName;    //The name to use for the data element/attribute
-                                    // for this report item.
-                                    // Default: Name of the report item
-        DataElementOutputEnum _DataElementOutput;   // should item appear in data rendering?
+        #region ====Fields & Properties====
+        /// <summary>
+            /// Name of the report item
+            /// </summary>
+        internal Name Name { get; set; }
 
-        TableCell _TC;      // TableCell- if part of a Table
-        List<ReportItem> _YParents; // calculated: when calculating the y position these are the items above it
-        bool _InMatrix;     // true if reportitem is in a matrix
-        internal ReportItem(ReportDefn r, ReportLink p, XmlNode xNode) : base(r, p)
-        {
-            _Name = null;
-            _Style = null;
-            _Action = null;
-            _Top = null;
-            _Left = null;
-            _Height = null;
-            _Width = null;
-            _ZIndex = 0;
-            _Visibility = null;
-            _ToolTip = null;
-            _Label = null;
-            _LinkToChild = null;
-            _Bookmark = null;
-            _RepeatWith = null;
-            _Custom = null;
-            _DataElementName = null;
-            _DataElementOutput = DataElementOutputEnum.Auto;
-            // Run thru the attributes
-            foreach (XmlAttribute xAttr in xNode.Attributes)
-            {
-                switch (xAttr.Name)
-                {
-                    case "Name":
-                        _Name = new Name(xAttr.Value);
-                        break;
-                }
-            }
-        }
+        /// <summary>
+        /// Style information for the element
+        /// </summary>
+        internal Style Style { get; set; }
 
-        internal bool ReportItemElement(XmlNode xNodeLoop)
-        {
-            switch (xNodeLoop.Name)
-            {
-                case "Style":
-                    _Style = new Style(OwnerReport, this, xNodeLoop);
-                    break;
-                case "Action":
-                    _Action = new Action(OwnerReport, this, xNodeLoop);
-                    break;
-                case "Top":
-                    _Top = new RSize(OwnerReport, xNodeLoop);
-                    break;
-                case "Left":
-                    _Left = new RSize(OwnerReport, xNodeLoop);
-                    break;
-                case "Height":
-                    _Height = new RSize(OwnerReport, xNodeLoop);
-                    break;
-                case "Width":
-                    _Width = new RSize(OwnerReport, xNodeLoop);
-                    break;
-                case "ZIndex":
-                    _ZIndex = XmlUtil.Integer(xNodeLoop.InnerText);
-                    break;
-                case "Visibility":
-                    _Visibility = new Visibility(OwnerReport, this, xNodeLoop);
-                    break;
-                case "ToolTip":
-                    _ToolTip = new Expression(OwnerReport, this, xNodeLoop, ExpressionType.String);
-                    break;
-                case "Label":
-                    _Label = new Expression(OwnerReport, this, xNodeLoop, ExpressionType.Variant);
-                    break;
-                case "LinkToChild":
-                    _LinkToChild = xNodeLoop.InnerText;
-                    break;
-                case "Bookmark":
-                    _Bookmark = new Expression(OwnerReport, this, xNodeLoop, ExpressionType.String);
-                    break;
-                case "RepeatWith":
-                    _RepeatWith = xNodeLoop.InnerText;
-                    break;
-                case "Custom":
-                    _Custom = new Custom(OwnerReport, this, xNodeLoop);
-                    break;
-                case "DataElementName":
-                    _DataElementName = xNodeLoop.InnerText;
-                    break;
-                case "DataElementOutput":
-                    _DataElementOutput = RDL.DataElementOutput.GetStyle(xNodeLoop.InnerText, OwnerReport.rl);
-                    break;
-                case "rd:DefaultName":
-                    break;      // MS tag: we don't use but don't want to generate a warning
-                default:
-                    return false;   // Not a report item element
-            }
-            return true;
-        }
+        /// <summary>
+        /// An action (e.g. a hyperlink) associated with the ReportItem
+        /// </summary>
+        internal Action Action { get; set; }
 
-        // Handle parsing of function in final pass
-        override internal void FinalPass()
-        {
-            if (_Style != null)
-                _Style.FinalPass();
-            if (_Action != null)
-                _Action.FinalPass();
-            if (_Visibility != null)
-                _Visibility.FinalPass();
-            if (_ToolTip != null)
-                _ToolTip.FinalPass();
-            if (_Label != null)
-                _Label.FinalPass();
-            if (_Bookmark != null)
-                _Bookmark.FinalPass();
-            if (_Custom != null)
-                _Custom.FinalPass();
+        /// <summary>
+        /// The distance of the item from the top of the containing object.
+        /// Defaults to 0 if omitted.
+        /// </summary>
+        internal RSize Top { get; set; }
 
-            if (Parent.Parent is TableCell) // This is part of a table
-            {
-                _TC = Parent.Parent as TableCell;
-            }
-            else
-            {
-                _TC = null;
-            }
+        /// <summary>
+        /// The distance of the item from the left of the containing object.
+        /// Defaults to 0 if omitted.
+        /// </summary>
+        internal RSize Left { get; set; }
 
-            // Determine if ReportItem is defined inside of a Matrix
-            _InMatrix = false;
-            for (ReportLink rl = this.Parent; rl != null; rl = rl.Parent)
-            {
-                if (rl is Matrix)
-                {
-                    _InMatrix = true;
-                    break;
-                }
-                if (rl is Table || rl is List || rl is Chart)
-                    break;
-            }
-
-            return;
-        }
-
-        internal void PositioningFinalPass(int i, List<ReportItem> items)
-        {
-            if (items.Count == 1 || i == 0)     // Nothing to do if only one item in list or 1st item in list
-                return;
-
-            int x = this.Left == null ? 0 : this.Left.Size;
-            int w = PositioningWidth(this);
-            int right = x + w;
-            int y = (this.Top == null ? 0 : this.Top.Size);
-            if (this is Line)
-            {   // normalize the width
-                if (w < 0)
-                {
-                    x -= w;
-                    w = -w;
-                }
-            }
-
-            this._YParents = new List<ReportItem>();
-            int maxParents = 100;               // heuristic to limit size of parents; otherwise processing in
-                                                //   extreme cases can blow up
-            for (int ti = i - 1; ti >= 0 && maxParents > 0; ti--)
-            {
-                ReportItem ri = items[ti];
-
-                int xw = ri.Left == null ? 0 : ri.Left.Size;
-                int w2 = PositioningWidth(ri);
-                if (ri is Line)
-                {   // normalize the width
-                    if (w2 < 0)
-                    {
-                        xw -= w2;
-                        w2 = -w2;
-                    }
-                }
-                if (ri.Height == null || ri.Top == null) // if position/height not specified don't use to reposition
-                    continue;
-                if (y < ri.Top.Size + ri.Height.Size)
-                    continue;
-                _YParents.Add(ri);		// X coordinate overlap
-                maxParents--;
-                if (xw <= x && xw + w2 >= x + w &&       // if item above completely covers the report item then it will be pushed down first
-                    maxParents > 30)                      //   and we haven't already set the maxParents.   
-                    maxParents = 30;                        //   just add a few more if necessary 
-            }
-            //foreach (ReportItem ri in items)
-            //{
-            //    if (ri == this)
-            //        break;
-
-            //    int xw = ri.Left == null ? 0 : ri.Left.Size;
-            //    int w2 = PositioningWidth(ri);
-            //    if (ri is Line)
-            //    {   // normalize the width
-            //        if (w2 < 0)
-            //        {
-            //            xw -= w2;
-            //            w2 = -w2;
-            //        }
-            //    }
-            //    //if (xw > right || x > xw + w2)                    // this allows items to be repositioned only based on what's above them
-            //    //    continue;
-            //    if (ri.Height == null || ri.Top == null)          // if position/height not specified don't use to reposition
-            //        continue;
-            //    if (y < ri.Top.Size + ri.Height.Size)
-            //        continue;
-            //    _YParents.Add(ri);		// X coordinate overlap
-            //}
-
-            // Reduce the overhead
-            if (this._YParents.Count == 0)
-                this._YParents = null;
-            else
-                this._YParents.TrimExcess();
-
-            return;
-        }
-
-        int PositioningWidth(ReportItem ri)
-        {
-            int w;
-            if (ri.Width == null)
-            {
-                if (ri is Table)
-                {
-                    Table t = ri as Table;
-                    w = t.WidthInUnits;
-                }
-                else
-                    w = int.MaxValue / 2;   // MaxValue/2 is just meant to be a large number (but won't overflow when adding in the x)
-            }
-            else
-                w = ri.Width.Size;
-
-            return w;
-        }
-
-        internal virtual void Run(IPresent ip, Row row)
-        {
-            return;
-        }
-
-        internal virtual void RunPage(Pages pgs, Row row)
-        {
-            return;
-        }
-
-        internal bool IsTableOrMatrixCell(Report rpt)
-        {
-            WorkClass wc = GetWC(rpt);
-            return (_TC != null || wc.MC != null || this._InMatrix);
-        }
-
-        internal Name Name
-        {
-            get { return _Name; }
-            set { _Name = value; }
-        }
-
-        internal Style Style
-        {
-            get { return _Style; }
-            set { _Style = value; }
-        }
-
-        internal Action Action
-        {
-            get { return _Action; }
-            set { _Action = value; }
-        }
-
-        internal RSize Top
-        {
-            get { return _Top; }
-            set { _Top = value; }
-        }
-
-        internal RSize Left
-        {
-            get { return _Left; }
-            set { _Left = value; }
-        }
-
-        internal float LeftCalc(Report rpt)
-        {
-            WorkClass wc = GetWC(rpt);
-            if (_TC != null || wc.MC != null || _Left == null)
-                return 0;
-            else
-                return _Left.Points;
-        }
-
-        internal float GetOffsetCalc(Report rpt)
-        {
-            WorkClass wc = GetWC(rpt);
-            float x;
-            if (this._TC != null)
-            {   // must be part of a table
-                Table t = _TC.OwnerTable;
-                int colindex = _TC.ColIndex;
-
-                TableColumn tc;
-                tc = (TableColumn)(t.TableColumns.Items[colindex]);
-                x = tc.GetXPosition(rpt);
-            }
-            else if (wc.MC != null)
-            {   // must be part of a matrix
-                x = wc.MC.XPosition;
-            }
-            else
-            {
-                ReportItems ris = this.Parent as ReportItems;
-                x = ris.GetXOffset(rpt);
-            }
-
-            return x;
-        }
-
-        internal RSize Height
-        {
-            get { return _Height; }
-            set { _Height = value; }
-        }
+        /// <summary>
+        /// Height of the item. Negative sizes allowed only for lines (The height/width gives the
+        /// offset of the endpoint of the line from the start point).
+        /// Defaults to the height of the containing object minus Top if omitted.
+        /// </summary>
+        internal RSize Height { get; set; }
 
         // routine returns the height; If not specified go up the owner chain
         //   to find an appropriate containing object
@@ -404,8 +52,8 @@ namespace appbox.Reporting.RDL
         {
             get
             {
-                if (_Height != null)
-                    return _Height.Points;
+                if (Height != null)
+                    return Height.Points;
 
                 float yloc = this.Top == null ? 0 : this.Top.Points;
 
@@ -458,19 +106,433 @@ namespace appbox.Reporting.RDL
             }
         }
 
+        /// <summary>
+        /// Width of the item. Negative sizes allowed only for lines.
+        /// Defaults to the width of the containing object minus Left if omitted.
+        /// </summary>
+        internal RSize Width { get; set; }
+
+        /// <summary>
+        /// Drawing order of the report item within the containing object.
+        /// Items with lower indices are drawn first (appearing behind items with
+        /// higher indices). Items with equal indices have an unspecified order.
+        /// Default: 0 Min: 0 Max: 2147483647
+        /// </summary>
+        internal int ZIndex { get; set; }
+
+        /// <summary>
+        /// Indicates if the item should be hidden.
+        /// </summary>
+        internal Visibility Visibility { get; set; }
+
+        /// <summary>
+        /// (string) A textual label for the report item. Used for
+        /// such things as including TITLE and ALT attributes in HTML reports.
+        /// </summary>
+        internal Expression ToolTip { get; set; }
+
+        /// <summary>
+        /// A label to identify an instance of a report item
+        /// (Variant) within the client UI (to provide a user-friendly label for searching)
+        /// Hierarchical listing of report item and group
+        /// labels within the UI (the Document Map)
+        /// should reflect the object containment
+        /// hierarchy in the report definition. Peer items
+        /// should be listed in left-to-right top-to-bottom order.
+        /// If the expression returns null, no item is added
+        /// to the Document Map. Not used for report items in the page header or footer.
+        /// </summary>
+        internal Expression Label { get; set; }
+
+        /// <summary>
+        /// The name of a report item contained directly
+        /// within this report item that is the target
+        /// location for the Document Map label (if any).
+        /// Ignored if Label is not present. Used only for Rectangle.
+        /// </summary>
+        internal string LinkToChild { get; set; }
+
+        /// <summary>
+        /// (string)A bookmark that can be linked to via a Bookmark action
+        /// </summary>
+        internal Expression Bookmark { get; set; }
+
+        /// <summary>
+        /// TableCell- if part of a Table
+        /// </summary>
+        internal TableCell TC { get; private set; }
+
+        /// <summary>
+        /// The name of a data region that this report item
+        /// should be repeated with if that data region spans multiple pages.
+        /// The data region must be in the same ReportItems collection as this ReportItem
+        /// (Since data regions are not allowed in page headers/footers, this means RepeatWith will
+        /// be unusable in page headers/footers).
+        /// Not allowed if this report item is a data region, subreport or rectangle that contains a
+        /// data region or subreport.
+        /// </summary>
+        internal string RepeatWith { get; set; }
+
+        /// <summary>
+        /// Custom information to be handed to a report output component.
+        /// </summary>
+        internal Custom Custom { get; set; }
+
+        /// <summary>
+        /// calculated: when calculating the y position these are the items above it
+        /// </summary>
+        internal List<ReportItem> YParents { get; private set; }
+
+        private string _DataElementName;
+        /// <summary>
+        /// The name to use for the data element/attribute for this report item.
+        /// Default: Name of the report item
+        /// </summary>
+        internal string DataElementName
+        {
+            get
+            {
+                if (_DataElementName != null)
+                    return _DataElementName;
+                else if (Name != null)
+                    return Name.Nm;
+                else
+                    return null;
+            }
+            set { _DataElementName = value; }
+        }
+
+        private DataElementOutputEnum _DataElementOutput;
+        /// <summary>
+        /// should item appear in data rendering?
+        /// </summary>
+        virtual internal DataElementOutputEnum DataElementOutput
+        {
+            get
+            {
+                if (_DataElementOutput == DataElementOutputEnum.Auto)
+                {
+                    if (this is Textbox)
+                    {
+                        Textbox tb = this as Textbox;
+                        if (tb.Value.IsConstant())
+                            return DataElementOutputEnum.NoOutput;
+                        else
+                            return DataElementOutputEnum.Output;
+                    }
+                    if (this is Rectangle)
+                        return DataElementOutputEnum.ContentsOnly;
+
+                    return DataElementOutputEnum.Output;
+                }
+                else
+                    return _DataElementOutput;
+            }
+            set { _DataElementOutput = value; }
+        }
+
+        private bool _InMatrix;     // true if reportitem is in a matrix
+
+        internal bool IsInBody => Parent.Parent is Body;
+        #endregion
+
+        #region ====Ctor====
+        internal ReportItem(ReportDefn r, ReportLink p, XmlNode xNode) : base(r, p)
+        {
+            Name = null;
+            Style = null;
+            Action = null;
+            Top = null;
+            Left = null;
+            Height = null;
+            Width = null;
+            ZIndex = 0;
+            Visibility = null;
+            ToolTip = null;
+            Label = null;
+            LinkToChild = null;
+            Bookmark = null;
+            RepeatWith = null;
+            Custom = null;
+            _DataElementName = null;
+            _DataElementOutput = DataElementOutputEnum.Auto;
+            // Run thru the attributes
+            foreach (XmlAttribute xAttr in xNode.Attributes)
+            {
+                switch (xAttr.Name)
+                {
+                    case "Name":
+                        Name = new Name(xAttr.Value);
+                        break;
+                }
+            }
+        }
+        #endregion
+
+        internal bool ReportItemElement(XmlNode xNodeLoop)
+        {
+            switch (xNodeLoop.Name)
+            {
+                case "Style":
+                    Style = new Style(OwnerReport, this, xNodeLoop);
+                    break;
+                case "Action":
+                    Action = new Action(OwnerReport, this, xNodeLoop);
+                    break;
+                case "Top":
+                    Top = new RSize(OwnerReport, xNodeLoop);
+                    break;
+                case "Left":
+                    Left = new RSize(OwnerReport, xNodeLoop);
+                    break;
+                case "Height":
+                    Height = new RSize(OwnerReport, xNodeLoop);
+                    break;
+                case "Width":
+                    Width = new RSize(OwnerReport, xNodeLoop);
+                    break;
+                case "ZIndex":
+                    ZIndex = XmlUtil.Integer(xNodeLoop.InnerText);
+                    break;
+                case "Visibility":
+                    Visibility = new Visibility(OwnerReport, this, xNodeLoop);
+                    break;
+                case "ToolTip":
+                    ToolTip = new Expression(OwnerReport, this, xNodeLoop, ExpressionType.String);
+                    break;
+                case "Label":
+                    Label = new Expression(OwnerReport, this, xNodeLoop, ExpressionType.Variant);
+                    break;
+                case "LinkToChild":
+                    LinkToChild = xNodeLoop.InnerText;
+                    break;
+                case "Bookmark":
+                    Bookmark = new Expression(OwnerReport, this, xNodeLoop, ExpressionType.String);
+                    break;
+                case "RepeatWith":
+                    RepeatWith = xNodeLoop.InnerText;
+                    break;
+                case "Custom":
+                    Custom = new Custom(OwnerReport, this, xNodeLoop);
+                    break;
+                case "DataElementName":
+                    _DataElementName = xNodeLoop.InnerText;
+                    break;
+                case "DataElementOutput":
+                    _DataElementOutput = RDL.DataElementOutput.GetStyle(xNodeLoop.InnerText, OwnerReport.rl);
+                    break;
+                case "rd:DefaultName":
+                    break;      // MS tag: we don't use but don't want to generate a warning
+                default:
+                    return false;   // Not a report item element
+            }
+            return true;
+        }
+
+        // Handle parsing of function in final pass
+        override internal void FinalPass()
+        {
+            if (Style != null)
+                Style.FinalPass();
+            if (Action != null)
+                Action.FinalPass();
+            if (Visibility != null)
+                Visibility.FinalPass();
+            if (ToolTip != null)
+                ToolTip.FinalPass();
+            if (Label != null)
+                Label.FinalPass();
+            if (Bookmark != null)
+                Bookmark.FinalPass();
+            if (Custom != null)
+                Custom.FinalPass();
+
+            if (Parent.Parent is TableCell) // This is part of a table
+            {
+                TC = Parent.Parent as TableCell;
+            }
+            else
+            {
+                TC = null;
+            }
+
+            // Determine if ReportItem is defined inside of a Matrix
+            _InMatrix = false;
+            for (ReportLink rl = this.Parent; rl != null; rl = rl.Parent)
+            {
+                if (rl is Matrix)
+                {
+                    _InMatrix = true;
+                    break;
+                }
+                if (rl is Table || rl is List || rl is Chart)
+                    break;
+            }
+
+            return;
+        }
+
+        internal void PositioningFinalPass(int i, List<ReportItem> items)
+        {
+            if (items.Count == 1 || i == 0)     // Nothing to do if only one item in list or 1st item in list
+                return;
+
+            int x = this.Left == null ? 0 : this.Left.Size;
+            int w = PositioningWidth(this);
+            int right = x + w;
+            int y = (this.Top == null ? 0 : this.Top.Size);
+            if (this is Line)
+            {   // normalize the width
+                if (w < 0)
+                {
+                    x -= w;
+                    w = -w;
+                }
+            }
+
+            this.YParents = new List<ReportItem>();
+            int maxParents = 100;               // heuristic to limit size of parents; otherwise processing in
+                                                //   extreme cases can blow up
+            for (int ti = i - 1; ti >= 0 && maxParents > 0; ti--)
+            {
+                ReportItem ri = items[ti];
+
+                int xw = ri.Left == null ? 0 : ri.Left.Size;
+                int w2 = PositioningWidth(ri);
+                if (ri is Line)
+                {   // normalize the width
+                    if (w2 < 0)
+                    {
+                        xw -= w2;
+                        w2 = -w2;
+                    }
+                }
+                if (ri.Height == null || ri.Top == null) // if position/height not specified don't use to reposition
+                    continue;
+                if (y < ri.Top.Size + ri.Height.Size)
+                    continue;
+                YParents.Add(ri);		// X coordinate overlap
+                maxParents--;
+                if (xw <= x && xw + w2 >= x + w &&       // if item above completely covers the report item then it will be pushed down first
+                    maxParents > 30)                      //   and we haven't already set the maxParents.   
+                    maxParents = 30;                        //   just add a few more if necessary 
+            }
+            //foreach (ReportItem ri in items)
+            //{
+            //    if (ri == this)
+            //        break;
+
+            //    int xw = ri.Left == null ? 0 : ri.Left.Size;
+            //    int w2 = PositioningWidth(ri);
+            //    if (ri is Line)
+            //    {   // normalize the width
+            //        if (w2 < 0)
+            //        {
+            //            xw -= w2;
+            //            w2 = -w2;
+            //        }
+            //    }
+            //    //if (xw > right || x > xw + w2)                    // this allows items to be repositioned only based on what's above them
+            //    //    continue;
+            //    if (ri.Height == null || ri.Top == null)          // if position/height not specified don't use to reposition
+            //        continue;
+            //    if (y < ri.Top.Size + ri.Height.Size)
+            //        continue;
+            //    _YParents.Add(ri);		// X coordinate overlap
+            //}
+
+            // Reduce the overhead
+            if (this.YParents.Count == 0)
+                this.YParents = null;
+            else
+                this.YParents.TrimExcess();
+
+            return;
+        }
+
+        int PositioningWidth(ReportItem ri)
+        {
+            int w;
+            if (ri.Width == null)
+            {
+                if (ri is Table)
+                {
+                    Table t = ri as Table;
+                    w = t.WidthInUnits;
+                }
+                else
+                    w = int.MaxValue / 2;   // MaxValue/2 is just meant to be a large number (but won't overflow when adding in the x)
+            }
+            else
+                w = ri.Width.Size;
+
+            return w;
+        }
+
+        internal virtual void Run(IPresent ip, Row row)
+        {
+            return;
+        }
+
+        internal virtual void RunPage(Pages pgs, Row row)
+        {
+            return;
+        }
+
+        internal bool IsTableOrMatrixCell(Report rpt)
+        {
+            WorkClass wc = GetWC(rpt);
+            return (TC != null || wc.MC != null || this._InMatrix);
+        }
+
+        internal float LeftCalc(Report rpt)
+        {
+            WorkClass wc = GetWC(rpt);
+            if (TC != null || wc.MC != null || Left == null)
+                return 0;
+            else
+                return Left.Points;
+        }
+
+        internal float GetOffsetCalc(Report rpt)
+        {
+            WorkClass wc = GetWC(rpt);
+            float x;
+            if (this.TC != null)
+            {   // must be part of a table
+                Table t = TC.OwnerTable;
+                int colindex = TC.ColIndex;
+
+                TableColumn tc;
+                tc = (TableColumn)(t.TableColumns.Items[colindex]);
+                x = tc.GetXPosition(rpt);
+            }
+            else if (wc.MC != null)
+            {   // must be part of a matrix
+                x = wc.MC.XPosition;
+            }
+            else
+            {
+                ReportItems ris = this.Parent as ReportItems;
+                x = ris.GetXOffset(rpt);
+            }
+
+            return x;
+        }
+
         internal bool IsHidden(Report rpt, Row r)
         {
-            if (this._Visibility == null)
+            if (this.Visibility == null)
                 return false;
-            return _Visibility.IsHidden(rpt, r);
+            return Visibility.IsHidden(rpt, r);
         }
 
         internal void SetPageLeft(Report rpt)
         {
-            if (this._TC != null)
+            if (this.TC != null)
             {   // must be part of a table
-                Table t = _TC.OwnerTable;
-                int colindex = _TC.ColIndex;
+                Table t = TC.OwnerTable;
+                int colindex = TC.ColIndex;
                 TableColumn tc = (TableColumn)(t.TableColumns.Items[colindex]);
                 Left = new RSize(OwnerReport, tc.GetXPosition(rpt).ToString() + "pt");
             }
@@ -482,15 +544,15 @@ namespace appbox.Reporting.RDL
         {
             WorkClass wc = GetWC(rpt);
             pi.X = GetOffsetCalc(rpt) + LeftCalc(rpt);
-            if (this._TC != null)
+            if (this.TC != null)
             {   // must be part of a table
-                Table t = _TC.OwnerTable;
-                int colindex = _TC.ColIndex;
+                Table t = TC.OwnerTable;
+                int colindex = TC.ColIndex;
 
                 // Calculate width: add up all columns within the column span
                 float width = 0;
                 TableColumn tc;
-                for (int ci = colindex; ci < colindex + _TC.ColSpan; ci++)
+                for (int ci = colindex; ci < colindex + TC.ColSpan; ci++)
                 {
                     tc = (TableColumn)(t.TableColumns.Items[ci]);
                     width += tc.Width.Points;
@@ -498,7 +560,7 @@ namespace appbox.Reporting.RDL
                 pi.W = width;
                 pi.Y = 0;
 
-                TableRow tr = (TableRow)(_TC.Parent.Parent);
+                TableRow tr = (TableRow)(TC.Parent.Parent);
                 pi.H = tr.HeightCalc(rpt);  // this is a cached item; note tr.HeightOfRow must already be called on row
             }
             else if (wc.MC != null)
@@ -541,17 +603,17 @@ namespace appbox.Reporting.RDL
             pi.ZIndex = this.ZIndex;        // retain the zindex of the object
 
             // Catch any action needed
-            if (this._Action != null)
+            if (this.Action != null)
             {
-                pi.BookmarkLink = _Action.BookmarkLinkValue(rpt, row);
-                pi.HyperLink = _Action.HyperLinkValue(rpt, row);
+                pi.BookmarkLink = Action.BookmarkLinkValue(rpt, row);
+                pi.HyperLink = Action.HyperLinkValue(rpt, row);
             }
 
-            if (this._Bookmark != null)
-                pi.Bookmark = _Bookmark.EvaluateString(rpt, row);
+            if (this.Bookmark != null)
+                pi.Bookmark = Bookmark.EvaluateString(rpt, row);
 
-            if (this._ToolTip != null)
-                pi.Tooltip = _ToolTip.EvaluateString(rpt, row);
+            if (this.ToolTip != null)
+                pi.Tooltip = ToolTip.EvaluateString(rpt, row);
         }
 
         internal MatrixCellEntry GetMC(Report rpt)
@@ -566,16 +628,10 @@ namespace appbox.Reporting.RDL
             wc.MC = mce;
         }
 
-        internal RSize Width
-        {
-            get { return _Width; }
-            set { _Width = value; }
-        }
-
         internal float WidthOrOwnerWidth(Report rpt)
         {
-            if (_Width != null)
-                return _Width.Points;
+            if (Width != null)
+                return Width.Points;
             float xloc = this.LeftCalc(rpt);
 
             for (ReportLink rl = this.Parent; rl != null; rl = rl.Parent)
@@ -602,15 +658,15 @@ namespace appbox.Reporting.RDL
         {
             WorkClass wc = GetWC(rpt);
             int width;
-            if (this._TC != null)
+            if (this.TC != null)
             {   // must be part of a table
-                Table t = _TC.OwnerTable;
-                int colindex = _TC.ColIndex;
+                Table t = TC.OwnerTable;
+                int colindex = TC.ColIndex;
 
                 // Calculate width: add up all columns within the column span
                 width = 0;
                 TableColumn tc;
-                for (int ci = colindex; ci < colindex + _TC.ColSpan; ci++)
+                for (int ci = colindex; ci < colindex + TC.ColSpan; ci++)
                 {
                     tc = (TableColumn)(t.TableColumns.Items[ci]);
                     width += tc.Width.PixelsX;
@@ -668,7 +724,7 @@ namespace appbox.Reporting.RDL
         internal void SetPagePositionBegin(Pages pgs)
         {
             // Update the current page
-            if (this._YParents != null)
+            if (this.YParents != null)
             {
                 ReportItem saveri = GetReportItemAbove(pgs.Report);
                 if (saveri != null)
@@ -708,7 +764,7 @@ namespace appbox.Reporting.RDL
 
         internal void SetPagePositionEnd(Pages pgs, float pos)
         {
-            if (_TC != null || _InMatrix)           // don't mess with page if part of a table or in a matrix
+            if (TC != null || _InMatrix)           // don't mess with page if part of a table or in a matrix
                 return;
             WorkClass wc = GetWC(pgs.Report);
             wc.CurrentPage = pgs.CurrentPage;
@@ -721,7 +777,7 @@ namespace appbox.Reporting.RDL
         /// </summary>
         internal float Gap(Report rpt)
         {
-            float top = _Top == null ? 0 : _Top.Points;
+            float top = Top == null ? 0 : Top.Points;
             ReportItem saveri = GetReportItemAbove(rpt);
             if (saveri == null)
                 return top;
@@ -745,7 +801,7 @@ namespace appbox.Reporting.RDL
         /// </summary>
         internal float RelativeY(Report rpt)
         {
-            float top = _Top == null ? 0 : _Top.Points;
+            float top = Top == null ? 0 : Top.Points;
             ReportItem saveri = GetReportItemAbove(rpt);
             if (saveri == null)
                 return top;
@@ -761,14 +817,14 @@ namespace appbox.Reporting.RDL
 
         private ReportItem GetReportItemAbove(Report rpt)
         {
-            if (this._YParents == null)
+            if (this.YParents == null)
                 return null;
 
             float maxy = float.MinValue;
             ReportItem saveri = null;
             int pgno = 0;
 
-            foreach (ReportItem ri in this._YParents)
+            foreach (ReportItem ri in this.YParents)
             {
                 WorkClass wc = ri.GetWC(rpt);
                 if (wc.BottomPosition.CompareTo(float.NaN) == 0 ||
@@ -785,122 +841,20 @@ namespace appbox.Reporting.RDL
             return saveri;
         }
 
-        internal int ZIndex
-        {
-            get { return _ZIndex; }
-            set { _ZIndex = value; }
-        }
-
-        internal Visibility Visibility
-        {
-            get { return _Visibility; }
-            set { _Visibility = value; }
-        }
-
-        internal Expression ToolTip
-        {
-            get { return _ToolTip; }
-            set { _ToolTip = value; }
-        }
-
         internal string ToolTipValue(Report rpt, Row r)
         {
-            if (_ToolTip == null)
+            if (ToolTip == null)
                 return null;
 
-            return _ToolTip.EvaluateString(rpt, r);
-        }
-
-        internal Expression Label
-        {
-            get { return _Label; }
-            set { _Label = value; }
-        }
-
-        internal string LinkToChild
-        {
-            get { return _LinkToChild; }
-            set { _LinkToChild = value; }
-        }
-
-        internal Expression Bookmark
-        {
-            get { return _Bookmark; }
-            set { _Bookmark = value; }
+            return ToolTip.EvaluateString(rpt, r);
         }
 
         internal string BookmarkValue(Report rpt, Row r)
         {
-            if (_Bookmark == null)
+            if (Bookmark == null)
                 return null;
 
-            return _Bookmark.EvaluateString(rpt, r);
-        }
-
-        internal TableCell TC
-        {
-            get { return _TC; }
-        }
-
-        internal string RepeatWith
-        {
-            get { return _RepeatWith; }
-            set { _RepeatWith = value; }
-        }
-
-        internal Custom Custom
-        {
-            get { return _Custom; }
-            set { _Custom = value; }
-        }
-
-        internal string DataElementName
-        {
-            get
-            {
-                if (_DataElementName != null)
-                    return _DataElementName;
-                else if (_Name != null)
-                    return _Name.Nm;
-                else
-                    return null;
-            }
-            set { _DataElementName = value; }
-        }
-
-        internal List<ReportItem> YParents
-        {
-            get { return this._YParents; }
-        }
-
-        virtual internal DataElementOutputEnum DataElementOutput
-        {
-            get
-            {
-                if (_DataElementOutput == DataElementOutputEnum.Auto)
-                {
-                    if (this is Textbox)
-                    {
-                        Textbox tb = this as Textbox;
-                        if (tb.Value.IsConstant())
-                            return DataElementOutputEnum.NoOutput;
-                        else
-                            return DataElementOutputEnum.Output;
-                    }
-                    if (this is Rectangle)
-                        return DataElementOutputEnum.ContentsOnly;
-
-                    return DataElementOutputEnum.Output;
-                }
-                else
-                    return _DataElementOutput;
-            }
-            set { _DataElementOutput = value; }
-        }
-
-        internal bool IsInBody
-        {
-            get { return this.Parent.Parent is Body; }
+            return Bookmark.EvaluateString(rpt, r);
         }
 
         private WorkClass GetWC(Report rpt)
@@ -935,8 +889,8 @@ namespace appbox.Reporting.RDL
                 CurrentPage = null;
             }
         }
-        #region IComparable Members
 
+        #region ====IComparable Members====
         // Sort report items based on top down, left to right
         public int CompareTo(object obj)
         {
@@ -954,7 +908,6 @@ namespace appbox.Reporting.RDL
 
             return l1 - l2;
         }
-
         #endregion
     }
 }

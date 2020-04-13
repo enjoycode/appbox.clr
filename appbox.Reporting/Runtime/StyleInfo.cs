@@ -210,6 +210,7 @@ namespace appbox.Reporting.RDL
             NumeralLanguage = Language;
             NumeralVariant = 1;
         }
+
         /// <summary>
         /// Name of the font family
         /// </summary>
@@ -225,10 +226,7 @@ namespace appbox.Reporting.RDL
         /// <summary>
         /// Name of the font family. Support list of families separated by ','.
         /// </summary>
-        public string FontFamilyFull
-        {
-            get { return _FontFamily; }
-        }
+        public string FontFamilyFull => _FontFamily;
         /// <summary>
         /// Gets the FontFamily instance using the FontFamily string.  This supports lists of fonts.
         /// </summary>
