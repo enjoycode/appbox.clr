@@ -45,6 +45,6 @@ jobs:
         git config --local user.name "enjoycode"
         git commit -m "CI by appbox.clr"
         echo "====git push==="
-        git push origin master
+        echo "git push origin master"
         echo "DONE"
       shell: cmd
