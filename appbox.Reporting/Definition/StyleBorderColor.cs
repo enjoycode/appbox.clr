@@ -13,20 +13,38 @@ namespace appbox.Reporting.RDL
 	[Serializable]
 	internal class StyleBorderColor : ReportLink
 	{
-		Expression _Default;	// (Color) Color of the border (unless overridden for a specific
-								//   side). Default: Black.
-		Expression _Left;		// (Color) Color of the left border
-		Expression _Right;		// (Color) Color of the right border
-		Expression _Top;		// (Color) Color of the top border
-		Expression _Bottom;		// (Color) Color of the bottom border
-	
+		/// <summary>
+		/// (Color) Color of the border (unless overridden for a specific side). Default: Black.
+		/// </summary>
+		internal Expression Default { get; set; }
+
+		/// <summary>
+		/// (Color) Color of the left border
+		/// </summary>
+		internal Expression Left { get; set; }
+
+		/// <summary>
+		/// (Color) Color of the right border
+		/// </summary>
+		internal Expression Right { get; set; }
+
+		/// <summary>
+		/// (Color) Color of the top border
+		/// </summary>
+		internal Expression Top { get; set; }
+
+		/// <summary>
+		/// (Color) Color of the bottom border
+		/// </summary>
+		internal Expression Bottom { get; set; }
+
 		internal StyleBorderColor(ReportDefn r, ReportLink p, XmlNode xNode) : base(r, p)
 		{
-			_Default=null;
-			_Left=null;
-			_Right=null;
-			_Top=null;
-			_Bottom=null;
+			Default=null;
+			Left=null;
+			Right=null;
+			Top=null;
+			Bottom=null;
 
 			// Loop thru all the child nodes
 			foreach(XmlNode xNodeLoop in xNode.ChildNodes)
@@ -36,19 +54,19 @@ namespace appbox.Reporting.RDL
 				switch (xNodeLoop.Name)
 				{
 					case "Default":
-						_Default = new Expression(r, this, xNodeLoop, ExpressionType.Color);
+						Default = new Expression(r, this, xNodeLoop, ExpressionType.Color);
 						break;
 					case "Left":
-						_Left = new Expression(r, this, xNodeLoop, ExpressionType.Color);
+						Left = new Expression(r, this, xNodeLoop, ExpressionType.Color);
 						break;
 					case "Right":
-						_Right = new Expression(r, this, xNodeLoop, ExpressionType.Color);
+						Right = new Expression(r, this, xNodeLoop, ExpressionType.Color);
 						break;
 					case "Top":
-						_Top = new Expression(r, this, xNodeLoop, ExpressionType.Color);
+						Top = new Expression(r, this, xNodeLoop, ExpressionType.Color);
 						break;
 					case "Bottom":
-						_Bottom = new Expression(r, this, xNodeLoop, ExpressionType.Color);
+						Bottom = new Expression(r, this, xNodeLoop, ExpressionType.Color);
 						break;
 					default:
 						// don't know this element - log it
@@ -61,16 +79,16 @@ namespace appbox.Reporting.RDL
 		// Handle parsing of function in final pass
 		override internal void FinalPass()
 		{
-			if (_Default != null)
-				_Default.FinalPass();
-			if (_Left != null)
-				_Left.FinalPass();
-			if (_Right != null)
-				_Right.FinalPass();
-			if (_Top != null)
-				_Top.FinalPass();
-			if (_Bottom != null)
-				_Bottom.FinalPass();
+			if (Default != null)
+				Default.FinalPass();
+			if (Left != null)
+				Left.FinalPass();
+			if (Right != null)
+				Right.FinalPass();
+			if (Top != null)
+				Top.FinalPass();
+			if (Bottom != null)
+				Bottom.FinalPass();
 			return;
 		}
 
@@ -79,22 +97,22 @@ namespace appbox.Reporting.RDL
 		{
 			StringBuilder sb = new StringBuilder();
 
-			if (_Default != null)
-				sb.AppendFormat(NumberFormatInfo.InvariantInfo, "border-color:{0};",_Default.EvaluateString(rpt, row));
+			if (Default != null)
+				sb.AppendFormat(NumberFormatInfo.InvariantInfo, "border-color:{0};",Default.EvaluateString(rpt, row));
 			else if (bDefaults)
 				sb.Append("border-color:black;");
 
-			if (_Left != null)
-				sb.AppendFormat(NumberFormatInfo.InvariantInfo, "border-left:{0};",_Left.EvaluateString(rpt, row));
+			if (Left != null)
+				sb.AppendFormat(NumberFormatInfo.InvariantInfo, "border-left:{0};",Left.EvaluateString(rpt, row));
 
-			if (_Right != null)
-				sb.AppendFormat(NumberFormatInfo.InvariantInfo, "border-right:{0};",_Right.EvaluateString(rpt, row));
+			if (Right != null)
+				sb.AppendFormat(NumberFormatInfo.InvariantInfo, "border-right:{0};",Right.EvaluateString(rpt, row));
 
-			if (_Top != null)
-				sb.AppendFormat(NumberFormatInfo.InvariantInfo, "border-top:{0};",_Top.EvaluateString(rpt, row));
+			if (Top != null)
+				sb.AppendFormat(NumberFormatInfo.InvariantInfo, "border-top:{0};",Top.EvaluateString(rpt, row));
 
-			if (_Bottom != null)
-				sb.AppendFormat(NumberFormatInfo.InvariantInfo, "border-bottom:{0};",_Bottom.EvaluateString(rpt, row));
+			if (Bottom != null)
+				sb.AppendFormat(NumberFormatInfo.InvariantInfo, "border-bottom:{0};",Bottom.EvaluateString(rpt, row));
 
 			return sb.ToString();
 		}
@@ -103,32 +121,32 @@ namespace appbox.Reporting.RDL
 		{
 			bool rc = true;
 
-			if (_Default != null)
-				rc = _Default.IsConstant();
+			if (Default != null)
+				rc = Default.IsConstant();
 
 			if (!rc)
 				return false;
 
-			if (_Left != null)
-				rc = _Left.IsConstant();
+			if (Left != null)
+				rc = Left.IsConstant();
 
 			if (!rc)
 				return false;
 
-			if (_Right != null)
-				rc = _Right.IsConstant();
+			if (Right != null)
+				rc = Right.IsConstant();
 
 			if (!rc)
 				return false;
 
-			if (_Top != null)
-				rc = _Top.IsConstant();
+			if (Top != null)
+				rc = Top.IsConstant();
 
 			if (!rc)
 				return false;
 
-			if (_Bottom != null)
-				rc = _Bottom.IsConstant();
+			if (Bottom != null)
+				rc = Bottom.IsConstant();
 
 			return rc;
 		}
@@ -138,78 +156,48 @@ namespace appbox.Reporting.RDL
 			return "border-color:black;";
 		}
 
-		internal Expression Default
+        internal Color EvalDefault(Report rpt, Row r)
 		{
-			get { return  _Default; }
-			set {  _Default = value; }
-		}
-
-		internal Color EvalDefault(Report rpt, Row r)
-		{
-			if (_Default == null)
+			if (Default == null)
 				return appbox.Drawing.Color.Black;
 			
-			string c = _Default.EvaluateString(rpt, r);
+			string c = Default.EvaluateString(rpt, r);
 			return XmlUtil.ColorFromHtml(c, appbox.Drawing.Color.Black, rpt);
 		}
 
-		internal Expression Left
+        internal Color EvalLeft(Report rpt, Row r)
 		{
-			get { return  _Left; }
-			set {  _Left = value; }
-		}
-
-		internal Color EvalLeft(Report rpt, Row r)
-		{
-			if (_Left == null)
+			if (Left == null)
 				return EvalDefault(rpt, r);
 			
-			string c = _Left.EvaluateString(rpt, r);
+			string c = Left.EvaluateString(rpt, r);
 			return XmlUtil.ColorFromHtml(c, appbox.Drawing.Color.Black, rpt);
 		}
 
-		internal Expression Right
+        internal Color EvalRight(Report rpt, Row r)
 		{
-			get { return  _Right; }
-			set {  _Right = value; }
-		}
-
-		internal Color EvalRight(Report rpt, Row r)
-		{
-			if (_Right == null)
+			if (Right == null)
 				return EvalDefault(rpt, r);
 			
-			string c = _Right.EvaluateString(rpt, r);
+			string c = Right.EvaluateString(rpt, r);
 			return XmlUtil.ColorFromHtml(c, appbox.Drawing.Color.Black, rpt);
 		}
 
-		internal Expression Top
+        internal Color EvalTop(Report rpt, Row r)
 		{
-			get { return  _Top; }
-			set {  _Top = value; }
-		}
-
-		internal Color EvalTop(Report rpt, Row r)
-		{
-			if (_Top == null)
+			if (Top == null)
 				return EvalDefault(rpt, r);
 			
-			string c = _Top.EvaluateString(rpt, r);
+			string c = Top.EvaluateString(rpt, r);
 			return XmlUtil.ColorFromHtml(c, appbox.Drawing.Color.Black, rpt);
 		}
 
-		internal Expression Bottom
+        internal Color EvalBottom(Report rpt, Row r)
 		{
-			get { return  _Bottom; }
-			set {  _Bottom = value; }
-		}
-
-		internal Color EvalBottom(Report rpt, Row r)
-		{
-			if (_Bottom == null)
+			if (Bottom == null)
 				return EvalDefault(rpt, r);
 			
-			string c = _Bottom.EvaluateString(rpt, r);
+			string c = Bottom.EvaluateString(rpt, r);
 			return XmlUtil.ColorFromHtml(c, appbox.Drawing.Color.Black, rpt);
 		}
 	}

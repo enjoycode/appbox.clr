@@ -11,20 +11,39 @@ namespace appbox.Reporting.RDL
 	[Serializable]
 	internal class StyleBorderStyle : ReportLink
 	{
-		Expression _Default;	// (Enum BorderStyle) Style of the border (unless overridden for a specific side)
-		// Default: none		
-		Expression _Left;		// (Enum BorderStyle) Style of the left border
-		Expression _Right;		// (Enum BorderStyle) Style of the right border
-		Expression _Top;		// (Enum BorderStyle) Style of the top border
-		Expression _Bottom;		// (Enum BorderStyle) Style of the bottom border
-	
+		/// <summary>
+		/// (Enum BorderStyle) Style of the border (unless overridden for a specific side)
+		/// Default: none
+		/// </summary>
+		internal Expression Default { get; set; }
+
+		/// <summary>
+		/// (Enum BorderStyle) Style of the left border
+		/// </summary>
+		internal Expression Left { get; set; }
+
+		/// <summary>
+		/// (Enum BorderStyle) Style of the right border
+		/// </summary>
+		internal Expression Right { get; set; }
+
+		/// <summary>
+		/// (Enum BorderStyle) Style of the top border
+		/// </summary>
+		internal Expression Top { get; set; }
+
+		/// <summary>
+		/// (Enum BorderStyle) Style of the bottom border
+		/// </summary>
+		internal Expression Bottom { get; set; }
+
 		internal StyleBorderStyle(ReportDefn r, ReportLink p, XmlNode xNode) : base(r, p)
 		{
-			_Default=null;
-			_Left=null;
-			_Right=null;
-			_Top=null;
-			_Bottom=null;
+			Default=null;
+			Left=null;
+			Right=null;
+			Top=null;
+			Bottom=null;
 
 			// Loop thru all the child nodes
 			foreach(XmlNode xNodeLoop in xNode.ChildNodes)
@@ -34,19 +53,19 @@ namespace appbox.Reporting.RDL
 				switch (xNodeLoop.Name)
 				{
 					case "Default":
-						_Default = new Expression(r, this, xNodeLoop, ExpressionType.Enum);
+						Default = new Expression(r, this, xNodeLoop, ExpressionType.Enum);
 						break;
 					case "Left":
-						_Left = new Expression(r, this, xNodeLoop, ExpressionType.Enum);
+						Left = new Expression(r, this, xNodeLoop, ExpressionType.Enum);
 						break;
 					case "Right":
-						_Right = new Expression(r, this, xNodeLoop, ExpressionType.Enum);
+						Right = new Expression(r, this, xNodeLoop, ExpressionType.Enum);
 						break;
 					case "Top":
-						_Top = new Expression(r, this, xNodeLoop, ExpressionType.Enum);
+						Top = new Expression(r, this, xNodeLoop, ExpressionType.Enum);
 						break;
 					case "Bottom":
-						_Bottom = new Expression(r, this, xNodeLoop, ExpressionType.Enum);
+						Bottom = new Expression(r, this, xNodeLoop, ExpressionType.Enum);
 						break;
 					default:	
 						// don't know this element - log it
@@ -59,16 +78,16 @@ namespace appbox.Reporting.RDL
 		// Handle parsing of function in final pass
 		override internal void FinalPass()
 		{
-			if (_Default != null)
-				_Default.FinalPass();
-			if (_Left != null)
-				_Left.FinalPass();
-			if (_Right != null)
-				_Right.FinalPass();
-			if (_Top != null)
-				_Top.FinalPass();
-			if (_Bottom != null)
-				_Bottom.FinalPass();
+			if (Default != null)
+				Default.FinalPass();
+			if (Left != null)
+				Left.FinalPass();
+			if (Right != null)
+				Right.FinalPass();
+			if (Top != null)
+				Top.FinalPass();
+			if (Bottom != null)
+				Bottom.FinalPass();
 			return;
 		}
 
@@ -77,22 +96,22 @@ namespace appbox.Reporting.RDL
 		{
 			StringBuilder sb = new StringBuilder();
 
-			if (_Default != null)
-				sb.AppendFormat("border-style:{0};",_Default.EvaluateString(rpt, row));
+			if (Default != null)
+				sb.AppendFormat("border-style:{0};",Default.EvaluateString(rpt, row));
 			else if (bDefaults)
 				sb.Append("border-style:none;");
 
-			if (_Left != null)
-				sb.AppendFormat("border-left-style:{0};",_Left.EvaluateString(rpt, row));
+			if (Left != null)
+				sb.AppendFormat("border-left-style:{0};",Left.EvaluateString(rpt, row));
 
-			if (_Right != null)
-				sb.AppendFormat("border-right-style:{0};",_Right.EvaluateString(rpt, row));
+			if (Right != null)
+				sb.AppendFormat("border-right-style:{0};",Right.EvaluateString(rpt, row));
 
-			if (_Top != null)
-				sb.AppendFormat("border-top-style:{0};",_Top.EvaluateString(rpt, row));
+			if (Top != null)
+				sb.AppendFormat("border-top-style:{0};",Top.EvaluateString(rpt, row));
 
-			if (_Bottom != null)
-				sb.AppendFormat("border-bottom-style:{0};",_Bottom.EvaluateString(rpt, row));
+			if (Bottom != null)
+				sb.AppendFormat("border-bottom-style:{0};",Bottom.EvaluateString(rpt, row));
 
 			return sb.ToString();
 		}
@@ -101,32 +120,32 @@ namespace appbox.Reporting.RDL
 		{
 			bool rc = true;
 
-			if (_Default != null)
-				rc = _Default.IsConstant();
+			if (Default != null)
+				rc = Default.IsConstant();
 
 			if (!rc)
 				return false;
 
-			if (_Left != null)
-				rc = _Left.IsConstant();
+			if (Left != null)
+				rc = Left.IsConstant();
 
 			if (!rc)
 				return false;
 
-			if (_Right != null)
-				rc = _Right.IsConstant();
+			if (Right != null)
+				rc = Right.IsConstant();
 
 			if (!rc)
 				return false;
 
-			if (_Top != null)
-				rc = _Top.IsConstant();
+			if (Top != null)
+				rc = Top.IsConstant();
 
 			if (!rc)
 				return false;
 
-			if (_Bottom != null)
-				rc = _Bottom.IsConstant();
+			if (Bottom != null)
+				rc = Bottom.IsConstant();
 
 			return rc;
 		}
@@ -136,78 +155,48 @@ namespace appbox.Reporting.RDL
 			return "border-style:none;";
 		}
 
-		internal Expression Default
+        internal BorderStyleEnum EvalDefault(Report rpt, Row r)
 		{
-			get { return  _Default; }
-			set {  _Default = value; }
-		}
- 
-		internal BorderStyleEnum EvalDefault(Report rpt, Row r)
-		{
-			if (_Default == null)
+			if (Default == null)
 				return BorderStyleEnum.None;
 
-			string bs = _Default.EvaluateString(rpt, r);
+			string bs = Default.EvaluateString(rpt, r);
 			return GetBorderStyle(bs, BorderStyleEnum.Solid);
 		}
 
-		internal Expression Left
+        internal BorderStyleEnum EvalLeft(Report rpt, Row r)
 		{
-			get { return  _Left; }
-			set {  _Left = value; }
-		}
-
-		internal BorderStyleEnum EvalLeft(Report rpt, Row r)
-		{
-			if (_Left == null)
+			if (Left == null)
 				return EvalDefault(rpt, r);
 
-			string bs = _Left.EvaluateString(rpt, r);
+			string bs = Left.EvaluateString(rpt, r);
 			return GetBorderStyle(bs, BorderStyleEnum.Solid);
 		}
 
-		internal Expression Right
+        internal BorderStyleEnum EvalRight(Report rpt, Row r)
 		{
-			get { return  _Right; }
-			set {  _Right = value; }
-		}
-
-		internal BorderStyleEnum EvalRight(Report rpt, Row r)
-		{
-			if (_Right == null)
+			if (Right == null)
 				return EvalDefault(rpt, r);
 
-			string bs = _Right.EvaluateString(rpt, r);
+			string bs = Right.EvaluateString(rpt, r);
 			return GetBorderStyle(bs, BorderStyleEnum.Solid);
 		}
 
-		internal Expression Top
+        internal BorderStyleEnum EvalTop(Report rpt, Row r)
 		{
-			get { return  _Top; }
-			set {  _Top = value; }
-		}
-
-		internal BorderStyleEnum EvalTop(Report rpt, Row r)
-		{
-			if (_Top == null)
+			if (Top == null)
 				return EvalDefault(rpt, r);
 
-			string bs = _Top.EvaluateString(rpt, r);
+			string bs = Top.EvaluateString(rpt, r);
 			return GetBorderStyle(bs, BorderStyleEnum.Solid);
 		}
 
-		internal Expression Bottom
+        internal BorderStyleEnum EvalBottom(Report rpt, Row r)
 		{
-			get { return  _Bottom; }
-			set {  _Bottom = value; }
-		}
-
-		internal BorderStyleEnum EvalBottom(Report rpt, Row r)
-		{
-			if (_Bottom == null)
+			if (Bottom == null)
 				return EvalDefault(rpt, r);
 
-			string bs = _Bottom.EvaluateString(rpt, r);
+			string bs = Bottom.EvaluateString(rpt, r);
 			return GetBorderStyle(bs, BorderStyleEnum.Solid);
 		}
 
@@ -254,6 +243,7 @@ namespace appbox.Reporting.RDL
 			return bs;
 		}
 	}
+
 	/// <summary>
 	/// Allowed values for border styles.  Note: these may not be actually supported depending
 	/// on the renderer used.
