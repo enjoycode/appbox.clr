@@ -13,54 +13,75 @@ namespace appbox.Reporting.RDL
     [Serializable]
     internal class Textbox : ReportItem
     {
-        Expression _Value;  // (Variant) An expression, the value of which is
-                            // displayed in the text-box.
-                            // This can be a constant expression for constant labels.
-        bool _CanGrow;      // Indicates the Textbox size can
-                            // increase to accommodate the contents
-        bool _CanShrink;    // Indicates the Textbox size can
-                            // decrease to match the contents
-        string _HideDuplicates; // Indicates the item should be hidden
-                                //when the value of the expression
-                                //associated with the report item is the
-                                //same as the preceding instance. The
-                                //value of HideDuplicates is the name
-                                //of a grouping or data set over which
-                                //to apply the hiding. Each time a
-                                //new instance of that group is
-                                //encountered, the first instance of
-                                //this report item will not be hidden.
-                                //Rows on a previous page are
-                                //ignored for the purposes of hiding
-                                //duplicates. If the textbox is in a
-                                //table or matrix cell, only the text
-                                //will be hidden. The textbox will
-                                //remain to provide background and
-                                //border for the cell.
-                                //Ignored in matrix subtotals.
-        ToggleImage _ToggleImage;   // Indicates the initial state of a
-                                    // toggling image should one be
-                                    // displayed as a part of the textbox.
-        DataElementStyleEnum _DataElementStyle; // Indicates whether textbox value
-                                                // should render as an element or attribute: Auto (Default)
-                                                // Auto uses the setting on the Report element.
-        bool _IsToggle;     // Textbox is used to toggle a detail row
-        List<string> _ExprReferences;   // array of names of expressions that reference this Textbox;
-                                        //  only needed for page header/footer references 
+        private DataElementStyleEnum _DataElementStyle; // Indicates whether textbox value
+        internal DataElementStyleEnum DataElementStyle
+        {
+            get
+            {
+                if (_DataElementStyle == DataElementStyleEnum.Auto) // auto means use report
+                    return OwnerReport.DataElementStyle;
+                else
+                    return _DataElementStyle;
+            }
+            set { _DataElementStyle = value; }
+        }
+
+        private List<string> _ExprReferences;   // array of names of expressions that reference this Textbox;
+                                                //  only needed for page header/footer references 
 
         static readonly Regex HTMLEXPR = new Regex("(<expr>.+</expr>)");     // Split on all expressions.
 
-        object lastEvaluatedValue = null;
-        Report lastValueForReport = null;
-        Row lastValueForRow = null;
+        private object lastEvaluatedValue = null;
+        private Report lastValueForReport = null;
+        private Row lastValueForRow = null;
+
+        /// <summary>
+        /// (Variant) An expression, the value of which is displayed in the text-box.
+        /// This can be a constant expression for constant labels.
+        /// </summary>
+        internal Expression Value { get; set; }
+
+        /// <summary>
+        /// Indicates the Textbox size can increase to accommodate the contents
+        /// </summary>
+        internal bool CanGrow { get; set; }
+
+        /// <summary>
+        /// Indicates the Textbox size can decrease to match the contents
+        /// </summary>
+        internal bool CanShrink { get; set; }
+
+        /// <summary>
+        /// Indicates the item should be hidden when the value of the expression
+        /// associated with the report item is the same as the preceding instance.
+        /// The value of HideDuplicates is the name of a grouping or data set over which
+        /// to apply the hiding. Each time a new instance of that group is
+        /// encountered, the first instance of this report item will not be hidden.
+        /// Rows on a previous page are ignored for the purposes of hiding duplicates.
+        /// If the textbox is in a table or matrix cell, only the text will be hidden.
+        /// The textbox will remain to provide background and border for the cell.
+        /// Ignored in matrix subtotals.
+        /// </summary>
+        internal string HideDuplicates { get; set; }
+
+        /// <summary>
+        /// Indicates the initial state of a toggling image should one be
+        /// displayed as a part of the textbox.
+        /// </summary>
+        internal ToggleImage ToggleImage { get; set; }
+
+        /// <summary>
+        /// Textbox is used to toggle a detail row
+        /// </summary>
+        internal bool IsToggle { get; set; }
 
         internal Textbox(ReportDefn r, ReportLink p, XmlNode xNode) : base(r, p, xNode)
         {
-            _Value = null;
-            _CanGrow = false;
-            _CanShrink = false;
-            _HideDuplicates = null;
-            _ToggleImage = null;
+            Value = null;
+            CanGrow = false;
+            CanShrink = false;
+            HideDuplicates = null;
+            ToggleImage = null;
             _DataElementStyle = DataElementStyleEnum.Auto;
 
             // Loop thru all the child nodes
@@ -71,19 +92,19 @@ namespace appbox.Reporting.RDL
                 switch (xNodeLoop.Name)
                 {
                     case "Value":
-                        _Value = new Expression(r, this, xNodeLoop, ExpressionType.Variant);
+                        Value = new Expression(r, this, xNodeLoop, ExpressionType.Variant);
                         break;
                     case "CanGrow":
-                        _CanGrow = XmlUtil.Boolean(xNodeLoop.InnerText, OwnerReport.rl);
+                        CanGrow = XmlUtil.Boolean(xNodeLoop.InnerText, OwnerReport.rl);
                         break;
                     case "CanShrink":
-                        _CanShrink = XmlUtil.Boolean(xNodeLoop.InnerText, OwnerReport.rl);
+                        CanShrink = XmlUtil.Boolean(xNodeLoop.InnerText, OwnerReport.rl);
                         break;
                     case "HideDuplicates":
-                        _HideDuplicates = xNodeLoop.InnerText;
+                        HideDuplicates = xNodeLoop.InnerText;
                         break;
                     case "ToggleImage":
-                        _ToggleImage = new ToggleImage(r, this, xNodeLoop);
+                        ToggleImage = new ToggleImage(r, this, xNodeLoop);
                         break;
                     case "DataElementStyle":
                         _DataElementStyle = RDL.DataElementStyle.GetStyle(xNodeLoop.InnerText, OwnerReport.rl);
@@ -97,7 +118,7 @@ namespace appbox.Reporting.RDL
                 }
             }
 
-            if (_Value == null)
+            if (Value == null)
                 OwnerReport.rl.LogError(8, "Textbox value not specified for " + (this.Name == null ? "'name not specified'" : this.Name.Nm));
 
             if (this.Name != null)
@@ -117,20 +138,20 @@ namespace appbox.Reporting.RDL
         override internal void FinalPass()
         {
             base.FinalPass();
-            _Value.FinalPass();
+            Value.FinalPass();
 
             //The Changes below were added from Forum, User: solidstate
             if (this.DataElementName == null && this.Name == null)
             {
                 // no name or dataelementname; try using expression
-                FunctionField ff = _Value.Expr as FunctionField;
+                FunctionField ff = Value.Expr as FunctionField;
                 if (ff != null && ff.Fld != null)
                 {
                     this.DataElementName = ff.Fld.DataField;
                     this.Name = ff.Fld.Name; // Added 
                 }
 
-                FunctionAggr fa = _Value.Expr as FunctionAggr;
+                FunctionAggr fa = Value.Expr as FunctionAggr;
                 if (fa != null)
                 {
                     FunctionField ff2 = fa.Expr as FunctionField;
@@ -142,16 +163,16 @@ namespace appbox.Reporting.RDL
                 }
             }
 
-            if (_ToggleImage != null)
-                _ToggleImage.FinalPass();
+            if (ToggleImage != null)
+                ToggleImage.FinalPass();
 
-            if (_HideDuplicates != null)
+            if (HideDuplicates != null)
             {
-                object o = OwnerReport.LUAggrScope[_HideDuplicates];
+                object o = OwnerReport.LUAggrScope[HideDuplicates];
                 if (o == null)
                 {
-                    OwnerReport.rl.LogError(4, "HideDuplicate '" + _HideDuplicates + "' is not a Group or DataSet name.   It will be ignored.");
-                    _HideDuplicates = null;
+                    OwnerReport.rl.LogError(4, "HideDuplicate '" + HideDuplicates + "' is not a Group or DataSet name.   It will be ignored.");
+                    HideDuplicates = null;
                 }
                 else if (o is Grouping)
                 {
@@ -302,7 +323,7 @@ namespace appbox.Reporting.RDL
         //  ie: same as previous text and on same page
         private bool RunTextIsDuplicate(TextboxRuntime tbr, string t, Page p)
         {
-            if (this._HideDuplicates == null)
+            if (this.HideDuplicates == null)
                 return false;
             if (t == tbr.PreviousText && p == tbr.PreviousPage)
                 return true;
@@ -321,7 +342,7 @@ namespace appbox.Reporting.RDL
                     o = null;
                 }
             }
-            string t = Style.GetFormatedString(rpt, this.Style, row, o, _Value.GetTypeCode());
+            string t = Style.GetFormatedString(rpt, this.Style, row, o, Value.GetTypeCode());
             if (IsHtml(rpt, row) && t != null && t.Contains("<expr>"))
             {
                 string[] parts = HTMLEXPR.Split(t);
@@ -356,7 +377,7 @@ namespace appbox.Reporting.RDL
 
             object o = Evaluate(rpt, row);
 
-            TypeCode tc = _Value.GetTypeCode();
+            TypeCode tc = Value.GetTypeCode();
             int width = this.WidthCalc(rpt, g);
 
             if (this.Style != null)
@@ -390,36 +411,12 @@ namespace appbox.Reporting.RDL
         {
             if (r == null || lastValueForRow != r || lastValueForReport != rpt)
             {
-                lastEvaluatedValue = _Value.Evaluate(rpt, r);
+                lastEvaluatedValue = Value.Evaluate(rpt, r);
                 lastValueForReport = rpt;
                 lastValueForRow = r;
             }
 
             return lastEvaluatedValue;
-        }
-
-        internal Expression Value
-        {
-            get { return _Value; }
-            set { _Value = value; }
-        }
-
-        internal bool CanGrow
-        {
-            get { return _CanGrow; }
-            set { _CanGrow = value; }
-        }
-
-        internal bool CanShrink
-        {
-            get { return _CanShrink; }
-            set { _CanShrink = value; }
-        }
-
-        internal string HideDuplicates
-        {
-            get { return _HideDuplicates; }
-            set { _HideDuplicates = value; }
         }
 
         internal bool IsHtml(Report rpt, Row row)
@@ -432,35 +429,10 @@ namespace appbox.Reporting.RDL
             return format.ToLower() == "html";
         }
 
-        internal ToggleImage ToggleImage
-        {
-            get { return _ToggleImage; }
-            set { _ToggleImage = value; }
-        }
-
-        internal bool IsToggle
-        {
-            get { return _IsToggle; }
-            set { _IsToggle = value; }
-        }
-
         internal int RunCount(Report rpt)
         {
             TextboxRuntime tbr = TextboxRuntime.GetTextboxRuntime(rpt, this);
-
             return tbr.RunCount;
-        }
-
-        internal DataElementStyleEnum DataElementStyle
-        {
-            get
-            {
-                if (_DataElementStyle == DataElementStyleEnum.Auto) // auto means use report
-                    return OwnerReport.DataElementStyle;
-                else
-                    return _DataElementStyle;
-            }
-            set { _DataElementStyle = value; }
         }
 
     }
