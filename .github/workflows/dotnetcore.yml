@@ -22,7 +22,7 @@ jobs:
     - name: Build with dotnet
       run: |
         dotnet publish -r win-x64 -c Release -o bin\AppContainer appbox.AppContainer\appbox.AppContainer.csproj
-        ncbeauty --loglevel=Info --nopatch=True bin\AppContainer lib
+        ncbeauty --force=True --loglevel=Info --nopatch=True bin\AppContainer lib
         dir bin\AppContainer
         dotnet publish -r win-x64 -c Release -o bin\Host appbox.Host\appbox.Host.csproj
         ncbeauty --loglevel=Info --nopatch=True bin\Host lib
