@@ -1,4 +1,3 @@
-
 using System;
 using System.Xml;
 
@@ -10,23 +9,34 @@ namespace appbox.Reporting.RDL
 	[Serializable]
 	internal class Rectangle : ReportItem
 	{
-		ReportItems _ReportItems;	// Report items contained within the bounds of the rectangle.
-		bool _PageBreakAtStart;		// Indicates the report should page break at the start of the rectangle.
-		bool _PageBreakAtEnd;		// Indicates the report should page break at the end of the rectangle.		
+		/// <summary>
+		/// Report items contained within the bounds of the rectangle.
+		/// </summary>
+		internal ReportItems ReportItems { get; set; }
+
+		/// <summary>
+		/// Indicates the report should page break at the start of the rectangle.
+		/// </summary>
+		internal bool PageBreakAtStart { get; set; }
+
+		/// <summary>
+		/// Indicates the report should page break at the end of the rectangle.
+		/// </summary>
+		internal bool PageBreakAtEnd { get; set; }
 
 		// constructor that doesn't process syntax
 		internal Rectangle(ReportDefn r, ReportLink p, XmlNode xNode, bool bNoLoop):base(r,p,xNode)
 		{
-			_ReportItems=null;
-			_PageBreakAtStart=false;
-			_PageBreakAtEnd=false;
+			ReportItems=null;
+			PageBreakAtStart=false;
+			PageBreakAtEnd=false;
 		}
 
 		internal Rectangle(ReportDefn r, ReportLink p, XmlNode xNode):base(r,p,xNode)
 		{
-			_ReportItems=null;
-			_PageBreakAtStart=false;
-			_PageBreakAtEnd=false;
+			ReportItems=null;
+			PageBreakAtStart=false;
+			PageBreakAtEnd=false;
 
 			// Loop thru all the child nodes
 			foreach(XmlNode xNodeLoop in xNode.ChildNodes)
@@ -36,13 +46,13 @@ namespace appbox.Reporting.RDL
 				switch (xNodeLoop.Name)
 				{
 					case "ReportItems":
-						_ReportItems = new ReportItems(r, this, xNodeLoop);
+						ReportItems = new ReportItems(r, this, xNodeLoop);
 						break;
 					case "PageBreakAtStart":
-						_PageBreakAtStart = XmlUtil.Boolean(xNodeLoop.InnerText, OwnerReport.rl);
+						PageBreakAtStart = XmlUtil.Boolean(xNodeLoop.InnerText, OwnerReport.rl);
 						break;
 					case "PageBreakAtEnd":
-						_PageBreakAtEnd = XmlUtil.Boolean(xNodeLoop.InnerText, OwnerReport.rl);
+						PageBreakAtEnd = XmlUtil.Boolean(xNodeLoop.InnerText, OwnerReport.rl);
 						break;
 					default:	
 						if (ReportItemElement(xNodeLoop))	// try at ReportItem level
@@ -58,8 +68,8 @@ namespace appbox.Reporting.RDL
 		{
 			base.FinalPass();
 
-			if (_ReportItems != null)
-				_ReportItems.FinalPass();
+			if (ReportItems != null)
+				ReportItems.FinalPass();
 
 			return;
 		}
@@ -68,12 +78,12 @@ namespace appbox.Reporting.RDL
 		{
 			base.Run(ip, row);
 
-			if (_ReportItems == null)
+			if (ReportItems == null)
 				return;
 
 			if (ip.RectangleStart(this, row))
 			{
-				_ReportItems.Run(ip, row);
+				ReportItems.Run(ip, row);
 				ip.RectangleEnd(this, row);
 			}
 		}
@@ -102,12 +112,12 @@ namespace appbox.Reporting.RDL
                 Page p = pgs.CurrentPage;
                 p.AddObject(pr);
 
-                if (_ReportItems != null)
+                if (ReportItems != null)
                 {
                     float saveY = p.YOffset;
        //             p.YOffset += (Top == null ? 0 : this.Top.Points);
                     p.YOffset = pr.Y;       // top of rectangle is base for contained report items
-                    _ReportItems.RunPage(pgs, row, GetOffsetCalc(pgs.Report) + LeftCalc(r));
+                    ReportItems.RunPage(pgs, row, GetOffsetCalc(pgs.Report) + LeftCalc(r));
                     p.YOffset = saveY;
                 }
 
@@ -126,31 +136,14 @@ namespace appbox.Reporting.RDL
         {
             base.RemoveWC(rpt);
 
-            if (this._ReportItems == null)
+            if (this.ReportItems == null)
                 return;
 
-            foreach (ReportItem ri in this._ReportItems.Items)
+            foreach (ReportItem ri in this.ReportItems.Items)
             {
                 ri.RemoveWC(rpt);
             }
         }
 
-		internal ReportItems ReportItems
-		{
-			get { return  _ReportItems; }
-			set {  _ReportItems = value; }
-		}
-
-		internal bool PageBreakAtStart
-		{
-			get { return  _PageBreakAtStart; }
-			set {  _PageBreakAtStart = value; }
-		}
-
-		internal bool PageBreakAtEnd
-		{
-			get { return  _PageBreakAtEnd; }
-			set {  _PageBreakAtEnd = value; }
-		}
-	}
+    }
 }

@@ -1,7 +1,5 @@
-
 using System;
 using System.Xml;
-using System.IO;
 
 namespace appbox.Reporting.RDL
 {
@@ -11,20 +9,41 @@ namespace appbox.Reporting.RDL
 	[Serializable]
 	internal class Details : ReportLink
 	{
-		TableRows _TableRows;	// The details rows for the table. The details rows
-								// cannot contain any DataRegions in any of their TableCells.
-		Grouping _Grouping;		// The expressions to group the detail data by
-		Sorting _Sorting;		// The expressions to sort the detail data by
-		Visibility _Visibility;	// Indicates if the details should be hidden	
-		Textbox _ToggleTextbox;	//  resolved TextBox for toggling visibility
-	
-		internal Details(ReportDefn r, ReportLink p, XmlNode xNode) : base(r, p)
+		/// <summary>
+		/// The details rows for the table. The details rows
+		/// cannot contain any DataRegions in any of their TableCells.
+		/// </summary>
+		internal TableRows TableRows { get; set; }
+
+		/// <summary>
+		/// The expressions to group the detail data by
+		/// </summary>
+		internal Grouping Grouping { get; set; }
+
+		/// <summary>
+		/// The expressions to sort the detail data by
+		/// </summary>
+		internal Sorting Sorting { get; set; }
+
+		/// <summary>
+		/// Indicates if the details should be hidden
+		/// </summary>
+		internal Visibility Visibility { get; set; }
+
+		/// <summary>
+		/// resolved TextBox for toggling visibility
+		/// </summary>
+		internal Textbox ToggleTextbox { get; private set; }
+
+        internal Table OwnerTable => (Table)Parent;
+
+        internal Details(ReportDefn r, ReportLink p, XmlNode xNode) : base(r, p)
 		{
-			_TableRows=null;
-			_Grouping=null;
-			_Sorting=null;
-			_Visibility=null;
-			_ToggleTextbox = null;
+			TableRows=null;
+			Grouping=null;
+			Sorting=null;
+			Visibility=null;
+			ToggleTextbox = null;
 
 			// Loop thru all the child nodes
 			foreach(XmlNode xNodeLoop in xNode.ChildNodes)
@@ -34,16 +53,16 @@ namespace appbox.Reporting.RDL
 				switch (xNodeLoop.Name)
 				{
 					case "TableRows":
-						_TableRows = new TableRows(r, this, xNodeLoop);
+						TableRows = new TableRows(r, this, xNodeLoop);
 						break;
 					case "Grouping":
-						_Grouping = new Grouping(r, this, xNodeLoop);
+						Grouping = new Grouping(r, this, xNodeLoop);
 						break;
 					case "Sorting":
-						_Sorting = new Sorting(r, this, xNodeLoop);
+						Sorting = new Sorting(r, this, xNodeLoop);
 						break;
 					case "Visibility":
-						_Visibility = new Visibility(r, this, xNodeLoop);
+						Visibility = new Visibility(r, this, xNodeLoop);
 						break;
 					default:
 						// don't know this element - log it
@@ -51,25 +70,25 @@ namespace appbox.Reporting.RDL
 						break;
 				}
 			}
-			if (_TableRows == null)
+			if (TableRows == null)
 				OwnerReport.rl.LogError(8, "Details requires the TableRows element.");
 		}
 		
 		override internal void FinalPass()
 		{
-			_TableRows.FinalPass();
-			if (_Grouping != null)
-				_Grouping.FinalPass();
-			if (_Sorting != null)
-				_Sorting.FinalPass();
-			if (_Visibility != null)
+			TableRows.FinalPass();
+			if (Grouping != null)
+				Grouping.FinalPass();
+			if (Sorting != null)
+				Sorting.FinalPass();
+			if (Visibility != null)
 			{
-				_Visibility.FinalPass();
-				if (_Visibility.ToggleItem != null)
+				Visibility.FinalPass();
+				if (Visibility.ToggleItem != null)
 				{
-					_ToggleTextbox = (Textbox) (OwnerReport.LUReportItems[_Visibility.ToggleItem]);
-					if (_ToggleTextbox != null)
-						_ToggleTextbox.IsToggle = true;
+					ToggleTextbox = (Textbox) (OwnerReport.LUReportItems[Visibility.ToggleItem]);
+					if (ToggleTextbox != null)
+						ToggleTextbox.IsToggle = true;
 				}
 			}
 			return;
@@ -85,7 +104,7 @@ namespace appbox.Reporting.RDL
 
 			for (int r=start; r <= end; r++)
 			{
-				_TableRows.Run(ip, rs.Data[r]);
+				TableRows.Run(ip, rs.Data[r]);
 			}
 			return;
 		}
@@ -119,56 +138,23 @@ namespace appbox.Reporting.RDL
                     OwnerTable.RunPageFooter(pgs, row, false);
 					p = OwnerTable.RunPageNew(pgs, p);
 					OwnerTable.RunPageHeader(pgs, row, false, null);
-                    _TableRows.RunPage(pgs, row, true);   // force checking since header + hrows might be > BottomOfPage
+                    TableRows.RunPage(pgs, row, true);   // force checking since header + hrows might be > BottomOfPage
                 }
                 else 
-				    _TableRows.RunPage(pgs, row, hrows > pgs.BottomOfPage);
+				    TableRows.RunPage(pgs, row, hrows > pgs.BottomOfPage);
 			}
 			return;
 		}
-  
-		internal TableRows TableRows
-		{
-			get { return  _TableRows; }
-			set {  _TableRows = value; }
-		}
 
-		internal float HeightOfRows(Pages pgs, Row r)
+        internal float HeightOfRows(Pages pgs, Row r)
 		{
             if (this.Visibility != null && Visibility.IsHidden(pgs.Report, r))
             {
                 return 0;
             }
 
-			return _TableRows.HeightOfRows(pgs, r);
+			return TableRows.HeightOfRows(pgs, r);
 		}
-
-		internal Grouping Grouping
-		{
-			get { return  _Grouping; }
-			set {  _Grouping = value; }
-		}
-
-		internal Sorting Sorting
-		{
-			get { return  _Sorting; }
-			set {  _Sorting = value; }
-		}
-
-		internal Table OwnerTable
-		{
-			get { return (Table) (this.Parent); }
-		}
-
-		internal Visibility Visibility
-		{
-			get { return  _Visibility; }
-			set {  _Visibility = value; }
-		}
-
-		internal Textbox ToggleTextbox
-		{
-			get { return  _ToggleTextbox; }
-		}
-	}
+        
+    }
 }

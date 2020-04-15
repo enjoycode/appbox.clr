@@ -1,8 +1,6 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Xml;
-using System.IO;
 
 namespace appbox.Reporting.RDL
 {
@@ -12,12 +10,15 @@ namespace appbox.Reporting.RDL
     [Serializable]
     internal class TableCells : ReportLink
     {
-        List<TableCell> _Items;         // list of TableCell
+        /// <summary>
+        /// list of TableCell
+        /// </summary>
+        internal List<TableCell> Items { get; }
 
         internal TableCells(ReportDefn r, ReportLink p, XmlNode xNode) : base(r, p)
         {
             TableCell tc;
-            _Items = new List<TableCell>();
+            Items = new List<TableCell>();
             // Loop thru all the child nodes
             int colIndex = 0;           // keep track of the column numbers
             foreach (XmlNode xNodeLoop in xNode.ChildNodes)
@@ -37,15 +38,15 @@ namespace appbox.Reporting.RDL
                         break;
                 }
                 if (tc != null)
-                    _Items.Add(tc);
+                    Items.Add(tc);
             }
-            if (_Items.Count > 0)
-                _Items.TrimExcess();
+            if (Items.Count > 0)
+                Items.TrimExcess();
         }
 
         override internal void FinalPass()
         {
-            foreach (TableCell tc in _Items)
+            foreach (TableCell tc in Items)
             {
                 tc.FinalPass();
             }
@@ -54,7 +55,7 @@ namespace appbox.Reporting.RDL
 
         internal void Run(IPresent ip, Row row)
         {
-            foreach (TableCell tc in _Items)
+            foreach (TableCell tc in Items)
             {
                 tc.Run(ip, row);
             }
@@ -70,7 +71,7 @@ namespace appbox.Reporting.RDL
             Page maxpg = savepg;
             float maxy = savey;
 
-            foreach (TableCell tc in _Items)
+            foreach (TableCell tc in Items)
             {
                 tc.RunPage(pgs, row);
                 if (maxpg != pgs.CurrentPage)
@@ -94,9 +95,5 @@ namespace appbox.Reporting.RDL
             return;
         }
 
-        internal List<TableCell> Items
-        {
-            get { return _Items; }
-        }
     }
 }

@@ -12,12 +12,15 @@ namespace appbox.Reporting.RDL
 	[Serializable]
 	internal class TableColumns : ReportLink, IEnumerable<TableColumn>
 	{
-        List<TableColumn> _Items;			// list of TableColumn
+		/// <summary>
+		/// list of TableColumn
+		/// </summary>
+		internal List<TableColumn> Items { get; }
 
 		internal TableColumns(ReportDefn r, ReportLink p, XmlNode xNode) : base(r, p)
 		{
 			TableColumn tc;
-            _Items = new List<TableColumn>();
+            Items = new List<TableColumn>();
 			// Loop thru all the child nodes
 			foreach(XmlNode xNodeLoop in xNode.ChildNodes)
 			{
@@ -35,25 +38,25 @@ namespace appbox.Reporting.RDL
 						break;
 				}
 				if (tc != null)
-					_Items.Add(tc);
+					Items.Add(tc);
 			}
-			if (_Items.Count == 0)
+			if (Items.Count == 0)
 				OwnerReport.rl.LogError(8, "For TableColumns at least one TableColumn is required.");
 			else
-                _Items.TrimExcess();
+                Items.TrimExcess();
 		}
 
 		internal TableColumn this[int ci]
 		{
 			get
 			{
-				return _Items[ci] as TableColumn;
+				return Items[ci] as TableColumn;
 			}
 		}
 		
 		override internal void FinalPass()
 		{
-			foreach (TableColumn tc in _Items)
+			foreach (TableColumn tc in Items)
 			{
 				tc.FinalPass();
 			}
@@ -62,7 +65,7 @@ namespace appbox.Reporting.RDL
 
 		internal void Run(IPresent ip, Row row)
 		{
-			foreach (TableColumn tc in _Items)
+			foreach (TableColumn tc in Items)
 			{
 				tc.Run(ip, row);
 			}
@@ -74,7 +77,7 @@ namespace appbox.Reporting.RDL
 		{
 			float x = startpos;
 
-			foreach (TableColumn tc in _Items)
+			foreach (TableColumn tc in Items)
 			{
 				if (tc.IsHidden(rpt, row))
 					continue;
@@ -84,28 +87,18 @@ namespace appbox.Reporting.RDL
 			return;
 		}
 
-        internal List<TableColumn> Items
-		{
-			get { return  _Items; }
-		}
-
-
         #region IEnumerable<TableColumn> Members
-
         public IEnumerator<TableColumn> GetEnumerator()
         {
-            return _Items.GetEnumerator();
+            return Items.GetEnumerator();
         }
-
         #endregion
 
         #region IEnumerable Members
-
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return _Items.GetEnumerator();
+            return Items.GetEnumerator();
         }
-
         #endregion
     }
 }

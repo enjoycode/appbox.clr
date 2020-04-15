@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Xml;
 
@@ -11,12 +10,15 @@ namespace appbox.Reporting.RDL
 	[Serializable]
 	internal class TableGroups : ReportLink
 	{
-        List<TableGroup> _Items;			// list of TableGroup entries
+		/// <summary>
+		/// list of TableGroup entries
+		/// </summary>
+		internal List<TableGroup> Items { get; }
 
 		internal TableGroups(ReportDefn r, ReportLink p, XmlNode xNode) : base(r, p)
 		{
 			TableGroup tg;
-            _Items = new List<TableGroup>();
+            Items = new List<TableGroup>();
 			// Loop thru all the child nodes
 			foreach(XmlNode xNodeLoop in xNode.ChildNodes)
 			{
@@ -34,17 +36,17 @@ namespace appbox.Reporting.RDL
 						break;
 				}
 				if (tg != null)
-					_Items.Add(tg);
+					Items.Add(tg);
 			}
-			if (_Items.Count == 0)
+			if (Items.Count == 0)
 				OwnerReport.rl.LogError(8, "For TableGroups at least one TableGroup is required.");
 			else
-                _Items.TrimExcess();
+                Items.TrimExcess();
 		}
 		
 		override internal void FinalPass()
 		{
-			foreach(TableGroup tg in _Items)
+			foreach(TableGroup tg in Items)
 			{
 				tg.FinalPass();
 			}
@@ -55,16 +57,12 @@ namespace appbox.Reporting.RDL
 		internal float DefnHeight()
 		{
 			float height=0;
-			foreach(TableGroup tg in _Items)
+			foreach(TableGroup tg in Items)
 			{
 				height += tg.DefnHeight();
 			}
 			return height;
 		}
 
-        internal List<TableGroup> Items
-		{
-			get { return  _Items; }
-		}
-	}
+    }
 }

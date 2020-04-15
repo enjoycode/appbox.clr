@@ -1,8 +1,6 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Xml;
-using System.IO;
 using appbox.Reporting.Resources;
 
 namespace appbox.Reporting.RDL
@@ -13,14 +11,18 @@ namespace appbox.Reporting.RDL
 	[Serializable]
 	internal class TableRows : ReportLink
 	{
-        List<TableRow> _Items;			// list of TableRow
-		float _HeightOfRows;		// height of contained rows
-		bool _CanGrow;				// if any TableRow contains a TextBox with CanGrow
+		/// <summary>
+		/// list of TableRow
+		/// </summary>
+		internal List<TableRow> Items { get; }
+
+        private float _HeightOfRows;        // height of contained rows
+        private bool _CanGrow;				// if any TableRow contains a TextBox with CanGrow
 
 		internal TableRows(ReportDefn r, ReportLink p, XmlNode xNode) : base(r, p)
 		{
 			TableRow t;
-            _Items = new List<TableRow>();
+            Items = new List<TableRow>();
 			_CanGrow = false;
 			// Loop thru all the child nodes
 			foreach(XmlNode xNodeLoop in xNode.ChildNodes)
@@ -39,18 +41,18 @@ namespace appbox.Reporting.RDL
 						break;
 				}
 				if (t != null)
-					_Items.Add(t);
+					Items.Add(t);
 			}
-			if (_Items.Count == 0)
+			if (Items.Count == 0)
 				OwnerReport.rl.LogError(8, "For TableRows at least one TableRow is required.");
 			else
-                _Items.TrimExcess();
+                Items.TrimExcess();
 		}
 		
 		override internal void FinalPass()
 		{
 			_HeightOfRows = 0;
-			foreach (TableRow t in _Items)
+			foreach (TableRow t in Items)
 			{
 				_HeightOfRows += t.Height.Points;
 				t.FinalPass();
@@ -62,7 +64,7 @@ namespace appbox.Reporting.RDL
 
 		internal void Run(IPresent ip, Row row)
 		{
-			foreach (TableRow t in _Items)
+			foreach (TableRow t in Items)
 			{
 				t.Run(ip, row);
 			}
@@ -78,7 +80,7 @@ namespace appbox.Reporting.RDL
 		{
 			if (bCheckRows)
 			{	// we need to check to see if a row will fit on the page
-				foreach (TableRow t in _Items)
+				foreach (TableRow t in Items)
 				{
 					Page p = pgs.CurrentPage;			// this can change after running a row
 					float hrows = t.HeightOfRow(pgs, row);	// height of this row
@@ -93,7 +95,7 @@ namespace appbox.Reporting.RDL
 			}
 			else
 			{	// all rows will fit on the page
-				foreach (TableRow t in _Items)
+				foreach (TableRow t in Items)
 					t.RunPage(pgs, row);
 			}
 			return;
@@ -116,7 +118,7 @@ namespace appbox.Reporting.RDL
 		internal float DefnHeight()
 		{
 			float height=0;
-			foreach (TableRow tr in this._Items)
+			foreach (TableRow tr in this.Items)
 			{
 				height += tr.Height.Points;
 			}
@@ -129,7 +131,7 @@ namespace appbox.Reporting.RDL
 				return _HeightOfRows;
 			
 			float height=0;
-			foreach (TableRow tr in this._Items)
+			foreach (TableRow tr in this.Items)
 			{
 				height += tr.HeightOfRow(pgs, r);
 			}
@@ -137,9 +139,5 @@ namespace appbox.Reporting.RDL
 			return Math.Max(height, _HeightOfRows);
 		}
 
-        internal List<TableRow> Items
-		{
-			get { return  _Items; }
-		}
-	}
+    }
 }
