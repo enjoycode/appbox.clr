@@ -9,22 +9,48 @@ namespace appbox.Reporting.RDL
     [Serializable]
     internal class TableGroup : ReportLink
     {
-        Grouping _Grouping;     // The expressions to group the data by.
-        Sorting _Sorting;       // The expressions to sort the data by.
-        Header _Header;         // A group header row.
-        Footer _Footer;         // A group footer row.
-        Visibility _Visibility; // Indicates if the group (and all groups embedded
-                                // within it) should be hidden.		
-        Textbox _ToggleTextbox; //  resolved TextBox for toggling visibility
+        /// <summary>
+        /// The expressions to group the data by.
+        /// </summary>
+        internal Grouping Grouping { get; set; }
+
+        /// <summary>
+        /// The expressions to sort the data by.
+        /// </summary>
+        internal Sorting Sorting { get; set; }
+
+        /// <summary>
+        /// A group header row.
+        /// </summary>
+        internal Header Header { get; set; }
+
+        internal int HeaderCount => Header == null ? 0 : Header.TableRows.Items.Count;
+
+        /// <summary>
+        /// A group footer row.
+        /// </summary>
+        internal Footer Footer { get; set; }
+
+        internal int FooterCount => Footer == null ? 0 : Footer.TableRows.Items.Count;
+
+        /// <summary>
+        /// Indicates if the group (and all groups embedded within it) should be hidden.	
+        /// </summary>
+        internal Visibility Visibility { get; set; }
+
+        /// <summary>
+        /// resolved TextBox for toggling visibility
+        /// </summary>
+        internal Textbox ToggleTextbox { get; private set; }
 
         internal TableGroup(ReportDefn r, ReportLink p, XmlNode xNode) : base(r, p)
         {
-            _Grouping = null;
-            _Sorting = null;
-            _Header = null;
-            _Footer = null;
-            _Visibility = null;
-            _ToggleTextbox = null;
+            Grouping = null;
+            Sorting = null;
+            Header = null;
+            Footer = null;
+            Visibility = null;
+            ToggleTextbox = null;
 
             // Loop thru all the child nodes
             foreach (XmlNode xNodeLoop in xNode.ChildNodes)
@@ -34,19 +60,19 @@ namespace appbox.Reporting.RDL
                 switch (xNodeLoop.Name)
                 {
                     case "Grouping":
-                        _Grouping = new Grouping(r, this, xNodeLoop);
+                        Grouping = new Grouping(r, this, xNodeLoop);
                         break;
                     case "Sorting":
-                        _Sorting = new Sorting(r, this, xNodeLoop);
+                        Sorting = new Sorting(r, this, xNodeLoop);
                         break;
                     case "Header":
-                        _Header = new Header(r, this, xNodeLoop);
+                        Header = new Header(r, this, xNodeLoop);
                         break;
                     case "Footer":
-                        _Footer = new Footer(r, this, xNodeLoop);
+                        Footer = new Footer(r, this, xNodeLoop);
                         break;
                     case "Visibility":
-                        _Visibility = new Visibility(r, this, xNodeLoop);
+                        Visibility = new Visibility(r, this, xNodeLoop);
                         break;
                     default:
                         // don't know this element - log it
@@ -54,28 +80,28 @@ namespace appbox.Reporting.RDL
                         break;
                 }
             }
-            if (_Grouping == null)
+            if (Grouping == null)
                 OwnerReport.rl.LogError(8, "TableGroup requires the Grouping element.");
         }
 
         override internal void FinalPass()
         {
-            if (_Grouping != null)
-                _Grouping.FinalPass();
-            if (_Sorting != null)
-                _Sorting.FinalPass();
-            if (_Header != null)
-                _Header.FinalPass();
-            if (_Footer != null)
-                _Footer.FinalPass();
-            if (_Visibility != null)
+            if (Grouping != null)
+                Grouping.FinalPass();
+            if (Sorting != null)
+                Sorting.FinalPass();
+            if (Header != null)
+                Header.FinalPass();
+            if (Footer != null)
+                Footer.FinalPass();
+            if (Visibility != null)
             {
-                _Visibility.FinalPass();
-                if (_Visibility.ToggleItem != null)
+                Visibility.FinalPass();
+                if (Visibility.ToggleItem != null)
                 {
-                    _ToggleTextbox = (Textbox)(OwnerReport.LUReportItems[_Visibility.ToggleItem]);
-                    if (_ToggleTextbox != null)
-                        _ToggleTextbox.IsToggle = true;
+                    ToggleTextbox = (Textbox)(OwnerReport.LUReportItems[Visibility.ToggleItem]);
+                    if (ToggleTextbox != null)
+                        ToggleTextbox.IsToggle = true;
                 }
             }
             return;
@@ -84,70 +110,14 @@ namespace appbox.Reporting.RDL
         internal float DefnHeight()
         {
             float height = 0;
-            if (_Header != null)
-                height += _Header.TableRows.DefnHeight();
+            if (Header != null)
+                height += Header.TableRows.DefnHeight();
 
-            if (_Footer != null)
-                height += _Footer.TableRows.DefnHeight();
+            if (Footer != null)
+                height += Footer.TableRows.DefnHeight();
 
             return height;
         }
 
-        internal Grouping Grouping
-        {
-            get { return _Grouping; }
-            set { _Grouping = value; }
-        }
-
-        internal Sorting Sorting
-        {
-            get { return _Sorting; }
-            set { _Sorting = value; }
-        }
-
-        internal Header Header
-        {
-            get { return _Header; }
-            set { _Header = value; }
-        }
-
-        internal int HeaderCount
-        {
-            get
-            {
-                if (_Header == null)
-                    return 0;
-                else
-                    return _Header.TableRows.Items.Count;
-            }
-        }
-
-        internal Footer Footer
-        {
-            get { return _Footer; }
-            set { _Footer = value; }
-        }
-
-        internal int FooterCount
-        {
-            get
-            {
-                if (_Footer == null)
-                    return 0;
-                else
-                    return _Footer.TableRows.Items.Count;
-            }
-        }
-
-        internal Visibility Visibility
-        {
-            get { return _Visibility; }
-            set { _Visibility = value; }
-        }
-
-        internal Textbox ToggleTextbox
-        {
-            get { return _ToggleTextbox; }
-        }
     }
 }

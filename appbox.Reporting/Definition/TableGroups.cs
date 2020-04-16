@@ -50,8 +50,6 @@ namespace appbox.Reporting.RDL
 			{
 				tg.FinalPass();
 			}
-
-			return;
 		}
 
 		internal float DefnHeight()
