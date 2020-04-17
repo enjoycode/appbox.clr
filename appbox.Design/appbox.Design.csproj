@@ -65,6 +65,7 @@
     <Folder Include="Omnisharp\Roslyn.CSharp\Services\Structure\" />
     <Folder Include="Omnisharp\Abstractions\Models\" />
     <Folder Include="Handlers\Enum\" />
+    <Folder Include="Handlers\Report\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\appbox.Core\appbox.Core.csproj" />
@@ -74,9 +75,13 @@
     <Compile Remove="Resources\DummyCode\*.cs" />
     <EmbeddedResource Include="Resources\DummyCode\*.cs" />
     <Compile Remove="Omnisharp\Roslyn\Utilities\ISymbolExtensions.cs" />
+    <EmbeddedResource Include="Resources\EmptyReport.xml" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="3.4.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="3.4.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="Resources\EmptyReport.xml" />
   </ItemGroup>
 </Project>

@@ -19,19 +19,19 @@ namespace appbox.Design
 
             var res = new OpenViewModelResult();
             res.Model = (ViewModel)modelNode.Model;
-            bool hasLoadSource = false;
+            bool hasLoadFromStaged = false;
             if (modelNode.IsCheckoutByMe)
             {
                 var codes = await StagedService.LoadViewCodeAsync(modelNode.Model.Id);
                 if (codes.Item1)
                 {
-                    hasLoadSource = true;
+                    hasLoadFromStaged = true;
                     res.Template = codes.Item2;
                     res.Script = codes.Item3;
                     res.Style = codes.Item4;
                 }
             }
-            if (!hasLoadSource)
+            if (!hasLoadFromStaged)
             {
                 var codes = await Store.ModelStore.LoadViewCodeAsync(modelNode.Model.Id);
                 res.Template = codes.Item1;

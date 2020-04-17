@@ -132,12 +132,12 @@ namespace appbox.Design
                             }
                         }
                         break;
-                        //case ModelType.Report:
-                        //this.TreeView.DesignHub.ReportDesignService.FlushReportDefinition(this);
-                        //break;
+                    case ModelType.Report:
+                        await StagedService.SaveReportCodeAsync(Model.Id, (string)modelInfos[0]);
+                        break;
                 }
 
-                //注意：不再在此更新RoslynDocument, 实体模型通过设计命令更新,服务模型通过前端代码编辑器实时更新
+                //注意：不在此更新RoslynDocument, 实体模型通过设计命令更新,服务模型通过前端代码编辑器实时更新
             }
 
             //保存节点模型

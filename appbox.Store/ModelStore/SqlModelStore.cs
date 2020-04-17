@@ -356,6 +356,14 @@ namespace appbox.Store
             return ValueTuple.Create(templateCode, scriptCode, styleCode);
         }
 
+        internal static async ValueTask<string> LoadReportCodeAsync(ulong modelId)
+        {
+            var data = await LoadMetaDataAsync(Meta_Code, modelId.ToString());
+            if (data == null)
+                return null;
+            return ModelCodeUtil.DecompressCode(data);
+        }
+
         /// <summary>
         /// 加载指定应用的第三方组件列表，仅用于设计时前端绑定
         /// </summary>

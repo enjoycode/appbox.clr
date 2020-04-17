@@ -9,6 +9,45 @@ namespace appbox.Store
     /// </summary>
     internal static class ModelCodeUtil
     {
+        /// <summary>
+        /// 用于简单压缩代码
+        /// </summary>
+        internal static byte[] CompressCode(string code)
+        {
+            using var ms = new MemoryStream(1024);
+            //先写入字符数
+            Serialization.VariantHelper.WriteInt32(code.Length, ms);
+            using (var cs = new BrotliStream(ms, CompressionMode.Compress, true))
+            {
+                StringHelper.WriteTo(code, cs.WriteByte);
+            }
+
+            return ms.ToArray();
+        }
+
+        internal static unsafe string DecompressCode(byte[] data)
+        {
+            fixed (byte* dataPtr = data)
+            {
+                return DecompressCode(new IntPtr(dataPtr), data.Length);
+            }
+        }
+
+        internal unsafe static string DecompressCode(IntPtr dataPtr, int size)
+        {
+            string res;
+            byte* data = (byte*)dataPtr;
+            using (var ums = new UnmanagedMemoryStream(data, size))
+            {
+                //读取字符数
+                int chars1 = Serialization.VariantHelper.ReadInt32(ums);
+                //再从压缩流中读取
+                using var cs = new BrotliStream(ums, CompressionMode.Decompress, true);
+                res = StringHelper.ReadFrom(chars1, () => (byte)cs.ReadByte());
+            }
+            return res;
+        }
+
         internal static byte[] EncodeServiceCode(string sourceCode, string declareCode)
         {
             //头部 1字节压缩标记 + var字符个数 + var字符个数
@@ -32,38 +71,32 @@ namespace appbox.Store
             }
         }
 
-        internal static void DecodeServiceCode(byte[] data, out string sourceCode, out string declareCode)
+        internal static unsafe void DecodeServiceCode(byte[] data, out string sourceCode, out string declareCode)
         {
-            unsafe
+            fixed (byte* dataPtr = data)
             {
-                fixed (byte* dataPtr = data)
-                {
-                    DecodeServiceCode(new IntPtr(dataPtr), data.Length, out sourceCode, out declareCode);
-                }
+                DecodeServiceCode(new IntPtr(dataPtr), data.Length, out sourceCode, out declareCode);
             }
         }
 
-        internal static void DecodeServiceCode(IntPtr dataPtr, int size, out string sourceCode, out string declareCode)
+        internal static unsafe void DecodeServiceCode(IntPtr dataPtr, int size, out string sourceCode, out string declareCode)
         {
-            unsafe
+            byte* data = (byte*)dataPtr;
+            using (var ums = new UnmanagedMemoryStream(data, size))
             {
-                byte* data = (byte*)dataPtr;
-                using (var ums = new UnmanagedMemoryStream(data, size))
-                {
-                    ums.ReadByte();
+                ums.ReadByte();
 
-                    //读取字符数
-                    int chars1 = Serialization.VariantHelper.ReadInt32(ums);
-                    int chars2 = Serialization.VariantHelper.ReadInt32(ums);
-                    //再从压缩流中读取
-                    using (var cs = new BrotliStream(ums, CompressionMode.Decompress, true))
-                    {
-                        sourceCode = StringHelper.ReadFrom(chars1, () => (byte)cs.ReadByte());
-                        if (chars2 > 0)
-                            declareCode = StringHelper.ReadFrom(chars2, () => (byte)cs.ReadByte());
-                        else
-                            declareCode = null;
-                    }
+                //读取字符数
+                int chars1 = Serialization.VariantHelper.ReadInt32(ums);
+                int chars2 = Serialization.VariantHelper.ReadInt32(ums);
+                //再从压缩流中读取
+                using (var cs = new BrotliStream(ums, CompressionMode.Decompress, true))
+                {
+                    sourceCode = StringHelper.ReadFrom(chars1, () => (byte)cs.ReadByte());
+                    if (chars2 > 0)
+                        declareCode = StringHelper.ReadFrom(chars2, () => (byte)cs.ReadByte());
+                    else
+                        declareCode = null;
                 }
             }
         }

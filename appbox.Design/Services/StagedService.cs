@@ -16,6 +16,28 @@ namespace appbox.Design
     static class StagedService
     {
 
+        private static async Task<byte[]> LoadCodeDataAsync(ulong modelId)
+        {
+            var developerID = RuntimeContext.Current.CurrentSession.LeafOrgUnitID;
+
+#if FUTURE
+            var q = new TableScan(Consts.SYS_STAGED_MODEL_ID);
+            q.Filter(q.GetGuid(Consts.STAGED_DEVELOPERID_ID) == developerID &
+                     q.GetString(Consts.STAGED_MODELID_ID) == modelId.ToString() &
+                     q.GetByte(Consts.STAGED_TYPE_ID) == (byte)StagedType.SourceCode);
+#else
+            var q = new SqlQuery(Consts.SYS_STAGED_MODEL_ID);
+            q.Where(q.T["DeveloperId"] == developerID &
+                q.T["ModelId"] == modelId.ToString() &
+                q.T["Type"] == (byte)StagedType.SourceCode);
+#endif
+            var res = await q.ToListAsync();
+            if (res == null || res.Count == 0)
+                return null;
+
+            return res[0].GetBytes(Consts.STAGED_DATA_ID);
+        }
+
         /// <summary>
         /// 保存Staged模型
         /// </summary>
@@ -50,26 +72,24 @@ namespace appbox.Design
         /// </summary>
         internal static async ValueTask<string> LoadServiceCode(ulong serviceModelId)
         {
-            var developerID = RuntimeContext.Current.CurrentSession.LeafOrgUnitID;
+            var data = await LoadCodeDataAsync(serviceModelId);
+            if (data == null) return null;
 
-#if FUTURE
-            var q = new TableScan(Consts.SYS_STAGED_MODEL_ID);
-            q.Filter(q.GetGuid(Consts.STAGED_DEVELOPERID_ID) == developerID &
-                     q.GetString(Consts.STAGED_MODELID_ID) == serviceModelId.ToString() &
-                     q.GetByte(Consts.STAGED_TYPE_ID) == (byte)StagedType.SourceCode);
-#else
-            var q = new SqlQuery(Consts.SYS_STAGED_MODEL_ID);
-            q.Where(q.T["DeveloperId"] == developerID &
-                q.T["ModelId"] == serviceModelId.ToString() &
-                q.T["Type"] == (byte)StagedType.SourceCode);
-#endif
-            var res = await q.ToListAsync();
-            if (res == null || res.Count == 0)
-                return null;
-
-            var data = res[0].GetBytes(Consts.STAGED_DATA_ID);
             ModelCodeUtil.DecodeServiceCode(data, out string sourceCode, out string declareCode);
             return sourceCode;
+        }
+
+        internal static Task SaveReportCodeAsync(ulong modelId, string code)
+        {
+            var data = ModelCodeUtil.CompressCode(code);
+            return SaveAsync(StagedType.SourceCode, modelId.ToString(), data);
+        }
+
+        internal static async Task<string> LoadReportCodeAsync(ulong modelId)
+        {
+            var data = await LoadCodeDataAsync(modelId);
+            if (data == null) return null;
+            return ModelCodeUtil.DecompressCode(data);
         }
 
         /// <summary>
@@ -83,24 +103,9 @@ namespace appbox.Design
 
         internal static async Task<ValueTuple<bool, string, string, string>> LoadViewCodeAsync(ulong modelId)
         {
-            var developerID = RuntimeContext.Current.CurrentSession.LeafOrgUnitID;
+            var data = await LoadCodeDataAsync(modelId);
+            if (data == null) return ValueTuple.Create<bool, string, string, string>(false, null, null, null);
 
-#if FUTURE
-            var q = new TableScan(Consts.SYS_STAGED_MODEL_ID);
-            q.Filter(q.GetGuid(Consts.STAGED_DEVELOPERID_ID) == developerID &
-                     q.GetString(Consts.STAGED_MODELID_ID) == modelId.ToString() &
-                     q.GetByte(Consts.STAGED_TYPE_ID) == (byte)StagedType.SourceCode);
-#else
-            var q = new SqlQuery(Consts.SYS_STAGED_MODEL_ID);
-            q.Where(q.T["DeveloperId"] == developerID &
-                q.T["ModelId"] == modelId.ToString() &
-                q.T["Type"] == (byte)StagedType.SourceCode);
-#endif
-            var res = await q.ToListAsync();
-            if (res == null || res.Count == 0)
-                return ValueTuple.Create<bool, string, string, string>(false, null, null, null);
-
-            var data = res[0].GetBytes(Consts.STAGED_DATA_ID);
             ModelCodeUtil.DecodeViewCode(data, out string templateCode, out string scriptCode, out string styleCode);
             return ValueTuple.Create(true, templateCode, scriptCode, styleCode);
         }
