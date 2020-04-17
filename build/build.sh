@@ -17,12 +17,14 @@ rm bin/lib/appbox.*.*
 
 echo "====Build AppContainer===="
 rm -rf ../appbox.AppContainer/bin/$1/netcoreapp3.1/linux-x64/publish
+dotnet restore -f ../appbox.AppContainer
 dotnet publish -c $1 -r linux-x64 ../appbox.AppContainer
 ncbeauty --loglevel=Info --nopatch=True ../appbox.AppContainer/bin/$1/netcoreapp3.1/linux-x64/publish lib
 cp -arf ../appbox.AppContainer/bin/$1/netcoreapp3.1/linux-x64/publish/* bin/
 
 echo "====Build Host===="
 rm -rf ../appbox.Host/bin/$1/netcoreapp3.1/linux-x64/publish
+dotnet restore -f ../appbox.Host
 dotnet publish -c $1 -r linux-x64 ../appbox.Host
 ncbeauty --loglevel=Info --nopatch=True ../appbox.Host/bin/$1/netcoreapp3.1/linux-x64/publish lib
 cp -arf ../appbox.Host/bin/$1/netcoreapp3.1/linux-x64/publish/* bin/
