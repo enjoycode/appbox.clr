@@ -28,13 +28,6 @@ namespace appbox.Design
                     }
                 }
             }
-            else if (nodeType == DesignNodeType.ReportModelNode)
-            {
-                throw ExceptionHelper.NotImplemented();
-                //var sr = modelID.Split('.');
-                //var modelNode = hub.DesignTree.FindModelNode(ModelType.Report, sr[0], sr[1]);
-                //hub.ReportDesignService.CloseReportModel(modelNode);
-            }
             else if (nodeType == DesignNodeType.WorkflowModelNode)
             {
                 throw ExceptionHelper.NotImplemented();
