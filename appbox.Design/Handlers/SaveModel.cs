@@ -24,6 +24,11 @@ namespace appbox.Design
                 modelInfo[2] = args.GetString();
                 modelInfo[3] = args.GetString();
             }
+            else if (nodeType == DesignNodeType.ReportModelNode)
+            {
+                modelInfo = new object[1];
+                modelInfo[0] = args.GetString();
+            }
 
             var node = hub.DesignTree.FindNode(nodeType, modelID);
             if (node == null)
