@@ -90,7 +90,7 @@ namespace appbox.Serialization
             RegisterKnownType(new UserSerializer(PayloadType.EnumModelItem, typeof(EnumModelItem), () => new EnumModelItem()));
             RegisterKnownType(new UserSerializer(PayloadType.ViewModel, typeof(ViewModel), () => new ViewModel()));
 
-            //RegisterKnownType(new UserSerializer(PayloadType.ReportModel, typeof(ReportModel), () => new ReportModel()));
+            RegisterKnownType(new UserSerializer(PayloadType.ReportModel, typeof(ReportModel), () => new ReportModel()));
             RegisterKnownType(new UserSerializer(PayloadType.ServiceModel, typeof(ServiceModel), () => new ServiceModel()));
             //RegisterKnownType(new UserSerializer(PayloadType.WorkflowModel, typeof(WorkflowModel), () => new WorkflowModel()));
             //RegisterKnownType(new UserSerializer(PayloadType.StartActivityModel, typeof(StartActivityModel), () => new StartActivityModel()));
