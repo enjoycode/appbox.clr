@@ -14,7 +14,6 @@ namespace appbox.Design
             int selectedNodeType = args.GetInt32();
             string selectedNodeId = args.GetString();
             string newname = args.GetString();
-            string remark = args.GetString();
 
             //先判断名称有效性
             if (string.IsNullOrEmpty(newname))
@@ -49,7 +48,7 @@ namespace appbox.Design
 
             //生成模型标识号并新建模型及节点
             var modelId = await Store.ModelStore.GenModelIdAsync(appId, ModelType.Permission, ModelLayer.DEV); //TODO:fix Layer
-            var model = new PermissionModel(modelId, newname) { Remark = remark };
+            var model = new PermissionModel(modelId, newname);
             var node = new ModelNode(model, hub);
             //添加至设计树
             var insertIndex = parentNode.Nodes.Add(node);

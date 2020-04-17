@@ -15,8 +15,6 @@ namespace appbox.Design
             int selectedNodeType = args.GetInt32();
             string selectedNodeId = args.GetString();
             var name = args.GetString();
-            var comment = args.GetString();
-            var isFlag = args.GetBoolean();
 
             // 验证类名称的合法性
             if (string.IsNullOrEmpty(name) || !CodeHelper.IsValidIdentifier(name))
@@ -49,11 +47,7 @@ namespace appbox.Design
 
             //生成模型标识号并新建模型及节点
             var modelId = await Store.ModelStore.GenModelIdAsync(appId, ModelType.Enum, ModelLayer.DEV); //TODO:fix Layer
-            var model = new EnumModel(modelId, name)
-            {
-                IsFlag = isFlag,
-                Comment = comment
-            };
+            var model = new EnumModel(modelId, name);
             var node = new ModelNode(model, hub);
             //添加至设计树
             var insertIndex = parentNode.Nodes.Add(node);
