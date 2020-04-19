@@ -8,6 +8,6 @@
     <ProjectReference Include="..\appbox.Store\appbox.Store.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="CassandraCSharpDriver" Version="3.13.0" />
+    <PackageReference Include="CassandraCSharpDriver" Version="3.14.0" />
   </ItemGroup>
 </Project>
