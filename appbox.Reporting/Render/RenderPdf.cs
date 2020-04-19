@@ -339,14 +339,11 @@ namespace appbox.Reporting.RDL
                 try
                 {
                     drawFont = new Font(si.GetFontFamily().Name, si.FontSize, fs);   // si.FontSize already in points
-                    Console.WriteLine("1");
                 }
                 catch (ArgumentException)
                 {
                     drawFont = new Font(Style.DefaultFontFamily, si.FontSize, fs);   // if this fails we'll let the error pass thru
-                    Console.WriteLine("2");
                 }
-                //Console.WriteLine(drawFont.FamilyName);
 
                 // ALIGNMENT 
                 drawFormat = new StringFormat();
