@@ -5,7 +5,27 @@ namespace appbox.Drawing
 {
     public sealed class Font : IDisposable
     {
-        public static readonly string DefaultFontFamilyName = SKFontManager.Default.MatchCharacter('中').FamilyName;
+        public static readonly string DefaultFontFamilyName;
+        private const string NotoFont = "DefaultFont.otf";
+        private static readonly bool DefaultFontIsNoto;
+
+        static Font()
+        {
+            //TODO:编译条件确认是否使用默认中文字体
+            var typeface = SKFontManager.Default.MatchCharacter('中');
+            if (typeface == null)
+            {
+                //使用默认Noto字体
+                typeface = SKFontManager.Default.CreateTypeface(NotoFont);
+                if (typeface == null)
+                    typeface = SKTypeface.CreateDefault();
+                else
+                    DefaultFontIsNoto = true;
+            }
+
+            DefaultFontFamilyName = typeface.FamilyName;
+            typeface.Dispose();
+        }
 
         #region ====Fields & Properties====
         private SKTypeface skTypeface;
@@ -114,10 +134,24 @@ namespace appbox.Drawing
                 FontStyle.Italic => SKFontStyle.Italic,
                 _ => SKFontStyle.Normal,
             };
-            if (string.IsNullOrEmpty(familyName))
-                skTypeface = SKFontManager.Default.MatchCharacter('中');
+
+            if (string.IsNullOrEmpty(familyName) || familyName == DefaultFontFamilyName)
+            {
+                if (DefaultFontIsNoto)
+                {
+                    skTypeface = SKFontManager.Default.CreateTypeface(NotoFont);
+                }
+                else
+                {
+                    skTypeface = SKTypeface.FromFamilyName(SKTypeface.Default.FamilyName, skFontStyle);
+                }
+            }
             else
-                skTypeface = SKFontManager.Default.MatchFamily(familyName, skFontStyle);
+            {
+                // SKTypeface.FromFamilyName(familyName, SKFontStyle)找不到返回默认的
+                skTypeface = SKTypeface.FromFamilyName(familyName, skFontStyle);
+            }
+
             Size = size;
             Style = style;
             Unit = unit;

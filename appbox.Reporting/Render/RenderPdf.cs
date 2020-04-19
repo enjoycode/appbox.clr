@@ -301,7 +301,6 @@ namespace appbox.Reporting.RDL
 
             Font drawFont = null;
             StringFormat drawFormat = null;
-            Brush drawBrush = null;
             try
             {
                 // STYLE 
@@ -339,45 +338,36 @@ namespace appbox.Reporting.RDL
                 }
                 try
                 {
-                    drawFont = new Font(si.GetFontFamily().Name, si.FontSize, fs);   // si.FontSize already in points 
+                    drawFont = new Font(si.GetFontFamily().Name, si.FontSize, fs);   // si.FontSize already in points
+                    Console.WriteLine("1");
                 }
                 catch (ArgumentException)
                 {
-                    drawFont = new Font(Style.DefaultFontFamily, si.FontSize, fs);   // if this fails we'll let the error pass thru 
+                    drawFont = new Font(Style.DefaultFontFamily, si.FontSize, fs);   // if this fails we'll let the error pass thru
+                    Console.WriteLine("2");
                 }
+                //Console.WriteLine(drawFont.FamilyName);
+
                 // ALIGNMENT 
                 drawFormat = new StringFormat();
-                switch (si.TextAlign)
+                drawFormat.Alignment = si.TextAlign switch
                 {
-                    case TextAlignEnum.Right:
-                        drawFormat.Alignment = StringAlignment.Far;
-                        break;
-                    case TextAlignEnum.Center:
-                        drawFormat.Alignment = StringAlignment.Center;
-                        break;
-                    case TextAlignEnum.Left:
-                    default:
-                        drawFormat.Alignment = StringAlignment.Near;
-                        break;
-                }
+                    TextAlignEnum.Right => StringAlignment.Far,
+                    TextAlignEnum.Center => StringAlignment.Center,
+                    _ => StringAlignment.Near,
+                };
                 if (pt.SI.WritingMode == WritingModeEnum.tb_rl)
                 {
                     drawFormat.FormatFlags |= StringFormatFlags.DirectionRightToLeft;
                     drawFormat.FormatFlags |= StringFormatFlags.DirectionVertical;
                 }
-                switch (si.VerticalAlign)
+                drawFormat.LineAlignment = si.VerticalAlign switch
                 {
-                    case VerticalAlignEnum.Bottom:
-                        drawFormat.LineAlignment = StringAlignment.Far;
-                        break;
-                    case VerticalAlignEnum.Middle:
-                        drawFormat.LineAlignment = StringAlignment.Center;
-                        break;
-                    case VerticalAlignEnum.Top:
-                    default:
-                        drawFormat.LineAlignment = StringAlignment.Near;
-                        break;
-                }
+                    VerticalAlignEnum.Bottom => StringAlignment.Far,
+                    VerticalAlignEnum.Middle => StringAlignment.Center,
+                    _ => StringAlignment.Near,
+                };
+
                 // draw the background 
                 DrawBackground(g, r, si);
 
@@ -387,28 +377,24 @@ namespace appbox.Reporting.RDL
                                                r.Width - si.PaddingLeft - si.PaddingRight,
                                                r.Height - si.PaddingTop - si.PaddingBottom);
 
-                drawBrush = new SolidBrush(si.Color);
                 if (pt.NoClip)   // request not to clip text 
                 {
                     //g.DrawString(pt.Text, drawFont, drawBrush, new PointF(r.Left, r.Top), drawFormat);
-                    g.DrawString(pt.Text, drawFont, drawBrush, r.Left, r.Top);
+                    g.DrawString(pt.Text, drawFont, si.Color, r.Left, r.Top);
                     //HighlightString(g, pt, new RectangleF(r.Left, r.Top, float.MaxValue, float.MaxValue),drawFont, drawFormat); 
                 }
                 else
                 {
-                    g.DrawString(pt.Text, drawFont, drawBrush, r2, drawFormat);
+                    g.DrawString(pt.Text, drawFont, si.Color, r2, drawFormat);
                     //HighlightString(g, pt, r2, drawFont, drawFormat); 
                 }
-
             }
             finally
             {
                 if (drawFont != null)
                     drawFont.Dispose();
                 if (drawFormat != null)
-                    drawFont.Dispose();
-                if (drawBrush != null)
-                    drawBrush.Dispose();
+                    drawFormat.Dispose();
             }
         }
 
