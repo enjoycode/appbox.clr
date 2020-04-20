@@ -11,15 +11,20 @@ namespace appbox.Reporting.RDL
 	[Serializable]
 	internal class Fields : ReportLink, ICollection
 	{
-		IDictionary _Items;			// dictionary of items
+		/// <summary>
+		/// dictionary of items
+		/// </summary>
+		internal IDictionary Items { get; }
+
+		internal Field this[string s] => Items[s] as Field;
 
 		internal Fields(ReportDefn r, ReportLink p, XmlNode xNode) : base(r, p)
 		{
 			Field f;
 			if (xNode.ChildNodes.Count < 10)
-				_Items = new ListDictionary();	// Hashtable is overkill for small lists
+				Items = new ListDictionary();	// Hashtable is overkill for small lists
 			else
-				_Items = new Hashtable(xNode.ChildNodes.Count);
+				Items = new Hashtable(xNode.ChildNodes.Count);
 
 			// Loop thru all the child nodes
 			int iCol=0;
@@ -40,77 +45,43 @@ namespace appbox.Reporting.RDL
 				}
 				if (f != null)
 				{
-					if (_Items.Contains(f.Name.Nm))
+					if (Items.Contains(f.Name.Nm))
 					{
 						r.rl.LogError(4, "Field " + f.Name + " has duplicates."); 
 					}
 					else	
-						_Items.Add(f.Name.Nm, f);
+						Items.Add(f.Name.Nm, f);
 				}
 			}
 		}
 
-		internal Field this[string s]
+        override internal void FinalPass()
 		{
-			get 
-			{
-				return _Items[s] as Field;
-			}
-		}
-		
-		override internal void FinalPass()
-		{
-			foreach (Field f in _Items.Values)
+			foreach (Field f in Items.Values)
 			{
 				f.FinalPass();
 			}
 			return;
 		}
 
-		internal IDictionary Items
-		{
-			get { return  _Items; }
-		}
-		#region ICollection Members
+        #region ICollection Members
+        public bool IsSynchronized => Items.Values.IsSynchronized;
 
-		public bool IsSynchronized
+        public int Count => Items.Values.Count;
+
+        public void CopyTo(Array array, int index)
 		{
-			get
-			{
-				return _Items.Values.IsSynchronized;
-			}
+			Items.Values.CopyTo(array, index);
 		}
 
-		public int Count
+        public object SyncRoot => Items.Values.SyncRoot;
+        #endregion
+
+        #region IEnumerable Members
+        public IEnumerator GetEnumerator()
 		{
-			get
-			{
-				return _Items.Values.Count;
-			}
+			return Items.Values.GetEnumerator();
 		}
-
-		public void CopyTo(Array array, int index)
-		{
-			_Items.Values.CopyTo(array, index);
-		}
-
-		public object SyncRoot
-		{
-			get
-			{
-				return _Items.Values.SyncRoot;
-			}
-		}
-
-		#endregion
-
-		#region IEnumerable Members
-
-		public IEnumerator GetEnumerator()
-		{
-			return _Items.Values.GetEnumerator();
-		}
-
 		#endregion
 
 	}
