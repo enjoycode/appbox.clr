@@ -1,9 +1,7 @@
-
 using System;
 using System.Collections;
 using System.Collections.Specialized;
 using System.Xml;
-
 
 namespace appbox.Reporting.RDL
 {
@@ -13,14 +11,17 @@ namespace appbox.Reporting.RDL
 	[Serializable]
 	internal class ReportParameters : ReportLink, ICollection
 	{
-		IDictionary _Items;			// list of report items
+		/// <summary>
+		/// list of report items
+		/// </summary>
+		internal IDictionary Items { get; }
 
 		internal ReportParameters(ReportDefn r, ReportLink p, XmlNode xNode) : base(r, p)
 		{
 			if (xNode.ChildNodes.Count < 10)
-				_Items = new ListDictionary();	// Hashtable is overkill for small lists
+				Items = new ListDictionary();	// Hashtable is overkill for small lists
 			else
-				_Items = new Hashtable(xNode.ChildNodes.Count);
+				Items = new Hashtable(xNode.ChildNodes.Count);
 
 			// Loop thru all the child nodes
 			foreach(XmlNode xNodeLoop in xNode.ChildNodes)
@@ -31,7 +32,7 @@ namespace appbox.Reporting.RDL
 				{
 					ReportParameter rp = new ReportParameter(r, this, xNodeLoop);
                     if (rp.Name != null)
-					    _Items.Add(rp.Name.Nm, rp);
+					    Items.Add(rp.Name.Nm, rp);
 				}
 				else
 					OwnerReport.rl.LogError(4, "Unknown ReportParameters element '" + xNodeLoop.Name + "' ignored.");
@@ -43,7 +44,7 @@ namespace appbox.Reporting.RDL
 			// Fill the values to use in the report parameters
 			foreach (string pname in parms.Keys)	// Loop thru the passed parameters
 			{
-				ReportParameter rp = (ReportParameter) _Items[pname];
+				ReportParameter rp = (ReportParameter) Items[pname];
 				if (rp == null)
 				{	// When not found treat it as a warning message
 					if (!pname.StartsWith("rs:"))	// don't care about report server parameters
@@ -71,63 +72,32 @@ namespace appbox.Reporting.RDL
                 }
 				rp.SetRuntimeValue(rpt, parmValue);
 			}
-
-			return;
 		}
 
 		override internal void FinalPass()
 		{
-			foreach (ReportParameter rp in _Items.Values)
+			foreach (ReportParameter rp in Items.Values)
 			{
 				rp.FinalPass();
 			}
 			return;
 		}
 
-		internal IDictionary Items
+        #region ICollection Members
+        public bool IsSynchronized => Items.IsSynchronized;
+
+        public int Count => Items.Count;
+
+        public void CopyTo(Array array, int index) => Items.CopyTo(array, index);
+
+        public object SyncRoot => Items.SyncRoot;
+        #endregion
+
+        #region IEnumerable Members
+        public IEnumerator GetEnumerator()
 		{
-			get { return  _Items; }
+			return Items.Values.GetEnumerator();
 		}
-		#region ICollection Members
-
-		public bool IsSynchronized
-		{
-			get
-			{
-				return _Items.IsSynchronized;
-			}
-		}
-
-		public int Count
-		{
-			get
-			{
-				return _Items.Count;
-			}
-		}
-
-		public void CopyTo(Array array, int index)
-		{
-			_Items.CopyTo(array, index);
-		}
-
-		public object SyncRoot
-		{
-			get
-			{
-				return _Items.SyncRoot;
-			}
-		}
-
-		#endregion
-
-		#region IEnumerable Members
-
-		public IEnumerator GetEnumerator()
-		{
-			return _Items.Values.GetEnumerator();
-		}
-
 		#endregion
 	}
 }
