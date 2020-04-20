@@ -911,8 +911,10 @@ namespace appbox.Reporting.RDL
 			if (args.Length >= indexOfScope)
 			{
 				string n = args[indexOfScope-1].EvaluateString(null, null);
-				if (idLookup.IsPageScope)
-					throw new ParserException(string.Format(Strings.Parser_ErrorP_ScopeNotSpecifiedInHeaderOrFooter,n));
+				//取消以下判断，否则PageHeader or PageFooter无法使用聚合表达式,
+                //eg: '=Sum(Fields!CategoryName.Value, "Data")'
+				//if (idLookup.IsPageScope)
+				//	throw new ParserException(string.Format(Strings.Parser_ErrorP_ScopeNotSpecifiedInHeaderOrFooter,n));
 
 				scope = idLookup.LookupScope(n);
 				if (scope == null)

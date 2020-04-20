@@ -11,22 +11,22 @@ namespace appbox.Reporting.Tests
         {
             //var rdl = new RDL.ReportDefn();
             //var report = new RDL.Report();
-            var rdlXml = Resources.LoadStringResource("Resources.TestReport.rdl");
+            var rdlXml = Resources.LoadStringResource("Resources.TestReport.xml");
             var rdlParser = new RDL.RDLParser(rdlXml);
             var report = rdlParser.Parse();
-            Assert.True(report.ErrorMaxSeverity <= 4);
-            //if (report.ErrorMaxSeverity > 0)
-            //{
-            //    foreach (string emsg in report.ErrorItems)
-            //    {
-            //        Console.WriteLine(emsg);
-            //    }
+            //Assert.True(report.ErrorMaxSeverity <= 4);
+            if (report.ErrorMaxSeverity > 0)
+            {
+                foreach (string emsg in report.ErrorItems)
+                {
+                    Console.WriteLine(emsg);
+                }
 
-            //    int severity = report.ErrorMaxSeverity;
-            //    report.ErrorReset();
-            //    if (severity > 4)
-            //        report = null;
-            //}
+                int severity = report.ErrorMaxSeverity;
+                report.ErrorReset();
+                if (severity > 4)
+                    throw new Exception("报表定义错误");
+            }
 
             //获取数据源
             var dt = new DataTable();

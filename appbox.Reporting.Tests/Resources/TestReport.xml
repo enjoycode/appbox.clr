@@ -45,16 +45,17 @@
     <Height>.5in</Height>
     <ReportItems>
       <Textbox Name="Textbox1">
-        <Top>.1in</Top>
-        <Left>.1in</Left>
-        <Width>6in</Width>
-        <Height>.25in</Height>
-        <Value>测试 Data Set Report</Value>
+        <Top>5mm</Top>
+        <Left>10mm</Left>
+        <Width>20mm</Width>
+        <Height>20mm</Height>
+        <Value>=Sum(Fields!CategoryID.Value, "Data")</Value>
         <Style>
           <FontSize>15pt</FontSize>
           <FontWeight>Bold</FontWeight>
         </Style>
       </Textbox>
+      
       <CustomReportItem>
          <Type>BarCode128</Type>
          <Top>.1in</Top>

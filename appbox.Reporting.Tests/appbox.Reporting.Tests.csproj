@@ -23,6 +23,6 @@
     <None Remove="Resources\TestReport.rdl" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Resources\TestReport.rdl" />
+    <EmbeddedResource Include="Resources\TestReport.xml" />
   </ItemGroup>
 </Project>
