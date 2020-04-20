@@ -11,8 +11,8 @@ namespace appbox.Reporting.RDL
 	[Serializable]
 	public class DataSet
 	{
-        readonly Report _rpt;       //	the runtime report
-        readonly DataSetDefn _dsd;	//  the true definition of the DataSet
+        private readonly Report _rpt;       //	the runtime report
+        private readonly DataSetDefn _dsd;	//  the true definition of the DataSet
 	
 		internal DataSet(Report rpt, DataSetDefn dsd)
 		{
@@ -54,7 +54,6 @@ namespace appbox.Reporting.RDL
         {
             _dsd.Query.CommandText.SetSource(sql);
         }
-
 
 	}
 }

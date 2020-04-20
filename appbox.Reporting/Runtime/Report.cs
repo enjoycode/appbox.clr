@@ -14,30 +14,202 @@ namespace appbox.Reporting.RDL
     ///</summary>
     public class Report
     {
-        // private definitions
-        ReportDefn _Report;
-        DataSources _DataSources;
-        DataSets _DataSets;
-        int _RuntimeName = 0;       // used for the generation of unique runtime names
-        IDictionary _LURuntimeName;     // Runtime names
-        ICollection _UserParameters;    // User parameters
+        /// <summary>
+        /// private definitions
+        /// </summary>
+        public ReportDefn ReportDefinition { get; private set; }
+
+        private DataSources _DataSources;
+        private DataSets _DataSets;
+        private ICollection _UserParameters;    // User parameters
+
+        public DataSources DataSources
+        {
+            get
+            {
+                if (ReportDefinition.DataSourcesDefn == null)
+                    return null;
+                if (_DataSources == null)
+                    _DataSources = new DataSources(this, ReportDefinition.DataSourcesDefn);
+                return _DataSources;
+            }
+        }
+
+        public DataSets DataSets
+        {
+            get
+            {
+                if (ReportDefinition.DataSetsDefn == null)
+                    return null;
+                if (_DataSets == null)
+                    _DataSets = new DataSets(this, ReportDefinition.DataSetsDefn);
+
+                return _DataSets;
+            }
+        }
+
+        /// <summary>
+        /// User provided parameters to the report.  IEnumerable is a list of UserReportParameter.
+        /// </summary>
+        public ICollection UserReportParameters
+        {
+            get
+            {
+                if (_UserParameters != null)    // only create this once
+                    return _UserParameters;     //  since it can be expensive to build
+
+                if (ReportDefinition.ReportParameters == null || ReportDefinition.ReportParameters.Count <= 0)
+                {
+                    List<UserReportParameter> parms = new List<UserReportParameter>(1);
+                    _UserParameters = parms;
+                }
+                else
+                {
+                    List<UserReportParameter> parms = new List<UserReportParameter>(ReportDefinition.ReportParameters.Count);
+                    foreach (ReportParameter p in ReportDefinition.ReportParameters)
+                    {
+                        UserReportParameter urp = new UserReportParameter(this, p);
+                        parms.Add(urp);
+                    }
+                    parms.TrimExcess();
+                    _UserParameters = parms;
+                }
+                return _UserParameters;
+            }
+        }
+
+        private int _RuntimeName = 0;       // used for the generation of unique runtime names
+        private readonly IDictionary _LURuntimeName;     // Runtime names
         internal ReportLog rl;  // report log
-        RCache _Cache;
+
+        internal RCache Cache { get; private set; }
 
         // Some report runtime variables
         private string _Folder;         // folder name
-        private string _ReportName;     // report name
-        private string _CSS;            // after rendering ASPHTML; this is separate
-        private string _JavaScript;     // after rendering ASPHTML; this is separate
-        private object _CodeInstance;   // Instance of the class generated for the Code element
-        private Page _CurrentPage;      // needed for page header/footer references
+        /// <summary>
+        /// Get/Set the folder containing the report.
+        /// </summary>
+        public string Folder
+        {
+            get { return _Folder ?? ReportDefinition.ParseFolder; }
+            set { _Folder = value; }
+        }
+
+        /// <summary>
+        /// Get/Set the report name.  Usually this is the file name of the report sans extension.
+        /// </summary>
+        public string Name { get; set; }
+
+        public string Description => ReportDefinition.Description;
+
+        public string Author => ReportDefinition.Author;
+
+        /// <summary>
+        /// after rendering ASPHTML; this is separate
+        /// </summary>
+        public string CSS { get; private set; }
+
+        /// <summary>
+        /// after rendering ASPHTML; this is separate
+        /// </summary>
+        public string JavaScript { get; private set; }
+
+        /// <summary>
+        /// Instance of the class generated for the Code element
+        /// </summary>
+        internal object CodeInstance { get; }
+
+        /// <summary>
+        /// needed for page header/footer references
+        /// </summary>
+        internal Page CurrentPage { get; set; }
+
         private string _UserID;         // UserID of client executing the report
         private string _ClientLanguage; // Language code of the client executing the report.
-        private DataSourcesDefn _ParentConnections; // When running subreport with merge transactions this is parent report connections
 
         internal int PageNumber = 1;            // current page number
         internal int TotalPages = 1;            // total number of pages in report
         internal DateTime ExecutionTime;    // start time of report execution
+
+        /// <summary>
+        /// Returns the height of the page in points.
+        /// </summary>
+        public float PageHeightPoints => ReportDefinition.PageHeight.Points;
+
+        /// <summary>
+        /// Returns the width of the page in points.
+        /// </summary>
+        public float PageWidthPoints => ReportDefinition.PageWidthPoints;
+
+        /// <summary>
+        /// Returns the left margin size in points.
+        /// </summary>
+        public float LeftMarginPoints => ReportDefinition.LeftMargin.Points;
+
+        /// <summary>
+        /// Returns the right margin size in points.
+        /// </summary>
+        public float RightMarginPoints => ReportDefinition.RightMargin.Points;
+
+        /// <summary>
+        /// Returns the top margin size in points.
+        /// </summary>
+        public float TopMarginPoints => ReportDefinition.TopMargin.Points;
+
+        /// <summary>
+        /// Returns the bottom margin size in points.
+        /// </summary>
+        public float BottomMarginPoints => ReportDefinition.BottomMargin.Points;
+
+        /// <summary>
+        /// Returns the maximum severity of any error.  4 or less indicating report continues running.
+        /// </summary>
+        public int ErrorMaxSeverity => rl == null ? 0 : rl.MaxSeverity;
+
+        /// <summary>
+        /// List of errors encountered so far.
+        /// </summary>
+        public IList ErrorItems => rl?.ErrorItems;
+
+        public NeedPassword GetDataSourceReferencePassword
+        {
+            get { return ReportDefinition.GetDataSourceReferencePassword; }
+            set { ReportDefinition.GetDataSourceReferencePassword = value; }
+        }
+
+        /// <summary>
+        /// Get/Set the UserID, that is the running user.
+        /// </summary>
+        public string UserID
+        {
+            get { return _UserID ?? Environment.UserName; }
+            set { _UserID = value; }
+        }
+
+        /// <summary>
+        /// Get/Set the three letter ISO language of the client of the report.
+        /// </summary>
+        public string ClientLanguage
+        {
+            get
+            {
+                if (ReportDefinition.Language != null)
+                    return ReportDefinition.Language.EvaluateString(this, null);
+
+                if (_ClientLanguage != null)
+                    return _ClientLanguage;
+
+                return CultureInfo.CurrentCulture.ThreeLetterISOLanguageName;
+            }
+            set { _ClientLanguage = value; }
+        }
+
+        /// <summary>
+        /// When running subreport with merge transactions this is parent report connections
+        /// </summary>
+        internal DataSourcesDefn ParentConnections { get; set; }
+
+        internal bool IsSubreportDataRetrievalDefined => SubreportDataRetrieval != null;
 
         /// <summary>
         /// Construct a runtime Report object using the compiled report definition.
@@ -45,14 +217,14 @@ namespace appbox.Reporting.RDL
         /// <param name="r"></param>
         public Report(ReportDefn r)
         {
-            _Report = r;
-            _Cache = new RCache();
+            ReportDefinition = r;
+            Cache = new RCache();
             rl = new ReportLog(r.rl);
-            _ReportName = r.Name;
+            Name = r.Name;
             _UserParameters = null;
             _LURuntimeName = new ListDictionary();  // shouldn't be very many of these
             if (r.Code != null)
-                _CodeInstance = r.Code.Load(this);
+                CodeInstance = r.Code.Load(this);
             if (r.Classes != null)
                 r.Classes.Load(this);
         }
@@ -68,6 +240,7 @@ namespace appbox.Reporting.RDL
         {
             SubreportDataRetrieval?.Invoke(this, e);
         }
+
         internal void SubreportDataRetrievalTriggerEvent()
         {
             if (SubreportDataRetrieval != null)
@@ -76,20 +249,13 @@ namespace appbox.Reporting.RDL
             }
 
         }
-        internal bool IsSubreportDataRetrievalDefined => SubreportDataRetrieval != null;
-
-        internal Page CurrentPage
-        {
-            get { return _CurrentPage; }
-            set { _CurrentPage = value; }
-        }
 
         internal Rows GetPageExpressionRows(string exprname)
         {
-            if (_CurrentPage == null)
+            if (CurrentPage == null)
                 return null;
 
-            return _CurrentPage.GetPageExpressionRows(exprname);
+            return CurrentPage.GetPageExpressionRows(exprname);
         }
 
         /// <summary>
@@ -99,7 +265,7 @@ namespace appbox.Reporting.RDL
         public bool RunGetData(IDictionary parms)
         {
             ExecutionTime = DateTime.Now;
-            bool bRows = _Report.RunGetData(this, parms);
+            bool bRows = ReportDefinition.RunGetData(this, parms);
             return bRows;
         }
 
@@ -131,20 +297,20 @@ namespace appbox.Reporting.RDL
             {
                 case OutputPresentationType.PDF:
                     ip = new RenderPdf(this, sg);
-                    _Report.Run(ip);
+                    ReportDefinition.Run(ip);
                     break;
                 case OutputPresentationType.XML:
-                    if (_Report.DataTransform != null && _Report.DataTransform.Length > 0)
+                    if (ReportDefinition.DataTransform != null && ReportDefinition.DataTransform.Length > 0)
                     {
                         msg = new MemoryStreamGen();
                         ip = new RenderXml(this, msg);
-                        _Report.Run(ip);
+                        ReportDefinition.Run(ip);
                         RunRenderXmlTransform(sg, msg);
                     }
                     else
                     {
                         ip = new RenderXml(this, sg);
-                        _Report.Run(ip);
+                        ReportDefinition.Run(ip);
                     }
                     break;
                 case OutputPresentationType.MHTML:
@@ -152,15 +318,15 @@ namespace appbox.Reporting.RDL
                     break;
                 case OutputPresentationType.CSV:
                     ip = new RenderCsv(this, sg);
-                    _Report.Run(ip);
+                    ReportDefinition.Run(ip);
                     break;
                 case OutputPresentationType.RTF:
                     ip = new RenderRtf(this, sg);
-                    _Report.Run(ip);
+                    ReportDefinition.Run(ip);
                     break;
                 case OutputPresentationType.ExcelTableOnly:
                     ip = new RenderExcel(this, sg);
-                    _Report.Run(ip);
+                    ReportDefinition.Run(ip);
                     break;
                 case OutputPresentationType.Excel2007:
                     throw new NotImplementedException();
@@ -174,18 +340,18 @@ namespace appbox.Reporting.RDL
                     ip = rh = new RenderHtml(this, sg);
                     rh.Asp = (type == OutputPresentationType.ASPHTML);
                     rh.Prefix = prefix;
-                    _Report.Run(ip);
+                    ReportDefinition.Run(ip);
                     // Retain the CSS and JavaScript
                     if (rh != null)
                     {
-                        _CSS = rh.CSS;
-                        _JavaScript = rh.JavaScript;
+                        CSS = rh.CSS;
+                        JavaScript = rh.JavaScript;
                     }
                     break;
             }
 
             sg.CloseMainStream();
-            _Cache = new RCache();
+            Cache = new RCache();
             return;
         }
 
@@ -237,7 +403,7 @@ namespace appbox.Reporting.RDL
                     temp.CloseMainStream();
                 if (fs != null)
                     fs.Close();
-                _Cache = new RCache();
+                Cache = new RCache();
             }
         }
 
@@ -301,10 +467,10 @@ namespace appbox.Reporting.RDL
             try
             {
                 string file;
-                if (_Report.DataTransform[0] != Path.DirectorySeparatorChar)
-                    file = this.Folder + Path.DirectorySeparatorChar + _Report.DataTransform;
+                if (ReportDefinition.DataTransform[0] != Path.DirectorySeparatorChar)
+                    file = this.Folder + Path.DirectorySeparatorChar + ReportDefinition.DataTransform;
                 else
-                    file = this.Folder + _Report.DataTransform;
+                    file = this.Folder + ReportDefinition.DataTransform;
                 XmlUtil.XslTrans(file, msg.GetText(), sg.GetStream());
             }
             catch (Exception ex)
@@ -328,24 +494,24 @@ namespace appbox.Reporting.RDL
             TotalPages = 1;
 
             Pages pgs = new Pages(this);
-            pgs.PageHeight = _Report.PageHeight.Points;
-            pgs.PageWidth = _Report.PageWidth.Points;
+            pgs.PageHeight = ReportDefinition.PageHeight.Points;
+            pgs.PageWidth = ReportDefinition.PageWidth.Points;
             try
             {
                 Page p = new Page(1);               // kick it off with a new page
                 pgs.AddPage(p);
 
                 // Create all the pages
-                _Report.Body.RunPage(pgs);
+                ReportDefinition.Body.RunPage(pgs);
 
                 if (pgs.LastPage.IsEmpty() && pgs.PageCount > 1) // get rid of extraneous pages which
                     pgs.RemoveLastPage();           //   can be caused by region page break at end
 
                 // Now create the headers and footers for all the pages (as needed)
-                if (_Report.PageHeader != null)
-                    _Report.PageHeader.RunPage(pgs);
-                if (_Report.PageFooter != null)
-                    _Report.PageFooter.RunPage(pgs);
+                if (ReportDefinition.PageHeader != null)
+                    ReportDefinition.PageHeader.RunPage(pgs);
+                if (ReportDefinition.PageFooter != null)
+                    ReportDefinition.PageFooter.RunPage(pgs);
                 // clear out any runtime clutter
                 foreach (Page pg in pgs)
                     pg.ResetPageExpressions();
@@ -359,53 +525,17 @@ namespace appbox.Reporting.RDL
             finally
             {
                 pgs.CleanUp();		// always want to make sure we clean this up since 
-                _Cache = new RCache();
+                Cache = new RCache();
             }
 
             return pgs;
         }
 
-        public NeedPassword GetDataSourceReferencePassword
-        {
-            get { return _Report.GetDataSourceReferencePassword; }
-            set { _Report.GetDataSourceReferencePassword = value; }
-        }
-
-        public ReportDefn ReportDefinition
-        {
-            get { return this._Report; }
-        }
-
         internal void SetReportDefinition(ReportDefn r)
         {
-            _Report = r;
+            ReportDefinition = r;
             _UserParameters = null;     // force recalculation of user parameters
             _DataSets = null;           // force reload of datasets
-        }
-
-        public string Description
-        {
-            get { return _Report.Description; }
-        }
-
-        public string Author
-        {
-            get { return _Report.Author; }
-        }
-
-        public string CSS
-        {
-            get { return _CSS; }
-        }
-
-        public string JavaScript
-        {
-            get { return _JavaScript; }
-        }
-
-        internal object CodeInstance
-        {
-            get { return this._CodeInstance; }
         }
 
         internal string CreateRuntimeName(object ro)
@@ -415,139 +545,6 @@ namespace appbox.Reporting.RDL
             _LURuntimeName.Add(name, ro);
             return name;
         }
-
-        public DataSources DataSources
-        {
-            get
-            {
-                if (_Report.DataSourcesDefn == null)
-                    return null;
-                if (_DataSources == null)
-                    _DataSources = new DataSources(this, _Report.DataSourcesDefn);
-                return _DataSources;
-            }
-        }
-
-        public DataSets DataSets
-        {
-            get
-            {
-                if (_Report.DataSetsDefn == null)
-                    return null;
-                if (_DataSets == null)
-                    _DataSets = new DataSets(this, _Report.DataSetsDefn);
-
-                return _DataSets;
-            }
-        }
-
-        /// <summary>
-        /// User provided parameters to the report.  IEnumerable is a list of UserReportParameter.
-        /// </summary>
-        public ICollection UserReportParameters
-        {
-            get
-            {
-                if (_UserParameters != null)    // only create this once
-                    return _UserParameters;     //  since it can be expensive to build
-
-                if (ReportDefinition.ReportParameters == null || ReportDefinition.ReportParameters.Count <= 0)
-                {
-                    List<UserReportParameter> parms = new List<UserReportParameter>(1);
-                    _UserParameters = parms;
-                }
-                else
-                {
-                    List<UserReportParameter> parms = new List<UserReportParameter>(ReportDefinition.ReportParameters.Count);
-                    foreach (ReportParameter p in ReportDefinition.ReportParameters)
-                    {
-                        UserReportParameter urp = new UserReportParameter(this, p);
-                        parms.Add(urp);
-                    }
-                    parms.TrimExcess();
-                    _UserParameters = parms;
-                }
-                return _UserParameters;
-            }
-        }
-        /// <summary>
-        /// Get/Set the folder containing the report.
-        /// </summary>
-        public string Folder
-        {
-            get { return _Folder == null ? _Report.ParseFolder : _Folder; }
-            set { _Folder = value; }
-        }
-
-        /// <summary>
-        /// Get/Set the report name.  Usually this is the file name of the report sans extension.
-        /// </summary>
-        public string Name
-        {
-            get { return _ReportName; }
-            set { _ReportName = value; }
-        }
-
-        /// <summary>
-        /// Returns the height of the page in points.
-        /// </summary>
-        public float PageHeightPoints
-        {
-            get { return _Report.PageHeight.Points; }
-        }
-        /// <summary>
-        /// Returns the width of the page in points.
-        /// </summary>
-        public float PageWidthPoints
-        {
-            get { return _Report.PageWidthPoints; }
-        }
-        /// <summary>
-        /// Returns the left margin size in points.
-        /// </summary>
-        public float LeftMarginPoints
-        {
-            get { return _Report.LeftMargin.Points; }
-        }
-        /// <summary>
-        /// Returns the right margin size in points.
-        /// </summary>
-        public float RightMarginPoints
-        {
-            get { return _Report.RightMargin.Points; }
-        }
-        /// <summary>
-        /// Returns the top margin size in points.
-        /// </summary>
-        public float TopMarginPoints
-        {
-            get { return _Report.TopMargin.Points; }
-        }
-        /// <summary>
-        /// Returns the bottom margin size in points.
-        /// </summary>
-        public float BottomMarginPoints
-        {
-            get { return _Report.BottomMargin.Points; }
-        }
-        /// <summary>
-		/// Returns the maximum severity of any error.  4 or less indicating report continues running.
-		/// </summary>
-		public int ErrorMaxSeverity
-        {
-            get
-            {
-                if (this.rl == null)
-                    return 0;
-                else
-                    return rl.MaxSeverity;
-            }
-        }
-
-        /// <summary>
-        /// List of errors encountered so far.
-        /// </summary>
-        public IList ErrorItems => rl?.ErrorItems;
 
         /// <summary>
         /// Clear all errors generated up to now.
@@ -559,42 +556,6 @@ namespace appbox.Reporting.RDL
             rl.Reset();
         }
 
-        /// <summary>
-        /// Get/Set the UserID, that is the running user.
-        /// </summary>
-        public string UserID
-        {
-            get { return _UserID == null ? Environment.UserName : _UserID; }
-            set { _UserID = value; }
-        }
-        /// <summary>
-        /// Get/Set the three letter ISO language of the client of the report.
-        /// </summary>
-        public string ClientLanguage
-        {
-            get
-            {
-                if (_Report.Language != null)
-                    return _Report.Language.EvaluateString(this, null);
-
-                if (_ClientLanguage != null)
-                    return _ClientLanguage;
-
-                return CultureInfo.CurrentCulture.ThreeLetterISOLanguageName;
-            }
-            set { _ClientLanguage = value; }
-        }
-
-        internal DataSourcesDefn ParentConnections
-        {
-            get { return _ParentConnections; }
-            set { _ParentConnections = value; }
-        }
-
-        internal RCache Cache
-        {
-            get { return _Cache; }
-        }
     }
 
     internal class RCache

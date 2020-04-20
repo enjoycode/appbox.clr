@@ -17,25 +17,62 @@ namespace appbox.Reporting.RDL
     [Serializable]
     internal class Query : ReportLink
     {
-        string _DataSourceName;     // Name of the data source to execute the query against
-        DataSourceDefn _DataSourceDefn; //  the data source object the DataSourceName references.
-        QueryCommandTypeEnum _QueryCommandType; // Indicates what type of query is contained in the CommandText
-        Expression _CommandText;    //	(string) The query to execute to obtain the data for the report
-        QueryParameters _QueryParameters;   // A list of parameters that are passed to the data
-                                            // source as part of the query.		
-        int _Timeout;               // Number of seconds to allow the query to run before
-                                    // timing out.   Must be >= 0; If omitted or zero; no timeout
-        int _RowLimit;              // Number of rows to retrieve before stopping retrieval; 0 means no limit
+        /// <summary>
+        /// Name of the data source to execute the query against
+        /// </summary>
+        internal string DataSourceName { get; }
 
-        IDictionary _Columns;       // QueryColumn (when SQL)
+        /// <summary>
+        /// the data source object the DataSourceName references.
+        /// </summary>
+        internal DataSourceDefn DataSourceDefn { get; private set; }
+
+        /// <summary>
+        /// Indicates what type of query is contained in the CommandText
+        /// </summary>
+        internal QueryCommandTypeEnum QueryCommandType { get; set; }
+
+        /// <summary>
+        /// (string) The query to execute to obtain the data for the report
+        /// </summary>
+        internal Expression CommandText { get; set; }
+
+        /// <summary>
+        /// A list of parameters that are passed to the data source as part of the query.	
+        /// </summary>
+        internal QueryParameters QueryParameters { get; set; }
+
+        /// <summary>
+        /// Number of seconds to allow the query to run before timing out.
+        /// Must be >= 0; If omitted or zero; no timeout
+        /// </summary>
+        internal int Timeout { get; set; }
+
+        private readonly int _RowLimit; // Number of rows to retrieve before stopping retrieval; 0 means no limit
+
+        /// <summary>
+        /// QueryColumn (when SQL)
+        /// </summary>
+        internal IDictionary Columns { get; private set; }
+
+        private string Provider
+        {
+            get
+            {
+                return DataSourceDefn == null ||
+                    DataSourceDefn.ConnectionProperties == null
+                    ? ""
+                    : DataSourceDefn.ConnectionProperties.DataProvider;
+            }
+        }
 
         internal Query(ReportDefn r, ReportLink p, XmlNode xNode) : base(r, p)
         {
-            _DataSourceName = null;
-            _QueryCommandType = QueryCommandTypeEnum.Text;
-            _CommandText = null;
-            _QueryParameters = null;
-            _Timeout = 0;
+            DataSourceName = null;
+            QueryCommandType = QueryCommandTypeEnum.Text;
+            CommandText = null;
+            QueryParameters = null;
+            Timeout = 0;
             _RowLimit = 0;
 
             // Loop thru all the child nodes
@@ -46,19 +83,19 @@ namespace appbox.Reporting.RDL
                 switch (xNodeLoop.Name)
                 {
                     case "DataSourceName":
-                        _DataSourceName = xNodeLoop.InnerText;
+                        DataSourceName = xNodeLoop.InnerText;
                         break;
                     case "CommandType":
-                        _QueryCommandType = RDL.QueryCommandType.GetStyle(xNodeLoop.InnerText, OwnerReport.rl);
+                        QueryCommandType = RDL.QueryCommandType.GetStyle(xNodeLoop.InnerText, OwnerReport.rl);
                         break;
                     case "CommandText":
-                        _CommandText = new Expression(r, this, xNodeLoop, ExpressionType.String);
+                        CommandText = new Expression(r, this, xNodeLoop, ExpressionType.String);
                         break;
                     case "QueryParameters":
-                        _QueryParameters = new QueryParameters(r, this, xNodeLoop);
+                        QueryParameters = new QueryParameters(r, this, xNodeLoop);
                         break;
                     case "Timeout":
-                        _Timeout = XmlUtil.Integer(xNodeLoop.InnerText);
+                        Timeout = XmlUtil.Integer(xNodeLoop.InnerText);
                         break;
                     case "RowLimit":                // Extension of RDL specification
                         _RowLimit = XmlUtil.Integer(xNodeLoop.InnerText);
@@ -71,62 +108,63 @@ namespace appbox.Reporting.RDL
             }   // end of foreach
 
             // Resolve the data source name to the object
-            if (_DataSourceName == null)
-            {
-                r.rl.LogError(8, "DataSourceName element not specified for Query.");
-                return;
-            }
+            //TODO:根据QueryCommandType判断是否扩展的服务调用
+            //if (DataSourceName == null)
+            //{
+            //    r.rl.LogError(8, "DataSourceName element not specified for Query.");
+            //    return;
+            //}
         }
 
         // Handle parsing of function in final pass
         override internal void FinalPass()
         {
-            if (_CommandText != null)
-                _CommandText.FinalPass();
-            if (_QueryParameters != null)
-                _QueryParameters.FinalPass();
+            if (CommandText != null)
+                CommandText.FinalPass();
+            if (QueryParameters != null)
+                QueryParameters.FinalPass();
 
             // verify the data source
             DataSourceDefn ds = null;
             if (OwnerReport.DataSourcesDefn != null &&
                 OwnerReport.DataSourcesDefn.Items != null)
             {
-                ds = OwnerReport.DataSourcesDefn[_DataSourceName];
+                ds = OwnerReport.DataSourcesDefn[DataSourceName];
             }
             if (ds == null)
             {
-                OwnerReport.rl.LogError(8, "Query references unknown data source '" + _DataSourceName + "'");
+                OwnerReport.rl.LogError(8, "Query references unknown data source '" + DataSourceName + "'");
                 return;
             }
-            _DataSourceDefn = ds;
+            DataSourceDefn = ds;
 
             IDbConnection cnSQL = ds.SqlConnect(null);
-            if (cnSQL == null || _CommandText == null)
+            if (cnSQL == null || CommandText == null)
                 return;
 
             // Treat this as a SQL statement
-            String sql = _CommandText.EvaluateString(null, null);
+            String sql = CommandText.EvaluateString(null, null);
             IDbCommand cmSQL = null;
             IDataReader dr = null;
             try
             {
                 cmSQL = cnSQL.CreateCommand();
                 cmSQL.CommandText = AddParametersAsLiterals(null, cnSQL, sql, false);
-                if (this._QueryCommandType == QueryCommandTypeEnum.StoredProcedure)
+                if (this.QueryCommandType == QueryCommandTypeEnum.StoredProcedure)
                     cmSQL.CommandType = CommandType.StoredProcedure;
 
                 AddParameters(null, cnSQL, cmSQL, false);
                 dr = cmSQL.ExecuteReader(CommandBehavior.SchemaOnly);
                 if (dr.FieldCount < 10)
-                    _Columns = new ListDictionary();    // Hashtable is overkill for small lists
+                    Columns = new ListDictionary();    // Hashtable is overkill for small lists
                 else
-                    _Columns = new Hashtable(dr.FieldCount);
+                    Columns = new Hashtable(dr.FieldCount);
 
                 for (int i = 0; i < dr.FieldCount; i++)
                 {
                     QueryColumn qc = new QueryColumn(i, dr.GetName(i), Type.GetTypeCode(dr.GetFieldType(i)));
 
-                    try { _Columns.Add(qc.colName, qc); }
+                    try { Columns.Add(qc.colName, qc); }
                     catch   // name has already been added to list: 
                     {   // According to the RDL spec SQL names are matched by Name not by relative
                         //   position: this seems wrong to me and causes this problem; but 
@@ -165,8 +203,8 @@ namespace appbox.Reporting.RDL
             }
 
             // Treat this as a SQL statement
-            DataSourceDefn ds = _DataSourceDefn;
-            if (ds == null || _CommandText == null)
+            DataSourceDefn ds = DataSourceDefn;
+            if (ds == null || CommandText == null)
             {
                 SetMyData(rpt, null);
                 return false;
@@ -180,17 +218,17 @@ namespace appbox.Reporting.RDL
             }
 
             Rows _Data = new Rows(rpt, null, null, null);       // no sorting and grouping at base data
-            String sql = _CommandText.EvaluateString(rpt, null);
+            String sql = CommandText.EvaluateString(rpt, null);
             IDbCommand cmSQL = null;
             IDataReader dr = null;
             try
             {
                 cmSQL = cnSQL.CreateCommand();
                 cmSQL.CommandText = AddParametersAsLiterals(rpt, cnSQL, sql, true);
-                if (_QueryCommandType == QueryCommandTypeEnum.StoredProcedure)
+                if (QueryCommandType == QueryCommandTypeEnum.StoredProcedure)
                     cmSQL.CommandType = CommandType.StoredProcedure;
-                if (_Timeout > 0)
-                    cmSQL.CommandTimeout = this._Timeout;
+                if (Timeout > 0)
+                    cmSQL.CommandTimeout = this.Timeout;
 
                 AddParameters(rpt, cnSQL, cmSQL, true);
                 dr = cmSQL.ExecuteReader(CommandBehavior.SingleResult);
@@ -610,17 +648,17 @@ namespace appbox.Reporting.RDL
         private void AddParameters(Report rpt, IDbConnection cn, IDbCommand cmSQL, bool bValue)
         {
             // any parameters to substitute
-            if (this._QueryParameters == null ||
-                this._QueryParameters.Items == null ||
-                this._QueryParameters.Items.Count == 0 ||
-                this._QueryParameters.ContainsArray)            // arrays get handled by AddParametersAsLiterals
+            if (this.QueryParameters == null ||
+                this.QueryParameters.Items == null ||
+                this.QueryParameters.Items.Count == 0 ||
+                this.QueryParameters.ContainsArray)            // arrays get handled by AddParametersAsLiterals
                 return;
 
             // AddParametersAsLiterals handles it when there is replacement
             if (RdlEngineConfig.DoParameterReplacement(Provider, cn))
                 return;
 
-            foreach (QueryParameter qp in this._QueryParameters.Items)
+            foreach (QueryParameter qp in this.QueryParameters.Items)
             {
                 string paramName;
 
@@ -647,26 +685,26 @@ namespace appbox.Reporting.RDL
         private string AddParametersAsLiterals(Report rpt, IDbConnection cn, string sql, bool bValue)
         {
             // No parameters means nothing to do
-            if (this._QueryParameters == null ||
-                this._QueryParameters.Items == null ||
-                this._QueryParameters.Items.Count == 0)
+            if (this.QueryParameters == null ||
+                this.QueryParameters.Items == null ||
+                this.QueryParameters.Items.Count == 0)
                 return sql;
 
             // Only do this for ODBC datasources - AddParameters handles it in other cases
             if (!RdlEngineConfig.DoParameterReplacement(Provider, cn))
             {
-                if (!_QueryParameters.ContainsArray)    // when array we do substitution
+                if (!QueryParameters.ContainsArray)    // when array we do substitution
                     return sql;
             }
 
             StringBuilder sb = new StringBuilder(sql);
             List<QueryParameter> qlist;
-            if (_QueryParameters.Items.Count <= 1)
-                qlist = _QueryParameters.Items;
+            if (QueryParameters.Items.Count <= 1)
+                qlist = QueryParameters.Items;
             else
             {   // need to sort the list so that longer items are first in the list
                 // otherwise substitution could be done incorrectly
-                qlist = new List<QueryParameter>(_QueryParameters.Items);
+                qlist = new List<QueryParameter>(QueryParameters.Items);
                 qlist.Sort();
             }
 
@@ -769,56 +807,6 @@ namespace appbox.Reporting.RDL
                 bFirst = false;
             }
             return sb.ToString();
-        }
-
-        private string Provider
-        {
-            get
-            {
-                if (this.DataSourceDefn == null ||
-                    this.DataSourceDefn.ConnectionProperties == null)
-                    return "";
-                return this.DataSourceDefn.ConnectionProperties.DataProvider;
-            }
-        }
-
-        internal string DataSourceName
-        {
-            get { return _DataSourceName; }
-        }
-
-        internal DataSourceDefn DataSourceDefn
-        {
-            get { return _DataSourceDefn; }
-        }
-
-        internal QueryCommandTypeEnum QueryCommandType
-        {
-            get { return _QueryCommandType; }
-            set { _QueryCommandType = value; }
-        }
-
-        internal Expression CommandText
-        {
-            get { return _CommandText; }
-            set { _CommandText = value; }
-        }
-
-        internal QueryParameters QueryParameters
-        {
-            get { return _QueryParameters; }
-            set { _QueryParameters = value; }
-        }
-
-        internal int Timeout
-        {
-            get { return _Timeout; }
-            set { _Timeout = value; }
-        }
-
-        internal IDictionary Columns
-        {
-            get { return _Columns; }
         }
 
         // Runtime data

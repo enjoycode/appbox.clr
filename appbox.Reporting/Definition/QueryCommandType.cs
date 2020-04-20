@@ -1,7 +1,3 @@
-
-using System;
-
-
 namespace appbox.Reporting.RDL
 {
 	///<summary>
@@ -13,6 +9,7 @@ namespace appbox.Reporting.RDL
 		StoredProcedure,
 		TableDirect
 	}
+
 	internal class QueryCommandType
 	{
 		static internal QueryCommandTypeEnum GetStyle(string s, ReportLog rl)
