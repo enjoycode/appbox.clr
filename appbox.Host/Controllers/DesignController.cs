@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data;
 using System.Threading.Tasks;
 using appbox.Caching;
 using appbox.Design;
@@ -110,17 +111,18 @@ namespace appbox.Controllers
                 //    report = null;
             }
 
-            ////获取数据源
-            ////var dt = new DataTable();
-            ////dt.Columns.Add("CategoryID", typeof(long));
-            ////dt.Columns.Add("CategoryName", typeof(string));
-            ////dt.Columns.Add("Description", typeof(string));
-            ////for (int i = 0; i < 20; i++)
-            ////{
-            ////    dt.Rows.Add(i, "Name", "Description");
-            ////}
-            ////report.DataSets["Data"].SetData(dt);
-            //report.RunGetData(null); //必须在手工设定数据源后执行
+            //获取数据源
+            var dt = new DataTable();
+            dt.Columns.Add("Name", typeof(string));
+            dt.Columns.Add("Course", typeof(string));
+            dt.Columns.Add("Score", typeof(int));
+            dt.Columns.Add("Memo", typeof(string));
+            for (int i = 0; i < 20; i++)
+            {
+                dt.Rows.Add("张三", "语文", 100, "Description");
+            }
+            report.DataSets["Order"].SetData(dt);
+            report.RunGetData(null); //必须在手工设定数据源后执行
 
             //输出为pdf, TODO:***暂简单写临时文件
             HttpContext.Response.ContentType = "application/pdf";
@@ -141,6 +143,6 @@ namespace appbox.Controllers
                 Log.Debug($"Clean report tempfile: {tempfile}");
             }
         }
-        
+
     }
 }

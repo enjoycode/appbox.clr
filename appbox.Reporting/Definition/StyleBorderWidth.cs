@@ -1,219 +1,207 @@
-
 using System;
 using System.Xml;
 using System.Text;
 
 namespace appbox.Reporting.RDL
 {
-	///<summary>
-	/// The width of the border.  Expressions for all sides as well as default expression.
-	///</summary>
-	[Serializable]
-	internal class StyleBorderWidth : ReportLink
-	{
-		Expression _Default;	//(Size) Width of the border (unless overridden for a specific side)
-								// Borders are centered on the edge of the object
-								// Default: 1 pt Max: 20 pt Min: 0.25 pt
-		Expression _Left;	//(Size) Width of the left border. Max: 20 pt Min: 0.25 pt
-		Expression _Right;	//(Size) Width of the right border. Max: 20 pt Min: 0.25 pt
-		Expression _Top;	//(Size) Width of the top border. Max: 20 pt Min: 0.25 pt
-		Expression _Bottom;	//(Size) Width of the bottom border. Max: 20 pt Min: 0.25 pt
-	
-		internal StyleBorderWidth(ReportDefn r, ReportLink p, XmlNode xNode) : base(r, p)
-		{
-			_Default=null;
-			_Left=null;
+    ///<summary>
+    /// The width of the border.  Expressions for all sides as well as default expression.
+    ///</summary>
+    [Serializable]
+    internal class StyleBorderWidth : ReportLink
+    {
+        /// <summary>
+        /// (Size) Width of the border (unless overridden for a specific side)
+        /// Borders are centered on the edge of the object
+        /// Default: 1 pt Max: 20 pt Min: 0.25 pt
+        /// </summary>
+        internal Expression Default { get; set; }
 
-			// Loop thru all the child nodes
-			foreach(XmlNode xNodeLoop in xNode.ChildNodes)
-			{
-				if (xNodeLoop.NodeType != XmlNodeType.Element)
-					continue;
-				switch (xNodeLoop.Name)
-				{
-					case "Default":
-						_Default = new Expression(r, this, xNodeLoop, ExpressionType.ReportUnit);
-						break;
-					case "Left":
-						_Left = new Expression(r, this, xNodeLoop, ExpressionType.ReportUnit);
-						break;
-					case "Right":
-						_Right = new Expression(r, this, xNodeLoop, ExpressionType.ReportUnit);
-						break;
-					case "Top":
-						_Top = new Expression(r, this, xNodeLoop, ExpressionType.ReportUnit);
-						break;
-					case "Bottom":
-						_Bottom = new Expression(r, this, xNodeLoop, ExpressionType.ReportUnit);
-						break;
-					default:	
-						// don't know this element - log it
-						OwnerReport.rl.LogError(4, "Unknown BorderWidth element '" + xNodeLoop.Name + "' ignored.");
-						break;
-				}
-			}
-		}
+        /// <summary>
+        /// (Size) Width of the left border. Max: 20 pt Min: 0.25 pt
+        /// </summary>
+        internal Expression Left { get; set; }
 
-		// Handle parsing of function in final pass
-		override internal void FinalPass()
-		{
-			if (_Default != null)
-				_Default.FinalPass();
-			if (_Left != null)
-				_Left.FinalPass();
-			if (_Right != null)
-				_Right.FinalPass();
-			if (_Top != null)
-				_Top.FinalPass();
-			if (_Bottom != null)
-				_Bottom.FinalPass();
-			return;
-		}
+        /// <summary>
+        /// (Size) Width of the right border. Max: 20 pt Min: 0.25 pt
+        /// </summary>
+        internal Expression Right { get; set; }
 
-		// Generate a CSS string from the specified styles
-		internal string GetCSS(Report rpt, Row row, bool bDefaults)
-		{
-			StringBuilder sb = new StringBuilder();
+        /// <summary>
+        /// (Size) Width of the top border. Max: 20 pt Min: 0.25 pt
+        /// </summary>
+        internal Expression Top { get; set; }
 
-			if (_Default != null)
-				sb.AppendFormat("border-width:{0};",_Default.EvaluateString(rpt, row));
-			else if (bDefaults)
-				sb.Append("border-width:1pt;");
+        /// <summary>
+        /// (Size) Width of the bottom border. Max: 20 pt Min: 0.25 pt
+        /// </summary>
+        internal Expression Bottom { get; set; }
 
-			if (_Left != null)
-				sb.AppendFormat("border-left-width:{0};",_Left.EvaluateString(rpt, row));
+        internal StyleBorderWidth(ReportDefn r, ReportLink p, XmlNode xNode) : base(r, p)
+        {
+            Default = null;
+            Left = null;
 
-			if (_Right != null)
-				sb.AppendFormat("border-right-width:{0};",_Right.EvaluateString(rpt, row));
+            // Loop thru all the child nodes
+            foreach (XmlNode xNodeLoop in xNode.ChildNodes)
+            {
+                if (xNodeLoop.NodeType != XmlNodeType.Element)
+                    continue;
+                switch (xNodeLoop.Name)
+                {
+                    case "Default":
+                        Default = new Expression(r, this, xNodeLoop, ExpressionType.ReportUnit);
+                        break;
+                    case "Left":
+                        Left = new Expression(r, this, xNodeLoop, ExpressionType.ReportUnit);
+                        break;
+                    case "Right":
+                        Right = new Expression(r, this, xNodeLoop, ExpressionType.ReportUnit);
+                        break;
+                    case "Top":
+                        Top = new Expression(r, this, xNodeLoop, ExpressionType.ReportUnit);
+                        break;
+                    case "Bottom":
+                        Bottom = new Expression(r, this, xNodeLoop, ExpressionType.ReportUnit);
+                        break;
+                    default:
+                        // don't know this element - log it
+                        OwnerReport.rl.LogError(4, "Unknown BorderWidth element '" + xNodeLoop.Name + "' ignored.");
+                        break;
+                }
+            }
+        }
 
-			if (_Top != null)
-				sb.AppendFormat("border-top-width:{0};",_Top.EvaluateString(rpt, row));
+        // Handle parsing of function in final pass
+        override internal void FinalPass()
+        {
+            if (Default != null)
+                Default.FinalPass();
+            if (Left != null)
+                Left.FinalPass();
+            if (Right != null)
+                Right.FinalPass();
+            if (Top != null)
+                Top.FinalPass();
+            if (Bottom != null)
+                Bottom.FinalPass();
+            return;
+        }
 
-			if (_Bottom != null)
-				sb.AppendFormat("border-bottom-width:{0};",_Bottom.EvaluateString(rpt, row));
+        // Generate a CSS string from the specified styles
+        internal string GetCSS(Report rpt, Row row, bool bDefaults)
+        {
+            StringBuilder sb = new StringBuilder();
 
-			return sb.ToString();
-		}
+            if (Default != null)
+                sb.AppendFormat("border-width:{0};", Default.EvaluateString(rpt, row));
+            else if (bDefaults)
+                sb.Append("border-width:1pt;");
 
-		internal bool IsConstant()
-		{
-			bool rc = true;
+            if (Left != null)
+                sb.AppendFormat("border-left-width:{0};", Left.EvaluateString(rpt, row));
 
-			if (_Default != null)
-				rc = _Default.IsConstant();
+            if (Right != null)
+                sb.AppendFormat("border-right-width:{0};", Right.EvaluateString(rpt, row));
 
-			if (!rc)
-				return false;
+            if (Top != null)
+                sb.AppendFormat("border-top-width:{0};", Top.EvaluateString(rpt, row));
 
-			if (_Left != null)
-				rc = _Left.IsConstant();
+            if (Bottom != null)
+                sb.AppendFormat("border-bottom-width:{0};", Bottom.EvaluateString(rpt, row));
 
-			if (!rc)
-				return false;
+            return sb.ToString();
+        }
 
-			if (_Right != null)
-				rc = _Right.IsConstant();
+        internal bool IsConstant()
+        {
+            bool rc = true;
 
-			if (!rc)
-				return false;
+            if (Default != null)
+                rc = Default.IsConstant();
 
-			if (_Top != null)
-				rc = _Top.IsConstant();
+            if (!rc)
+                return false;
 
-			if (!rc)
-				return false;
+            if (Left != null)
+                rc = Left.IsConstant();
 
-			if (_Bottom != null)
-				rc = _Bottom.IsConstant();
+            if (!rc)
+                return false;
 
-			return rc;
-		}
+            if (Right != null)
+                rc = Right.IsConstant();
 
-		static internal string GetCSSDefaults()
-		{
-			return "border-width:1pt;";
-		}
+            if (!rc)
+                return false;
 
-		internal Expression Default
-		{
-			get { return  _Default; }
-			set {  _Default = value; }
-		}
+            if (Top != null)
+                rc = Top.IsConstant();
 
-		internal float EvalDefault(Report rpt, Row r)	// return points
-		{
-			if (_Default == null)
-				return 1;
+            if (!rc)
+                return false;
 
-			string sw;
-			sw = _Default.EvaluateString(rpt, r);
+            if (Bottom != null)
+                rc = Bottom.IsConstant();
 
-			RSize rs = new RSize(this.OwnerReport, sw);
-			return rs.Points;
-		}
+            return rc;
+        }
 
-		internal Expression Left
-		{
-			get { return  _Left; }
-			set {  _Left = value; }
-		}
+        static internal string GetCSSDefaults()
+        {
+            return "border-width:1pt;";
+        }
 
-		internal float EvalLeft(Report rpt, Row r)	// return points
-		{
-			if (_Left == null)
-				return EvalDefault(rpt, r);
+        internal float EvalDefault(Report rpt, Row r)   // return points
+        {
+            if (Default == null)
+                return 1;
 
-			string sw = _Left.EvaluateString(rpt, r);
-			RSize rs = new RSize(this.OwnerReport, sw);
-			return rs.Points;
-		}
+            string sw;
+            sw = Default.EvaluateString(rpt, r);
 
-		internal Expression Right
-		{
-			get { return  _Right; }
-			set {  _Right = value; }
-		}
+            RSize rs = new RSize(this.OwnerReport, sw);
+            return rs.Points;
+        }
 
-		internal float EvalRight(Report rpt, Row r)	// return points
-		{
-			if (_Right == null)
-				return EvalDefault(rpt, r);
+        internal float EvalLeft(Report rpt, Row r)  // return points
+        {
+            if (Left == null)
+                return EvalDefault(rpt, r);
 
-			string sw = _Right.EvaluateString(rpt, r);
-			RSize rs = new RSize(this.OwnerReport, sw);
-			return rs.Points;
-		}
+            string sw = Left.EvaluateString(rpt, r);
+            RSize rs = new RSize(this.OwnerReport, sw);
+            return rs.Points;
+        }
 
-		internal Expression Top
-		{
-			get { return  _Top; }
-			set {  _Top = value; }
-		}
+        internal float EvalRight(Report rpt, Row r) // return points
+        {
+            if (Right == null)
+                return EvalDefault(rpt, r);
 
-		internal float EvalTop(Report rpt, Row r)	// return points
-		{
-			if (_Top == null)
-				return EvalDefault(rpt, r);
+            string sw = Right.EvaluateString(rpt, r);
+            RSize rs = new RSize(this.OwnerReport, sw);
+            return rs.Points;
+        }
 
-			string sw = _Top.EvaluateString(rpt, r);
-			RSize rs = new RSize(this.OwnerReport, sw);
-			return rs.Points;
-		}
+        internal float EvalTop(Report rpt, Row r)   // return points
+        {
+            if (Top == null)
+                return EvalDefault(rpt, r);
 
-		internal Expression Bottom
-		{
-			get { return  _Bottom; }
-			set {  _Bottom = value; }
-		}
+            string sw = Top.EvaluateString(rpt, r);
+            RSize rs = new RSize(this.OwnerReport, sw);
+            return rs.Points;
+        }
 
-		internal float EvalBottom(Report rpt, Row r)	// return points
-		{
-			if (_Bottom == null)
-				return EvalDefault(rpt, r);
+        internal float EvalBottom(Report rpt, Row r)    // return points
+        {
+            if (Bottom == null)
+                return EvalDefault(rpt, r);
 
-			string sw = _Bottom.EvaluateString(rpt, r);
-			RSize rs = new RSize(this.OwnerReport, sw);
-			return rs.Points;
-		}
-	}
+            string sw = Bottom.EvaluateString(rpt, r);
+            RSize rs = new RSize(this.OwnerReport, sw);
+            return rs.Points;
+        }
+    }
 }
