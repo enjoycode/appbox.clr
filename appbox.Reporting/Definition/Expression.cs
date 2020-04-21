@@ -39,7 +39,8 @@ namespace appbox.Reporting.RDL
         /// </summary>
         internal ExpressionType ExpectedType { get; }
 
-        internal Expression(ReportDefn r, ReportLink p, XmlNode xNode, ExpressionType et) : this(r, p, xNode.InnerText, et) { }
+        internal Expression(ReportDefn r, ReportLink p, XmlNode xNode, ExpressionType et)
+            : this(r, p, xNode.InnerText, et) { }
 
         internal Expression(ReportDefn r, ReportLink p, String xNode, ExpressionType et) : base(r, p)
         {
@@ -152,8 +153,6 @@ namespace appbox.Reporting.RDL
                 OwnerReport.rl.LogError(4, "Expression:" + Source + "\r\nConstant Optimization exception:\r\n" + ex.Message + "\r\nStack trace:\r\n" + ex.StackTrace);
             }
             Type = Expr.GetTypeCode();
-
-            return;
         }
 
         private string ErrorText(string msg)
