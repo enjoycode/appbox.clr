@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Threading.Tasks;
 using appbox.Caching;
@@ -138,5 +139,36 @@ namespace appbox.Controllers
             }
         }
 
+        /// <summary>
+        /// 设计时生成条码图片
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="code"></param>
+        /// <returns></returns>
+        [HttpGet("{type}/{code}/{width}/{height}/{scale}")] //Get /api/design/barcode/BarCode128/123456/200/100/1
+        public async Task Barcode(string type, string code, int width, int height, float scale)
+        {
+            //设置当前用户会话
+            RuntimeContext.Current.CurrentSession = HttpContext.Session.LoadWebSession();
+            //判断权限
+            if (!(RuntimeContext.Current.CurrentSession is IDeveloperSession))
+                throw new Exception("Must login as a Developer");
+
+            var target = Reporting.RDL.RdlEngineConfig.CreateCustomReportItem(type);
+            var props = new Dictionary<string, object>
+            {
+                {"Code", code }
+            };
+            target.SetProperties(props);
+            var skbmp = target.DrawImage((int)(width * scale), (int)(height * scale));
+            using var bmp = new Drawing.Bitmap(skbmp);
+            using var ms = new System.IO.MemoryStream(1024);
+            bmp.Save(ms, Drawing.ImageFormat.Jpeg, 90);
+            ms.Position = 0;
+
+            HttpContext.Response.ContentType = "image/jpg";
+            await ms.CopyToAsync(HttpContext.Response.Body);
+            //bmp.Save(HttpContext.Response.Body, Drawing.ImageFormat.Png); //不支持同步直接写
+        }
     }
 }

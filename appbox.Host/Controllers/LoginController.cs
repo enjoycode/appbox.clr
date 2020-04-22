@@ -24,7 +24,7 @@ namespace appbox.Server.WebHost.Controllers
         public async Task<IActionResult> Post([FromBody] LoginRequire require)
         {
             if (string.IsNullOrEmpty(require.User) || string.IsNullOrEmpty(require.Password))
-                return Ok(new { Succeed = false, Error = "User accout or password is null" });
+                return Ok(new { Succeed = false, Error = "User account or password is null" });
 
 #if FUTURE
             //TODO:以下逻辑合并至ServerMessageDispatcher.ProcessLoginRequire

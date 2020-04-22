@@ -24,13 +24,13 @@ namespace appbox.Drawing
 
         public Bitmap(SKBitmap skBitmap) { this.skBitmap = skBitmap; }
 
-        public override void Save(Stream stream, ImageFormat format)
+        public override void Save(Stream stream, ImageFormat format, int quality = 100)
         {
             using var wstream = new SKManagedWStream(stream, false);
             using var pixmap = new SKPixmap();
             if (skBitmap.PeekPixels(pixmap))
             {
-                pixmap.Encode(wstream, (SKEncodedImageFormat)format, 100);
+                pixmap.Encode(wstream, (SKEncodedImageFormat)format, quality);
             }
         }
 

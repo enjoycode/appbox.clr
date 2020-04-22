@@ -31,8 +31,8 @@ namespace appbox.Reporting
             float mag = PixelConversions.GetMagnification(72f, 72f, width, height,
                 OptimalHeight, OptimalWidth);
 
-            int barHeight = PixelConversions.PixelXFromMm(72f, OptimalHeight * mag);
-            int barWidth = PixelConversions.PixelYFromMm(72f, OptimalWidth * mag);
+            int barHeight = PixelConversions.PixelFromMm(72f, OptimalHeight * mag);
+            int barWidth = PixelConversions.PixelFromMm(72f, OptimalWidth * mag);
 
             writer.Options.Height = barHeight;
             writer.Options.Width = barWidth;

@@ -48,7 +48,7 @@ namespace appbox.Drawing
         public float HorizontalResolution => 72f; //TODO:
         public float VerticalResolution => 72f; //TODO:
 
-        public abstract void Save(Stream stream, ImageFormat format);
+        public abstract void Save(Stream stream, ImageFormat format, int quality = 100);
 
 
         #region ====IDisposable Support====
