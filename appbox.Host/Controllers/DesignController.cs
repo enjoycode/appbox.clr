@@ -107,21 +107,15 @@ namespace appbox.Controllers
 
                 int severity = report.ErrorMaxSeverity;
                 report.ErrorReset();
-                //if (severity > 4)
-                //    report = null;
+                if (severity > 4)
+                    throw new Exception("Parse Report error.");
             }
 
-            //获取数据源
-            var dt = new DataTable();
-            dt.Columns.Add("Name", typeof(string));
-            dt.Columns.Add("Course", typeof(string));
-            dt.Columns.Add("Score", typeof(int));
-            dt.Columns.Add("Memo", typeof(string));
-            for (int i = 0; i < 20; i++)
+            //根据推/拉模式获取或生成预览数据源, TODO:暂全部生成测试数据
+            foreach (var ds in report.DataSets)
             {
-                dt.Rows.Add("张三", "语文", 100, "Description");
+                ((Reporting.RDL.DataSet)ds).MakePreviewData(10);
             }
-            report.DataSets["Order"].SetData(dt);
             report.RunGetData(null); //必须在手工设定数据源后执行
 
             //输出为pdf, TODO:***暂简单写临时文件

@@ -133,7 +133,7 @@ namespace appbox.Reporting.RDL
             }
             if (ds == null)
             {
-                OwnerReport.rl.LogError(8, "Query references unknown data source '" + DataSourceName + "'");
+                //OwnerReport.rl.LogError(8, "Query references unknown data source '" + DataSourceName + "'");
                 return;
             }
             DataSourceDefn = ds;
@@ -366,7 +366,7 @@ namespace appbox.Reporting.RDL
                         {
                             or.Data[fld.ColumnNumber] =
                                 Convert.ToDateTime(xNodeColumn.InnerText,
-                                System.Globalization.DateTimeFormatInfo.InvariantInfo);
+                                DateTimeFormatInfo.InvariantInfo);
                         }
                         catch	// all conversion errors result in a null value
                         {
