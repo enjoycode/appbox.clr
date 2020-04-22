@@ -18,71 +18,23 @@ namespace appbox.Reporting.RDL
         static internal IDictionary SqlEntries = null;
         // list of entries
         static internal Dictionary<string, CustomReportItemEntry> CustomReportItemEntries = null;
-        static DateTime _InitFileCreationTime = DateTime.MinValue;
 
         // Compression entries
         static CompressionConfig _Compression = null;
 
         static public string DirectoryLoadedFrom { get; private set; } = null;
 
-        // initializes when no init available
-        static public void RdlEngineConfigInit()
+        static RdlEngineConfig()
         {
-            string d1, d2;
-            d1 = AppDomain.CurrentDomain.BaseDirectory;
-            d2 = AppDomain.CurrentDomain.RelativeSearchPath;
-            if (d2 != null && d2 != string.Empty)
-                d2 = (d2.Contains(":") ? "" : AppDomain.CurrentDomain.BaseDirectory) + d2 + Path.DirectorySeparatorChar;
-            RdlEngineConfigInit(d1, d2);
+            RdlEngineConfigInit();
         }
 
         // initialize configuration
-        static public void RdlEngineConfigInit(params string[] dirs)
+        private static void RdlEngineConfigInit()
         {
-            bool bLoaded = false;
-            XmlDocument xDoc = new XmlDocument();
+            var xDoc = new XmlDocument();
             xDoc.PreserveWhitespace = false;
-            string file = null;
-            DateTime fileTime = DateTime.MinValue;
-
-            foreach (string dir in dirs)
-            {
-                if (dir == null)
-                    continue;
-
-                PlatformID pid = Environment.OSVersion.Platform;
-                if (pid == PlatformID.Unix)
-                {
-                    file = Path.Combine(dir, "RdlEngineConfig.Linux.xml");
-                }
-                else
-                {
-                    file = Path.Combine(dir, "RdlEngineConfig.xml");
-                }
-
-                
-                try
-                {
-                    FileInfo fi = new FileInfo(file);
-                    fileTime = fi.CreationTime;
-                    if (_InitFileCreationTime == fileTime && SqlEntries != null)
-                        return;         // we've already inited with this file 
-                    xDoc.Load(file);
-                    bLoaded = true;
-                    DirectoryLoadedFrom = dir;
-                }
-                catch (Exception ex)
-                {   // can't do much about failures; no place to report them 
-                    Console.WriteLine("Error opening RdlEngineConfig.xml: {0}", ex.Message);
-                }
-                if (bLoaded)
-                    break;
-            }
-            if (!bLoaded)   // we couldn't find the configuration so we'll use internal one 
-            {
-                if (SqlEntries != null)         // we don't need to reinit with internal one 
-                    return;
-                xDoc.InnerXml = @" 
+            xDoc.InnerXml = @" 
 <config> 
    <DataSources> 
       <DataSource> 
@@ -141,10 +93,10 @@ namespace appbox.Reporting.RDL
       </CustomReportItem>
    </CustomReportItems>
 </config>";
-            }
+
             XmlNode xNode;
             xNode = xDoc.SelectSingleNode("//config");
-             
+
             IDictionary dsDir = new ListDictionary();
             Dictionary<string, CustomReportItemEntry> crieDir =
                 new Dictionary<string, CustomReportItemEntry>();   // list of entries 
@@ -172,18 +124,9 @@ namespace appbox.Reporting.RDL
 
             SqlEntries = dsDir;
             CustomReportItemEntries = crieDir;
-            _InitFileCreationTime = fileTime;           // save initialization time 
-
-            return;
         }
 
-        internal static CompressionConfig GetCompression()
-        {
-            if (SqlEntries == null)
-                RdlEngineConfigInit();      // init if necessary 
-
-            return _Compression;
-        }
+        internal static CompressionConfig GetCompression() => _Compression;
 
         static void GetCompression(XmlNode xNode)
         {
@@ -289,7 +232,7 @@ namespace appbox.Reporting.RDL
                     // The file cannot be found without adding the current directoyr
                     if (System.IO.File.Exists(codemodule) == false && System.IO.Path.GetFileName(codemodule) == codemodule)
                     {
-                        
+
                         if (AppDomain.CurrentDomain.RelativeSearchPath != null)
                         {
                             codemodule = System.IO.Path.Combine(AppDomain.CurrentDomain.RelativeSearchPath, codemodule);
@@ -383,11 +326,6 @@ namespace appbox.Reporting.RDL
                     break;
 #endif
                 default:
-                    if (SqlEntries == null)
-                    {         // if never initialized; we should init 
-                        RdlEngineConfigInit();
-                    }
-
                     Console.WriteLine("Attempt to find provider");
                     SqlConfigEntry sce = SqlEntries[provider] as SqlConfigEntry;
                     if (sce == null || sce.CodeModule == null)
@@ -419,17 +357,13 @@ namespace appbox.Reporting.RDL
 
         static public bool DoParameterReplacement(string provider, IDbConnection cn)
         {
-            if (SqlEntries == null)
-                RdlEngineConfigInit();
-            SqlConfigEntry sce = SqlEntries[provider] as SqlConfigEntry;
+            var sce = SqlEntries[provider] as SqlConfigEntry;
             return sce == null ? false : sce.ReplaceParameters;
         }
 
         static public string GetTableSelect(string provider, IDbConnection cn)
         {
             throw new NotSupportedException();
-            //if (SqlEntries == null)
-            //    RdlEngineConfigInit();
             //SqlConfigEntry sce = SqlEntries[provider] as SqlConfigEntry;
             //if (sce == null)
             //{
@@ -452,8 +386,6 @@ namespace appbox.Reporting.RDL
 
         static public string[] GetProviders()
         {
-            if (SqlEntries == null)
-                RdlEngineConfigInit();
             if (SqlEntries.Count == 0)
                 return null;
             string[] items = new string[SqlEntries.Count];
@@ -467,8 +399,6 @@ namespace appbox.Reporting.RDL
 
         static public string[] GetCustomReportTypes()
         {
-            if (CustomReportItemEntries == null)
-                RdlEngineConfigInit();
             if (CustomReportItemEntries.Count == 0)
                 return null;
             string[] items = new string[CustomReportItemEntries.Count];
@@ -563,8 +493,7 @@ namespace appbox.Reporting.RDL
 
         public static ICustomReportItem CreateCustomReportItem(string friendlyTypeName)
         {
-            CustomReportItemEntry crie = null;
-            if (!CustomReportItemEntries.TryGetValue(friendlyTypeName, out crie))
+            if (!CustomReportItemEntries.TryGetValue(friendlyTypeName, out CustomReportItemEntry crie))
                 throw new Exception(string.Format(Strings.RdlEngineConfig_Error_NotKnownCustomReportItemType, friendlyTypeName));
             if (crie.Type == null)
                 throw new Exception(crie.ErrorMsg ??
@@ -580,12 +509,8 @@ namespace appbox.Reporting.RDL
                 throw new ArgumentException("The type does not implement the ICustomReportItem interface: " +
                     type == null ? "null" : type.Name);
 
-            if (CustomReportItemEntries == null)
-                RdlEngineConfigInit();
-
             // Let's manage doublons, if any. 
-            CustomReportItemEntry item;
-            if (!CustomReportItemEntries.TryGetValue(itemName, out item))
+            if (!CustomReportItemEntries.TryGetValue(itemName, out CustomReportItemEntry item))
                 CustomReportItemEntries[itemName] = new CustomReportItemEntry(itemName, type, null);
             else if (!item.Type.Equals(type))
                 throw new ArgumentException("A different type of CustomReportItem with the same has already been declared.");
