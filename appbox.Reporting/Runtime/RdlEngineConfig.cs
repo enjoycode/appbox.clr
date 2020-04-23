@@ -72,9 +72,9 @@ namespace appbox.Reporting.RDL
          <ClassName>appbox.Reporting.BarCodeBookland</ClassName>
       </CustomReportItem>
       <CustomReportItem>
-         <Type>QR Code</Type>
+         <Type>QRCode</Type>
          <CodeModule>appbox.Reporting.dll</CodeModule>
-         <ClassName>appbox.Reporting.QrCode</ClassName>
+         <ClassName>appbox.Reporting.QRCode</ClassName>
       </CustomReportItem>
       <CustomReportItem>
          <Type>BarCode39</Type>

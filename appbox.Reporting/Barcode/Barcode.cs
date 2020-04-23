@@ -142,7 +142,7 @@ namespace appbox.Reporting
         protected override ZXing.BarcodeFormat BarcodeFormat => ZXing.BarcodeFormat.CODE_39;
     }
 
-    public sealed class QrCode : BarcodeBase
+    public sealed class QRCode : BarcodeBase
     {
         protected override ZXing.BarcodeFormat BarcodeFormat => ZXing.BarcodeFormat.QR_CODE;
     }
