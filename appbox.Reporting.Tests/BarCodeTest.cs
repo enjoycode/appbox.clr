@@ -18,7 +18,7 @@ namespace appbox.Reporting.Tests
             };
             code128.SetProperties(props);
 
-            var bmp = code128.DrawImage(100, 400);
+            var bmp = code128.DrawImage(180, 40);
             var img = new Bitmap(bmp);
             using var fs = File.OpenWrite("A_BarCode128.jpg");
             img.Save(fs, ImageFormat.Jpeg);

@@ -1,50 +1,37 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Xml;
-using System.ComponentModel;
 
 namespace appbox.Reporting
 {
-    public class BarCode128 : RDL.ICustomReportItem
+    public abstract class BarcodeBase : RDL.ICustomReportItem
     {
-        static public readonly float OptimalHeight = 35.91f;          // Optimal height at magnification 1    
-        static public readonly float OptimalWidth = 65.91f;            // Optimal width at mag 1
-        private string _code128 = "";
+        private string _code = "";
+
+        protected abstract ZXing.BarcodeFormat BarcodeFormat { get; }
 
         #region ICustomReportItem Members
-
-        public bool IsDataRegion()
-        {
-            return false;
-        }
+        public bool IsDataRegion() => false;
 
         public SkiaSharp.SKBitmap DrawImage(int width, int height)
         {
-            return DrawImage(width, height, _code128.ToUpper());
+            return DrawImage(width, height, _code);
         }
 
-        public SkiaSharp.SKBitmap DrawImage(int width, int height, string code128)
+        public SkiaSharp.SKBitmap DrawImage(int width, int height, string code)
         {
             var writer = new ZXing.SkiaSharp.BarcodeWriter(); //TODO:优化单例ZXing.BarCodeRender
-            writer.Format = ZXing.BarcodeFormat.CODE_128;
-
-            float mag = PixelConversions.GetMagnification(72f, 72f, width, height,
-                OptimalHeight, OptimalWidth);
-
-            int barHeight = PixelConversions.PixelFromMm(72f, OptimalHeight * mag);
-            int barWidth = PixelConversions.PixelFromMm(72f, OptimalWidth * mag);
-
-            writer.Options.Height = barHeight;
-            writer.Options.Width = barWidth;
-
-            return writer.Write(code128);
+            writer.Format = BarcodeFormat;
+            writer.Options.Height = height;
+            writer.Options.Width = width;
+            return writer.Write(code);
         }
 
         public void SetProperties(IDictionary<string, object> props)
         {
             try
             {
-                _code128 = props["Code"].ToString();
+                _code = props["Code"].ToString();
             }
             catch (KeyNotFoundException)
             {
@@ -96,7 +83,7 @@ namespace appbox.Reporting
         public string GetCustomReportItemXml()
         {
             return "<CustomReportItem><Type>{0}</Type>" +
-                string.Format("<Height>{0}mm</Height><Width>{1}mm</Width>", OptimalHeight, OptimalWidth) +
+                "<Height>200pt</Height><Width>100pt</Width>" +
                 "<CustomProperties>" +
                 "<CustomProperty>" +
                 "<Name>Code</Name>" +
@@ -118,11 +105,11 @@ namespace appbox.Reporting
         /// </summary>
         public sealed class BarCodeProperties
         {
-            string _code128;
-            BarCode128 _bc;
-            XmlNode _node;
+            private string _code;
+            private readonly BarcodeBase _bc;
+            private readonly XmlNode _node;
 
-            internal BarCodeProperties(BarCode128 bc, XmlNode node)
+            internal BarCodeProperties(BarcodeBase bc, XmlNode node)
             {
                 _bc = bc;
                 _node = node;
@@ -130,16 +117,33 @@ namespace appbox.Reporting
 
             internal void SetBarCode(string ns)
             {
-                _code128 = ns;
+                _code = ns;
             }
 
-            [Category("Code"), Description("The text string to be encoded as a BarCode128 Code.")]
+            /// <summary>
+            /// The text string to be encoded as a Code.
+            /// </summary>
             public string Code
             {
-                get { return _code128; }
-                set { _code128 = value; _bc.SetPropertiesInstance(_node, this); }
+                get { return _code; }
+                set { _code = value; _bc.SetPropertiesInstance(_node, this); }
             }
         }
 
+    }
+
+    public sealed class BarCode128: BarcodeBase
+    {
+        protected override ZXing.BarcodeFormat BarcodeFormat => ZXing.BarcodeFormat.CODE_128;
+    }
+
+    public sealed class BarCode39 : BarcodeBase
+    {
+        protected override ZXing.BarcodeFormat BarcodeFormat => ZXing.BarcodeFormat.CODE_39;
+    }
+
+    public sealed class QrCode : BarcodeBase
+    {
+        protected override ZXing.BarcodeFormat BarcodeFormat => ZXing.BarcodeFormat.QR_CODE;
     }
 }
