@@ -13,8 +13,8 @@ namespace appbox.Reporting.RDL
     {
         #region ====Fields & Properties====
         /// <summary>
-            /// Name of the report item
-            /// </summary>
+        /// Name of the report item
+        /// </summary>
         internal Name Name { get; set; }
 
         /// <summary>
@@ -658,7 +658,7 @@ namespace appbox.Reporting.RDL
         {
             WorkClass wc = GetWC(rpt);
             int width;
-            if (this.TC != null)
+            if (TC != null)
             {   // must be part of a table
                 Table t = TC.OwnerTable;
                 int colindex = TC.ColIndex;
@@ -668,20 +668,22 @@ namespace appbox.Reporting.RDL
                 TableColumn tc;
                 for (int ci = colindex; ci < colindex + TC.ColSpan; ci++)
                 {
-                    tc = (TableColumn)(t.TableColumns.Items[ci]);
-                    width += tc.Width.PixelsX;
+                    tc = t.TableColumns.Items[ci];
+                    width += g == null ? tc.Width.PixelsX : tc.Width.ToPixels((decimal)g.DpiX);
                 }
             }
             else if (wc.MC != null)
             {   // must be part of a matrix
-                width = g == null ? RSize.PixelsFromPoints(wc.MC.Width) : RSize.PixelsFromPoints(g, wc.MC.Width);
+                width = g == null ? RSize.PixelsFromPoints(wc.MC.Width)
+                    : RSize.PixelsFromPoints(wc.MC.Width, g.DpiX);
             }
             else
             {   // not part of a table or matrix
                 if (Width != null)
-                    width = Width.PixelsX;
+                    width = g == null ? Width.PixelsX : Width.ToPixels((decimal)g.DpiX);
                 else
-                    width = RSize.PixelsFromPoints(WidthOrOwnerWidth(rpt));
+                    width = g == null ? RSize.PixelsFromPoints(WidthOrOwnerWidth(rpt))
+                        : RSize.PixelsFromPoints(WidthOrOwnerWidth(rpt), g.DpiX);
             }
             return width;
         }

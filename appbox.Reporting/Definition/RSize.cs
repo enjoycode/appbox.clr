@@ -1,10 +1,8 @@
-
 using System;
 using System.Xml;
 using appbox.Drawing;
 using System.Globalization;
 using System.Text.RegularExpressions;
-
 
 namespace appbox.Reporting.RDL
 {
@@ -129,33 +127,20 @@ namespace appbox.Reporting.RDL
         internal int PixelsX
         {
             get
-            {   // For now assume 96 dpi;  TODO: what would be better way; shouldn't use server display pixels
-                decimal p = Size;
-                p = p / 2540m;      // get it in inches
-                p = p * 96;				// 
-                if (p != 0)
-                    return (int)p;
-                return (Size > 0) ? 1 : (int)p;
+            {
+                // For now assume 96 dpi;  TODO: what would be better way; shouldn't use server display pixels
+                return ToPixels(96);
             }
         }
 
         static internal readonly float POINTSIZED = 72.27f;
         static internal readonly decimal POINTSIZEM = 72.27m;
 
-        static internal int PixelsFromPoints(float x)
+        static internal int PixelsFromPoints(float x, float dpi = 96)
         {
-            int result = (int)(x * 96 / POINTSIZED);	// convert to pixels
+            int result = (int)(x * dpi / POINTSIZED);	// convert to pixels
             if (result == 0 && x > .0001f)
                 return 1;
-            return result;
-        }
-
-        static internal int PixelsFromPoints(Graphics g, float x)
-        {
-            int result = (int)(x * g.DpiX / POINTSIZED);	// convert to pixels
-            if (result == 0 && x > .0001f)
-                return 1;
-
             return result;
         }
 
@@ -179,7 +164,7 @@ namespace appbox.Reporting.RDL
         /// <returns>An int containing the size in pixels.</returns>
         internal int ToPixels(decimal dpi)
         {
-            return RSize.ToPixels(Size, dpi);
+            return ToPixels(Size, dpi);
         }
 
         /// <summary>
@@ -203,7 +188,7 @@ namespace appbox.Reporting.RDL
 
         internal float ToPoints()
         {
-            return RSize.ToPoints(Size);
+            return ToPoints(Size);
         }
 
         static public float ToPoints(int size)

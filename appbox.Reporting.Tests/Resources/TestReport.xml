@@ -60,8 +60,8 @@
          <Type>BarCode128</Type>
          <Top>.1in</Top>
          <Left>2.5in</Left>
-         <Height>180pt</Height>
-         <Width>40pt</Width>
+         <Height>40pt</Height>
+         <Width>180pt</Width>
          <CustomProperties>
             <CustomProperty>
                 <Name>Code</Name>

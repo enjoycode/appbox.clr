@@ -174,7 +174,9 @@ namespace appbox.Reporting.RDL
                 int width = WidthCalc(rpt, pgs.G) -
                     (Style == null ? 0 :
                         (Style.EvalPaddingLeftPx(rpt, row) + Style.EvalPaddingRightPx(rpt, row)));
-                int height = RSize.PixelsFromPoints(HeightOrOwnerHeight) -
+                int height = pgs.G == null ? RSize.PixelsFromPoints(HeightOrOwnerHeight) :
+                        RSize.PixelsFromPoints(HeightOrOwnerHeight, pgs.G.DpiY);
+                height = height -
                     (Style == null ? 0 :
                         (Style.EvalPaddingTopPx(rpt, row) + Style.EvalPaddingBottomPx(rpt, row)));
                 var skbmp = cri.DrawImage(width, height);
