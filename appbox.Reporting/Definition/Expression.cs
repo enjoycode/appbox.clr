@@ -1,10 +1,7 @@
-
 using System;
 using System.Xml;
 using System.Collections;
-using System.Collections.Specialized;
 using System.Threading;
-using appbox.Reporting.RDL;
 
 namespace appbox.Reporting.RDL
 {
@@ -150,7 +147,8 @@ namespace appbox.Reporting.RDL
             }
             catch (Exception ex)
             {
-                OwnerReport.rl.LogError(4, "Expression:" + Source + "\r\nConstant Optimization exception:\r\n" + ex.Message + "\r\nStack trace:\r\n" + ex.StackTrace);
+                OwnerReport.rl.LogError(4, "Expression:" + Source + "\r\nConstant Optimization exception:\r\n"
+                    + ex.Message + "\r\nStack trace:\r\n" + ex.StackTrace);
             }
             Type = Expr.GetTypeCode();
         }

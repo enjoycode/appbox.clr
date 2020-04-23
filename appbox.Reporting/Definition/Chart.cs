@@ -1,7 +1,5 @@
 using System;
 using System.Xml;
-using System.IO;
-using appbox.Drawing;
 
 namespace appbox.Reporting.RDL
 {

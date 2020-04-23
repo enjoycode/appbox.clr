@@ -96,7 +96,7 @@ namespace appbox.Reporting.RDL
                 switch (xNodeLoop.Name)
                 {
                     case "DataType":
-                        dt = DataType.GetStyle(xNodeLoop.InnerText, this.OwnerReport);
+                        dt = DataType.GetStyle(xNodeLoop.InnerText, OwnerReport);
                         _NumericType = DataType.IsNumeric(dt);
                         break;
                     case "Nullable":
@@ -126,7 +126,7 @@ namespace appbox.Reporting.RDL
                         break;
                     default:
                         // don't know this element - log it
-                        OwnerReport.rl.LogError(4, "Unknown ReportParameter element '" + xNodeLoop.Name + "' ignored.");
+                        OwnerReport.rl.LogError(4, $"Unknown ReportParameter element '{xNodeLoop.Name}' ignored.");
                         break;
                 }
             }
@@ -167,7 +167,7 @@ namespace appbox.Reporting.RDL
             if (result == null)
                 return null;
             object v = result[0];
-            if (v is String && _NumericType)
+            if (v is string && _NumericType)
                 v = ConvertStringToNumber((string)v);
 
             rtv = Convert.ChangeType(v, dt);
@@ -196,7 +196,7 @@ namespace appbox.Reporting.RDL
             foreach (object v in result)
             {
                 object nv = v;
-                if (nv is String && _NumericType)
+                if (nv is string && _NumericType)
                     nv = ConvertStringToNumber((string)nv);
 
                 ar.Add(Convert.ChangeType(nv, dt));
@@ -210,7 +210,7 @@ namespace appbox.Reporting.RDL
 
         internal void SetRuntimeValue(Report rpt, object v)
         {
-            if (this.MultiValue)
+            if (MultiValue)
             {   // ok to only set one parameter of multiValue;  but we still save as MultiValue
                 ArrayList ar;
                 if (v is string)
@@ -302,9 +302,9 @@ namespace appbox.Reporting.RDL
         {
             // remove any commas, currency symbols (internationalized)
             NumberFormatInfo nfi = NumberFormatInfo.CurrentInfo;
-            if (!String.IsNullOrEmpty(nfi.NumberGroupSeparator))
+            if (!string.IsNullOrEmpty(nfi.NumberGroupSeparator))
                 newv = newv.Replace(nfi.NumberGroupSeparator, "");
-            if (!String.IsNullOrEmpty(nfi.CurrencySymbol))
+            if (!string.IsNullOrEmpty(nfi.CurrencySymbol))
                 newv = newv.Replace(nfi.CurrencySymbol, "");
             return newv;
         }

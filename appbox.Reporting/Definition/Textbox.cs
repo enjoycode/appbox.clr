@@ -171,7 +171,7 @@ namespace appbox.Reporting.RDL
                 object o = OwnerReport.LUAggrScope[HideDuplicates];
                 if (o == null)
                 {
-                    OwnerReport.rl.LogError(4, "HideDuplicate '" + HideDuplicates + "' is not a Group or DataSet name.   It will be ignored.");
+                    OwnerReport.rl.LogError(4, $"HideDuplicate '{HideDuplicates}' is not a Group or DataSet name.   It will be ignored.");
                     HideDuplicates = null;
                 }
                 else if (o is Grouping)
