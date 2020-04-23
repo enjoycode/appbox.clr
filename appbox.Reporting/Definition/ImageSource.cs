@@ -1,49 +1,47 @@
-
-using System;
-
-
 namespace appbox.Reporting.RDL
 {
-	///<summary>
-	///  Handles the Image source enumeration.  External, Embedded, Database
-	///</summary>
-	internal enum ImageSourceEnum
-	{
-		External,	// The Value contains a constant or
-					// expression that evaluates to the location of
-					// the image
-		Embedded,	// The Value contains a constant
-					// or expression that evaluates to the name of
-					// an EmbeddedImage within the report.
-		Database,	// The Value contains an
-					// expression (typically a field in the database)
-					// that evaluates to the binary data for the
-					// image.
-		Unknown		// Illegal or unspecified
-	}
-	internal class ImageSource
-	{
-		static internal ImageSourceEnum GetStyle(string s)
-		{
-			ImageSourceEnum rs;
+    ///<summary>
+    ///  Handles the Image source enumeration.  External, Embedded, Database
+    ///</summary>
+    internal enum ImageSourceEnum
+    {
+        /// <summary>
+        /// The Value contains a constant or
+        /// expression that evaluates to the location of the image
+        /// </summary>
+        External,
+        /// <summary>
+        /// The Value contains a constant
+        /// or expression that evaluates to the name of
+        /// an EmbeddedImage within the report.
+        /// </summary>
+        Embedded,
+        /// <summary>
+        /// The Value contains an
+        /// expression (typically a field in the database)
+        /// that evaluates to the binary data for the
+        /// image.
+        /// </summary>
+        Database,
+        /// <summary>
+        /// Illegal or unspecified
+        /// </summary>
+        Unknown
+    }
 
-			switch (s)
-			{		
-				case "External":
-					rs = ImageSourceEnum.External;
-					break;
-				case "Embedded":
-					rs = ImageSourceEnum.Embedded;
-					break;
-				case "Database":
-					rs = ImageSourceEnum.Database;
-					break;
-				default:		
-					rs = ImageSourceEnum.Unknown;
-					break;
-			}
-			return rs;
-		}
-	}
+    internal class ImageSource
+    {
+        static internal ImageSourceEnum GetStyle(string s)
+        {
+            var rs = s switch
+            {
+                "External" => ImageSourceEnum.External,
+                "Embedded" => ImageSourceEnum.Embedded,
+                "Database" => ImageSourceEnum.Database,
+                _ => ImageSourceEnum.Unknown,
+            };
+            return rs;
+        }
+    }
 
 }
