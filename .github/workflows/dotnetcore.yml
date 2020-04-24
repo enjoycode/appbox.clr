@@ -21,9 +21,9 @@ jobs:
       run: dotnet tool install --global nulastudio.ncbeauty
     - name: Build with dotnet
       run: |
-        dotnet publish -r win-x64 -c Release -o bin\AppContainer appbox.AppContainer\appbox.AppContainer.csproj
-        ncbeauty --force=True --loglevel=Info --nopatch=True bin\AppContainer lib
-        dir bin\AppContainer
+        dotnet publish -r win-x64 -c Release appbox.AppContainer\appbox.AppContainer.csproj
+        ncbeauty --loglevel=Info --nopatch=True appbox.AppContainer\bin\Release\netcoreapp3.1\win-x64\publish lib
+        dir appbox.AppContainer\bin\Release\netcoreapp3.1\win-x64\publish
         dotnet publish -r win-x64 -c Release -o bin\Host appbox.Host\appbox.Host.csproj
         ncbeauty --loglevel=Info --nopatch=True bin\Host lib
         dir bin\Host
@@ -32,7 +32,7 @@ jobs:
         git config --global core.autocrlf input
         git clone https://enjoycode:${{ secrets.CI_TOKEN }}@github.com/enjoycode/appbox.deploy.win bin\deploy
         rd /q /s bin\deploy\lib
-        xcopy /E /I /Y /Q "bin\AppContainer" "bin\deploy"
+        xcopy /E /I /Y /Q "appbox.AppContainer\bin\Release\netcoreapp3.1\win-x64\publish" "bin\deploy"
         xcopy /E /I /Y /Q "bin\Host" "bin\deploy"
         xcopy /I /Y /Q "build\debugger\netcoredbg.exe" "bin\deploy\lib"
         xcopy /I /Y /Q "build\debugger\SymbolReader.dll" "bin\deploy\lib"
