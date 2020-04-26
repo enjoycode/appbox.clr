@@ -11,7 +11,7 @@ namespace appbox.Reporting.Tests
         {
             //var rdl = new RDL.ReportDefn();
             //var report = new RDL.Report();
-            var rdlXml = Resources.LoadStringResource("Resources.TestReport.xml");
+            var rdlXml = Resources.LoadStringResource("Resources.TestGroup.xml");
             var rdlParser = new RDL.RDLParser(rdlXml);
             var report = rdlParser.Parse();
             //Assert.True(report.ErrorMaxSeverity <= 4);
@@ -35,7 +35,7 @@ namespace appbox.Reporting.Tests
             dt.Columns.Add("Description", typeof(string));
             for (int i = 0; i < 20; i++)
             {
-                dt.Rows.Add(i, "Name", "Description");
+                dt.Rows.Add(i % 3, (i % 3).ToString() + "-Name" + (i % 2).ToString(), "Description");
             }
             report.DataSets["Data"].SetData(dt);
             report.RunGetData(null); //必须在手工设定数据源后执行

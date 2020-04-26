@@ -215,6 +215,8 @@ namespace appbox.Reporting.RDL
         {
             tbr.PreviousText = null;
             tbr.PreviousPage = null;
+            tbr.PreviousPageText = null;
+            tbr.PreviousPageTextHtml = null;
         }
 
         override internal void Run(IPresent ip, Row row)
@@ -229,7 +231,7 @@ namespace appbox.Reporting.RDL
             bool bDup = RunTextIsDuplicate(tbr, t, null);
             if (bDup)
             {
-                if (!(this.IsTableOrMatrixCell(rpt)))   // don't put out anything if not in Table or Matrix
+                if (!(IsTableOrMatrixCell(rpt)))   // don't put out anything if not in Table or Matrix
                     return;
                 t = "";     // still need to put out the cell
             }
@@ -259,9 +261,10 @@ namespace appbox.Reporting.RDL
             bool bDup = RunTextIsDuplicate(tbr, t, pgs.CurrentPage);
             if (bDup)
             {
-                if (!(this.IsTableOrMatrixCell(r))) // don't put out anything if not in Table or Matrix
-                    bHidden = true;
-                t = "";     // still need to put out the cell
+                bHidden = true; //TODO:属性控制是否hidden，现直接隐藏
+                //if (!IsTableOrMatrixCell(r)) // don't put out anything if not in Table or Matrix
+                //    bHidden = true;
+                //t = "";     // still need to put out the cell
             }
             PageText pt;
             PageTextHtml pth = null;
@@ -270,19 +273,19 @@ namespace appbox.Reporting.RDL
             else
                 pt = new PageText(t);
             SetPagePositionAndStyle(r, pt, row);
-            if (this.CanGrow && tbr.RunHeight == 0) // when textbox is in a DataRegion this will already be called
+            if (CanGrow && tbr.RunHeight == 0) // when textbox is in a DataRegion this will already be called
             {
-                this.RunTextCalcHeight(r, pgs.G, row, pt is PageTextHtml ? pt as PageTextHtml : null);
+                RunTextCalcHeight(r, pgs.G, row, pt is PageTextHtml ? pt as PageTextHtml : null);
             }
             pt.H = Math.Max(pt.H, tbr.RunHeight);       // reset height
             if (pt.SI.BackgroundImage != null)
                 pt.SI.BackgroundImage.H = pt.H;     //   and in the background image
-            pt.CanGrow = this.CanGrow;
+            pt.CanGrow = CanGrow;
 
             // check TextAlign: if General then correct based on data type
             if (pt.SI.TextAlign == TextAlignEnum.General)
             {
-                if (DataType.IsNumeric(this.Value.GetTypeCode()))
+                if (DataType.IsNumeric(Value.GetTypeCode()))
                     pt.SI.TextAlign = TextAlignEnum.Right;
             }
 
@@ -290,13 +293,13 @@ namespace appbox.Reporting.RDL
             if (!bHidden)
             {
                 // Force page break if it doesn't fit on a page
-                if (this.IsInBody &&                         // Only force page when object directly in body
+                if (IsInBody &&                         // Only force page when object directly in body
                     pgs.CurrentPage.YOffset + pt.Y + pt.H >= pgs.BottomOfPage && // running off end of page
                     !pgs.CurrentPage.IsEmpty())                             // if page is already empty don't force new
                 {	// force page break if it doesn't fit on the page
                     pgs.NextOrNew();
                     pgs.CurrentPage.YOffset = OwnerReport.TopOfPage;
-                    if (this.YParents != null)
+                    if (YParents != null)
                         pt.Y = 0;
                 }
 
@@ -307,13 +310,23 @@ namespace appbox.Reporting.RDL
                 {
                     tbr.PreviousText = t;	// previous text displayed
                     tbr.PreviousPage = p;	//  page previous text was shown on
+                    tbr.PreviousPageText = pt;
+                    tbr.PreviousPageTextHtml = pth;
+                }
+            }
+            else
+            {
+                if (bDup) //临时方案自动合并分组的单元格
+                {
+                    if (tbr.PreviousPageText != null) tbr.PreviousPageText.H += pt.H;
+                    if (tbr.PreviousPageTextHtml != null) tbr.PreviousPageTextHtml.H += pt.H;
                 }
             }
 
             SetPagePositionEnd(pgs, pt.Y + pt.H);
             if (pth != null)
                 pth.Reset();
-            if (this.CanGrow && !Value.IsConstant())
+            if (CanGrow && !Value.IsConstant())
             {
                 tbr.RunHeight = 0;                  // need to recalculate
             }
@@ -323,7 +336,7 @@ namespace appbox.Reporting.RDL
         //  ie: same as previous text and on same page
         private bool RunTextIsDuplicate(TextboxRuntime tbr, string t, Page p)
         {
-            if (this.HideDuplicates == null)
+            if (HideDuplicates == null)
                 return false;
             if (t == tbr.PreviousText && p == tbr.PreviousPage)
                 return true;
@@ -337,12 +350,12 @@ namespace appbox.Reporting.RDL
             // AJM 15082008: Suppress NaN from appearing in a textbox
             if (o is double)
             {
-                if (Double.IsNaN((double)o))
+                if (double.IsNaN((double)o))
                 {
                     o = null;
                 }
             }
-            string t = Style.GetFormatedString(rpt, this.Style, row, o, Value.GetTypeCode());
+            string t = Style.GetFormatedString(rpt, Style, row, o, Value.GetTypeCode());
             if (IsHtml(rpt, row) && t != null && t.Contains("<expr>"))
             {
                 string[] parts = HTMLEXPR.Split(t);
@@ -378,13 +391,13 @@ namespace appbox.Reporting.RDL
             object o = Evaluate(rpt, row);
 
             TypeCode tc = Value.GetTypeCode();
-            int width = this.WidthCalc(rpt, g);
+            int width = WidthCalc(rpt, g);
 
-            if (this.Style != null)
+            if (Style != null)
             {
                 width -= (Style.EvalPaddingLeftPx(rpt, row) + Style.EvalPaddingRightPx(rpt, row));
 
-                if (this.IsHtml(rpt, row))
+                if (IsHtml(rpt, row))
                 {
                     if (pth == null)
                     {
@@ -421,7 +434,7 @@ namespace appbox.Reporting.RDL
 
         internal bool IsHtml(Report rpt, Row row)
         {
-            if (this.Style == null || this.Style.Format == null)
+            if (Style == null || Style.Format == null)
                 return false;
             string format = Style.Format.EvaluateString(rpt, row);
             if (format == null)
@@ -442,14 +455,15 @@ namespace appbox.Reporting.RDL
         internal int RunCount = 0;          // number of times TextBox is rendered at runtime;
                                             //    used to generate unique names for toggling visibility
         internal float RunHeight = 0;           // the runtime height (in points)
+        internal PageText PreviousPageText = null;
+        internal PageTextHtml PreviousPageTextHtml = null;
         internal string PreviousText = null;    // previous text displayed
         internal Page PreviousPage = null;  //  page previous text was shown on
         internal object LastObject = null;  // last object calculated
 
         static internal TextboxRuntime GetTextboxRuntime(Report rpt, Textbox tb)
         {
-            TextboxRuntime tbr = rpt.Cache.Get(tb, "txtbox") as TextboxRuntime;
-            if (tbr != null)
+            if (rpt.Cache.Get(tb, "txtbox") is TextboxRuntime tbr)
                 return tbr;
             tbr = new TextboxRuntime();
             rpt.Cache.Add(tb, "txtbox", tbr);

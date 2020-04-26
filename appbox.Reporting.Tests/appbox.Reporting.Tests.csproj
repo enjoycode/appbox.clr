@@ -20,9 +20,11 @@
     <Folder Include="Resources\" />
   </ItemGroup>
   <ItemGroup>
-    <None Remove="Resources\TestReport.rdl" />
+    <None Remove="Resources\TestReport.xml" />
+    <None Remove="Resources\TestGroup.xml" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Resources\TestReport.xml" />
+    <EmbeddedResource Include="Resources\TestGroup.xml" />
   </ItemGroup>
 </Project>

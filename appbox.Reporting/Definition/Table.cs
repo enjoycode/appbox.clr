@@ -290,7 +290,7 @@ namespace appbox.Reporting.RDL
             RunPageRegionBegin(pgs);
 
             Page p = pgs.CurrentPage;
-            p.YOffset += this.RelativeY(r);
+            p.YOffset += RelativeY(r);
 
             // Calculate the xpositions of the columns
             TableColumns.CalculateXPositions(r, GetOffsetCalc(r) + LeftCalc(r), row);

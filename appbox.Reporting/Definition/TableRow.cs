@@ -86,7 +86,7 @@ namespace appbox.Reporting.RDL
                 Textbox tb = ri as Textbox;
                 if (tb.CanGrow)
                 {
-                    if (this.GrowList == null)
+                    if (GrowList == null)
                         GrowList = new List<Textbox>();
                     GrowList.Add(tb);
                     CanGrow = true;
@@ -95,8 +95,6 @@ namespace appbox.Reporting.RDL
 
             if (CanGrow)				// shrink down the resulting list
                 GrowList.TrimExcess();
-
-            return;
         }
 
         internal void Run(IPresent ip, Row row)
@@ -143,13 +141,15 @@ namespace appbox.Reporting.RDL
                 return defnHeight;
             }
 
-            TableColumns tcs = this.Table.TableColumns;
+            TableColumns tcs = Table.TableColumns;
             float height = 0;
-            foreach (Textbox tb in this.GrowList)
+            foreach (Textbox tb in GrowList)
             {
                 int ci = tb.TC.ColIndex;
                 if (tcs[ci].IsHidden(rpt, r))    // if column is hidden don't use in calculation
+                {
                     continue;
+                }
                 height = Math.Max(height, tb.RunTextCalcHeight(rpt, g, r));
             }
             wc.CalcHeight = Math.Max(height, defnHeight);
@@ -179,8 +179,7 @@ namespace appbox.Reporting.RDL
 
         private WorkClass GetWC(Report rpt)
         {
-            WorkClass wc = rpt.Cache.Get(this, "wc") as WorkClass;
-            if (wc == null)
+            if (!(rpt.Cache.Get(this, "wc") is WorkClass wc))
             {
                 wc = new WorkClass(this);
                 rpt.Cache.Add(this, "wc", wc);

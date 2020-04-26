@@ -513,7 +513,7 @@ namespace appbox.Reporting.RDL
             }
             else
             {
-                ReportItems ris = this.Parent as ReportItems;
+                ReportItems ris = Parent as ReportItems;
                 x = ris.GetXOffset(rpt);
             }
 
@@ -522,18 +522,18 @@ namespace appbox.Reporting.RDL
 
         internal bool IsHidden(Report rpt, Row r)
         {
-            if (this.Visibility == null)
+            if (Visibility == null)
                 return false;
             return Visibility.IsHidden(rpt, r);
         }
 
         internal void SetPageLeft(Report rpt)
         {
-            if (this.TC != null)
+            if (TC != null)
             {   // must be part of a table
                 Table t = TC.OwnerTable;
                 int colindex = TC.ColIndex;
-                TableColumn tc = (TableColumn)(t.TableColumns.Items[colindex]);
+                TableColumn tc = t.TableColumns.Items[colindex];
                 Left = new RSize(OwnerReport, tc.GetXPosition(rpt).ToString() + "pt");
             }
             else if (Left == null)
@@ -544,7 +544,7 @@ namespace appbox.Reporting.RDL
         {
             WorkClass wc = GetWC(rpt);
             pi.X = GetOffsetCalc(rpt) + LeftCalc(rpt);
-            if (this.TC != null)
+            if (TC != null)
             {   // must be part of a table
                 Table t = TC.OwnerTable;
                 int colindex = TC.ColIndex;
@@ -573,7 +573,7 @@ namespace appbox.Reporting.RDL
             {   // don't really handle if line is part of table???  TODO
                 PageLine pl = (PageLine)pi;
                 if (Top != null)
-                    pl.Y = this.Gap(rpt);		 //  y will get adjusted when pageitem added to page
+                    pl.Y = Gap(rpt);		 //  y will get adjusted when pageitem added to page
                 float y2 = pl.Y;
                 if (Height != null)
                     y2 += Height.Points;
@@ -585,34 +585,34 @@ namespace appbox.Reporting.RDL
             else
             {	// not part of a table or matrix
                 if (Top != null)
-                    pi.Y = this.Gap(rpt);		 //  y will get adjusted when pageitem added to page
+                    pi.Y = Gap(rpt);		 //  y will get adjusted when pageitem added to page
                 if (Height != null)
                     pi.H = Height.Points;
                 else
-                    pi.H = this.HeightOrOwnerHeight;
+                    pi.H = HeightOrOwnerHeight;
                 if (Width != null)
                     pi.W = Width.Points;
                 else
-                    pi.W = this.WidthOrOwnerWidth(rpt);
+                    pi.W = WidthOrOwnerWidth(rpt);
             }
             if (Style != null)
                 pi.SI = Style.GetStyleInfo(rpt, row);
             else
                 pi.SI = new StyleInfo();	// this will just default everything
 
-            pi.ZIndex = this.ZIndex;        // retain the zindex of the object
+            pi.ZIndex = ZIndex;        // retain the zindex of the object
 
             // Catch any action needed
-            if (this.Action != null)
+            if (Action != null)
             {
                 pi.BookmarkLink = Action.BookmarkLinkValue(rpt, row);
                 pi.HyperLink = Action.HyperLinkValue(rpt, row);
             }
 
-            if (this.Bookmark != null)
+            if (Bookmark != null)
                 pi.Bookmark = Bookmark.EvaluateString(rpt, row);
 
-            if (this.ToolTip != null)
+            if (ToolTip != null)
                 pi.Tooltip = ToolTip.EvaluateString(rpt, row);
         }
 
@@ -726,7 +726,7 @@ namespace appbox.Reporting.RDL
         internal void SetPagePositionBegin(Pages pgs)
         {
             // Update the current page
-            if (this.YParents != null)
+            if (YParents != null)
             {
                 ReportItem saveri = GetReportItemAbove(pgs.Report);
                 if (saveri != null)
@@ -736,21 +736,21 @@ namespace appbox.Reporting.RDL
                     pgs.CurrentPage.YOffset = wc.BottomPosition;
                 }
             }
-            else if (this.Parent.Parent is PageHeader)
+            else if (Parent.Parent is PageHeader)
             {
                 pgs.CurrentPage.YOffset = OwnerReport.TopMargin.Points;
 
             }
-            else if (this.Parent.Parent is PageFooter)
+            else if (Parent.Parent is PageFooter)
             {
                 pgs.CurrentPage.YOffset = OwnerReport.PageHeight.Points
                     - OwnerReport.BottomMargin.Points
                     - OwnerReport.PageFooter.Height.Points;
             }
-            else if (!(this.Parent.Parent is Body))
+            else if (!(Parent.Parent is Body))
             {   // if not body then we don't need to do anything
             }
-            else if (this.OwnerReport.Subreport != null)
+            else if (OwnerReport.Subreport != null)
             {
                 //				pgs.CurrentPage = this.OwnerReport.Subreport.FirstPage;
                 //				pgs.CurrentPage.YOffset = top;
@@ -898,14 +898,14 @@ namespace appbox.Reporting.RDL
         {
             ReportItem ri = obj as ReportItem;
 
-            int t1 = this.Top == null ? 0 : this.Top.Size;
+            int t1 = Top == null ? 0 : Top.Size;
             int t2 = ri.Top == null ? 0 : ri.Top.Size;
 
             int rc = t1 - t2;
             if (rc != 0)
                 return rc;
 
-            int l1 = this.Left == null ? 0 : this.Left.Size;
+            int l1 = Left == null ? 0 : Left.Size;
             int l2 = ri.Left == null ? 0 : ri.Left.Size;
 
             return l1 - l2;
