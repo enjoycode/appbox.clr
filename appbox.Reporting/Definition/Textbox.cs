@@ -113,23 +113,26 @@ namespace appbox.Reporting.RDL
                         if (ReportItemElement(xNodeLoop))   // try at ReportItem level
                             break;
                         // don't know this element - log it
-                        OwnerReport.rl.LogError(4, "Unknown Textbox element '" + xNodeLoop.Name + "' ignored.");
+                        OwnerReport.rl.LogError(4, $"Unknown Textbox element '{xNodeLoop.Name}' ignored.");
                         break;
                 }
             }
 
             if (Value == null)
-                OwnerReport.rl.LogError(8, "Textbox value not specified for " + (this.Name == null ? "'name not specified'" : this.Name.Nm));
+            {
+                Value = new Expression(r, this, "", ExpressionType.Variant);
+                //OwnerReport.rl.LogError(8, "Textbox value not specified for " + (Name == null ? "'name not specified'" : Name.Nm));
+            }
 
-            if (this.Name != null)
+            if (Name != null)
             {
                 try
                 {
-                    OwnerReport.LUReportItems.Add(this.Name.Nm, this);      // add to referenceable TextBoxes
+                    OwnerReport.LUReportItems.Add(Name.Nm, this);      // add to referenceable TextBoxes
                 }
                 catch       // Duplicate name
                 {
-                    OwnerReport.rl.LogError(4, "Duplicate Textbox name '" + this.Name.Nm + "' ignored.");
+                    OwnerReport.rl.LogError(4, $"Duplicate Textbox name '{Name.Nm}' ignored.");
                 }
             }
         }

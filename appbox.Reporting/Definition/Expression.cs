@@ -39,7 +39,7 @@ namespace appbox.Reporting.RDL
         internal Expression(ReportDefn r, ReportLink p, XmlNode xNode, ExpressionType et)
             : this(r, p, xNode.InnerText, et) { }
 
-        internal Expression(ReportDefn r, ReportLink p, String xNode, ExpressionType et) : base(r, p)
+        internal Expression(ReportDefn r, ReportLink p, string xNode, ExpressionType et) : base(r, p)
         {
             Source = xNode;
             Type = TypeCode.Empty;
