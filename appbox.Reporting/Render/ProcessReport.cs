@@ -27,8 +27,8 @@ namespace appbox.Reporting.RDL
     [Serializable]
     public class ProcessReport
     {
-        Report r;                   // report
-        IStreamGen _sg;
+        readonly Report r;
+        readonly IStreamGen _sg;
 
         public ProcessReport(Report rep, IStreamGen sg)
         {
@@ -52,10 +52,7 @@ namespace appbox.Reporting.RDL
         public void Run(IDictionary parms, OutputPresentationType type)
         {
             r.RunGetData(parms);
-
             r.RunRender(_sg, type);
-
-            return;
         }
 
     }

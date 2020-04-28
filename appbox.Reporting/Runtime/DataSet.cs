@@ -58,7 +58,7 @@ namespace appbox.Reporting.RDL
         //====DesignTime Methods====
         public void MakePreviewData(int rows)
         {
-            rows = Math.Min(rows, 128);
+            rows = Math.Min(rows, 128); //暂最多128行
 
             var dt = new DataTable();
             Field field;
@@ -67,26 +67,32 @@ namespace appbox.Reporting.RDL
                 field = (Field)col;
                 dt.Columns.Add(field.Name.Nm, XmlUtil.GetTypeFromTypeCode(field.RunType));
             }
+
+            //TODO:如果有DataRegion绑定且有分组则模拟分组，暂简单模拟分组
+
             for (int i = 0; i < rows; i++)
             {
                 var row = dt.NewRow();
                 int j = 0;
+                int no;
                 foreach (var col in _dsd.Fields)
                 {
+                    no = i % (j + 3);
                     field = (Field)col;
                     switch (field.RunType)
                     {
                         case TypeCode.Boolean:
-                            row[j] = true; break;
+                            row[j] = i % 2 == 0; break;
                         case TypeCode.Object:
                         case TypeCode.String:
-                            row[j] = $"{field.Name.Nm}{i}"; break;
+                            row[j] = $"{field.Name.Nm}{no}";
+                            break;
                         case TypeCode.Char:
                             row[j] = 'C'; break;
                         case TypeCode.DateTime:
-                            row[j] = new DateTime(1977, 3, 16); break;
+                            row[j] = new DateTime(1977, 3, no + 1); break;
                         default: //left numbers
-                            row[j] = Convert.ChangeType(i, field.RunType); break;
+                            row[j] = Convert.ChangeType(no, field.RunType); break;
                     }
                     j++;
                 }
