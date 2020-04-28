@@ -1,4 +1,3 @@
-
 using System;
 using System.Xml;
 
@@ -10,15 +9,27 @@ namespace appbox.Reporting.RDL
 	[Serializable]
 	internal class RowGrouping : ReportLink
 	{
-		RSize _Width;	// Width of the row header
-		DynamicRows _DynamicRows;	// Dynamic row headings for this grouping
-		StaticRows _StaticRows;	// Static row headings for this grouping		
-	
+
+		/// <summary>
+		/// Width of the row header
+		/// </summary>
+		internal RSize Width { get; set; }
+
+		/// <summary>
+		/// Dynamic row headings for this grouping
+		/// </summary>
+		internal DynamicRows DynamicRows { get; set; }
+
+		/// <summary>
+		/// Static row headings for this grouping
+		/// </summary>
+		internal StaticRows StaticRows { get; set; }
+
 		internal RowGrouping(ReportDefn r, ReportLink p, XmlNode xNode) : base(r, p)
 		{
-			_Width=null;
-			_DynamicRows=null;
-			_StaticRows=null;
+			Width=null;
+			DynamicRows=null;
+			StaticRows=null;
 
 			// Loop thru all the child nodes
 			foreach(XmlNode xNodeLoop in xNode.ChildNodes)
@@ -28,13 +39,13 @@ namespace appbox.Reporting.RDL
 				switch (xNodeLoop.Name)
 				{
 					case "Width":
-						_Width = new RSize(r, xNodeLoop);
+						Width = new RSize(r, xNodeLoop);
 						break;
 					case "DynamicRows":
-						_DynamicRows = new DynamicRows(r, this, xNodeLoop);
+						DynamicRows = new DynamicRows(r, this, xNodeLoop);
 						break;
 					case "StaticRows":
-						_StaticRows = new StaticRows(r, this, xNodeLoop);
+						StaticRows = new StaticRows(r, this, xNodeLoop);
 						break;
 					default:	
 						// don't know this element - log it
@@ -42,35 +53,18 @@ namespace appbox.Reporting.RDL
 						break;
 				}
 			}
-			if (_Width == null)
+			if (Width == null)
 				OwnerReport.rl.LogError(8, "RowGrouping requires the Width element.");
 		}
 		
 		override internal void FinalPass()
 		{
-			if (_DynamicRows != null)
-				_DynamicRows.FinalPass();
-			if (_StaticRows != null)
-				_StaticRows.FinalPass();
+			if (DynamicRows != null)
+				DynamicRows.FinalPass();
+			if (StaticRows != null)
+				StaticRows.FinalPass();
 			return;
 		}
 
-		internal RSize Width
-		{
-			get { return  _Width; }
-			set {  _Width = value; }
-		}
-
-		internal DynamicRows DynamicRows
-		{
-			get { return  _DynamicRows; }
-			set {  _DynamicRows = value; }
-		}
-
-		internal StaticRows StaticRows
-		{
-			get { return  _StaticRows; }
-			set {  _StaticRows = value; }
-		}
-	}
+    }
 }

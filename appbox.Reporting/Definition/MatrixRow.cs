@@ -1,4 +1,3 @@
-
 using System;
 using System.Xml;
 
@@ -10,13 +9,20 @@ namespace appbox.Reporting.RDL
 	[Serializable]
 	internal class MatrixRow : ReportLink
 	{
-		RSize _Height;	// Height of each detail cell in this row.
-		MatrixCells _MatrixCells;	// The set of cells in a row in the detail section of the Matrix.		
-	
+		/// <summary>
+		/// Height of each detail cell in this row.
+		/// </summary>
+		internal RSize Height { get; set; }
+
+		/// <summary>
+		/// The set of cells in a row in the detail section of the Matrix.
+		/// </summary>
+		internal MatrixCells MatrixCells { get; set; }
+
 		internal MatrixRow(ReportDefn r, ReportLink p, XmlNode xNode) : base(r, p)
 		{
-			_Height=null;
-			_MatrixCells=null;
+			Height=null;
+			MatrixCells=null;
 
 			// Loop thru all the child nodes
 			foreach(XmlNode xNodeLoop in xNode.ChildNodes)
@@ -26,36 +32,25 @@ namespace appbox.Reporting.RDL
 				switch (xNodeLoop.Name)
 				{
 					case "Height":
-						_Height = new RSize(r, xNodeLoop);
+						Height = new RSize(r, xNodeLoop);
 						break;
 					case "MatrixCells":
-						_MatrixCells = new MatrixCells(r, this, xNodeLoop);
+						MatrixCells = new MatrixCells(r, this, xNodeLoop);
 						break;
 					default:
 						break;
 				}
 			}
-			if (_MatrixCells == null)
+			if (MatrixCells == null)
 				OwnerReport.rl.LogError(8, "MatrixRow requires the MatrixCells element.");
 		}
 		
 		override internal void FinalPass()
 		{
-			if (_MatrixCells != null)
-				_MatrixCells.FinalPass();
+			if (MatrixCells != null)
+				MatrixCells.FinalPass();
 			return;
 		}
 
-		internal RSize Height
-		{
-			get { return  _Height; }
-			set {  _Height = value; }
-		}
-
-		internal MatrixCells MatrixCells
-		{
-			get { return  _MatrixCells; }
-			set {  _MatrixCells = value; }
-		}
-	}
+    }
 }

@@ -554,7 +554,7 @@ namespace appbox.Reporting.RDL
                 TableColumn tc;
                 for (int ci = colindex; ci < colindex + TC.ColSpan; ci++)
                 {
-                    tc = (TableColumn)(t.TableColumns.Items[ci]);
+                    tc = t.TableColumns.Items[ci];
                     width += tc.Width.Points;
                 }
                 pi.W = width;
@@ -569,9 +569,8 @@ namespace appbox.Reporting.RDL
                 pi.Y = 0;
                 pi.H = wc.MC.Height;
             }
-            else if (pi is PageLine)
+            else if (pi is PageLine pl)
             {   // don't really handle if line is part of table???  TODO
-                PageLine pl = (PageLine)pi;
                 if (Top != null)
                     pl.Y = Gap(rpt);		 //  y will get adjusted when pageitem added to page
                 float y2 = pl.Y;
