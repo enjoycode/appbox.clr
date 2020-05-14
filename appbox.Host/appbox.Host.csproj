@@ -54,9 +54,6 @@
     <ProjectReference Include="..\appbox.Store.Cassandra\appbox.Store.Cassandra.csproj">
       <GlobalPropertiesToRemove></GlobalPropertiesToRemove>
     </ProjectReference>
-    <ProjectReference Include="..\appbox.Reporting\appbox.Reporting.csproj">
-      <GlobalPropertiesToRemove></GlobalPropertiesToRemove>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Channel\" />
