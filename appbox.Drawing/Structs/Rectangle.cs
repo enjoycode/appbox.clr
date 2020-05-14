@@ -4,8 +4,6 @@ using System.ComponentModel;
 namespace appbox.Drawing
 {
     //[Serializable]
-    //[ComVisible (true)]
-    //[TypeConverter (typeof (RectangleConverter))]
     public struct Rectangle
     {
 
@@ -249,7 +247,6 @@ namespace appbox.Drawing
         ///	The Y coordinate of the bottom edge of the Rectangle.
         ///	Read only.
         /// </remarks>
-        [Browsable(false)]
         public int Bottom => Top + Height;
 
         /// <summary>
@@ -266,7 +263,6 @@ namespace appbox.Drawing
         /// <remarks>
         ///	Indicates if the width or height are zero. Read only.
         /// </remarks>		
-        [Browsable(false)]
         public bool IsEmpty => ((X == 0) && (Top == 0) && (Width == 0) && (Height == 0));
 
         /// <summary>
@@ -276,7 +272,6 @@ namespace appbox.Drawing
         ///	The X coordinate of the left edge of the Rectangle.
         ///	Read only.
         /// </remarks>
-        [Browsable(false)]
         public int Left => X;
 
         /// <summary>
@@ -285,7 +280,6 @@ namespace appbox.Drawing
         /// <remarks>
         ///	The Location of the top-left corner of the Rectangle.
         /// </remarks>
-        [Browsable(false)]
         public Point Location
         {
             get
@@ -306,7 +300,6 @@ namespace appbox.Drawing
         ///	The X coordinate of the right edge of the Rectangle.
         ///	Read only.
         /// </remarks>
-        [Browsable(false)]
         public int Right => X + Width;
 
         /// <summary>
@@ -315,7 +308,6 @@ namespace appbox.Drawing
         /// <remarks>
         ///	The Size of the Rectangle.
         /// </remarks>
-        [Browsable(false)]
         public Size Size
         {
             get
@@ -336,7 +328,6 @@ namespace appbox.Drawing
         ///	The Y coordinate of the top edge of the Rectangle.
         ///	Read only.
         /// </remarks>
-        [Browsable(false)]
         public int Top { get; private set; }
 
         /// <summary>

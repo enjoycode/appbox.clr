@@ -5,8 +5,6 @@ using System.ComponentModel;
 namespace appbox.Drawing
 {
 	//[Serializable]
-	//[ComVisible(true)]
-	//[TypeConverter(typeof(SizeConverter))]
 	public struct Size
 	{
 
@@ -190,7 +188,6 @@ namespace appbox.Drawing
 		/// <remarks>
 		///	Indicates if both Width and Height are zero.
 		/// </remarks>
-		[Browsable(false)]
 		public bool IsEmpty
 		{
 			get { return ((Width == 0) && (Height == 0)); }

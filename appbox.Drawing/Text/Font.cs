@@ -143,7 +143,7 @@ namespace appbox.Drawing
                 }
                 else
                 {
-                    skTypeface = SKTypeface.FromFamilyName(SKTypeface.Default.FamilyName, skFontStyle);
+                    skTypeface = SKTypeface.FromFamilyName(DefaultFontFamilyName, skFontStyle);
                 }
             }
             else

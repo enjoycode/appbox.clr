@@ -127,7 +127,6 @@ namespace appbox.Drawing
 		/// <remarks>
 		///	Indicates if both Width and Height are zero.
 		/// </remarks>
-		[Browsable(false)]
 		public bool IsEmpty
 		{
 			get { return ((Width == 0.0) && (Height == 0.0)); }

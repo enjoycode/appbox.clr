@@ -196,7 +196,6 @@ namespace appbox.Drawing
         ///	The Y coordinate of the bottom edge of the RectangleF.
         ///	Read only.
         /// </remarks>
-        [Browsable(false)]
         public float Bottom => Y + Height;
 
         /// <summary>
@@ -213,7 +212,6 @@ namespace appbox.Drawing
         /// <remarks>
         ///	Indicates if the width or height are zero. Read only.
         /// </remarks>
-        [Browsable(false)]
         public bool IsEmpty => (Width <= 0 || Height <= 0);
 
         /// <summary>
@@ -223,7 +221,6 @@ namespace appbox.Drawing
         ///	The X coordinate of the left edge of the RectangleF.
         ///	Read only.
         /// </remarks>
-        [Browsable(false)]
         public float Left => X;
 
         /// <summary>
@@ -232,7 +229,6 @@ namespace appbox.Drawing
         /// <remarks>
         ///	The Location of the top-left corner of the RectangleF.
         /// </remarks>
-        [Browsable(false)]
         public PointF Location
         {
             get
@@ -253,7 +249,6 @@ namespace appbox.Drawing
         ///	The X coordinate of the right edge of the RectangleF.
         ///	Read only.
         /// </remarks>
-        [Browsable(false)]
         public float Right => X + Width;
 
         /// <summary>
@@ -262,7 +257,6 @@ namespace appbox.Drawing
         /// <remarks>
         ///	The Size of the RectangleF.
         /// </remarks>
-        [Browsable(false)]
         public SizeF Size
         {
             get
@@ -283,7 +277,6 @@ namespace appbox.Drawing
         ///	The Y coordinate of the top edge of the RectangleF.
         ///	Read only.
         /// </remarks>
-        [Browsable(false)]
         public float Top => Y;
 
         /// <summary>

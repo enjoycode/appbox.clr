@@ -5,7 +5,6 @@ using System.Globalization;
 namespace appbox.Drawing
 {
     //[Serializable]
-    //[TypeConverter(typeof(PointConverter))]
     public struct Point
     {
 
@@ -205,7 +204,6 @@ namespace appbox.Drawing
         /// <remarks>
         ///	Indicates if both X and Y are zero.
         /// </remarks>
-        [Browsable(false)]
         public bool IsEmpty
         {
             get { return ((X == 0) && (Y == 0)); }

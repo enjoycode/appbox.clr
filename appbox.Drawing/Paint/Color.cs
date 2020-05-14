@@ -2,7 +2,6 @@
 
 namespace appbox.Drawing
 {
-    //[TypeConverter(typeof(ColorConverter))]
     //[Serializable]
     public struct Color
     {

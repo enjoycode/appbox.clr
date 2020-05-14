@@ -254,10 +254,11 @@ namespace appbox.Drawing
             //}
         }
 
-        //public void SetClip(GraphicsPath path, CombineMode combineMode)
-        //{
-        //    SkiaApi.sk_canvas_clip_path_with_operation(canvas, path.nativePath, ToSKClipOperation(combineMode), true);
-        //}
+        public void SetClip(GraphicsPath path, CombineMode combineMode)
+        {
+            throw new NotImplementedException();
+           //SkiaApi.sk_canvas_clip_path_with_operation(canvas, path.nativePath, ToSKClipOperation(combineMode), true);
+        }
 
         //public void SetClip(Region region, CombineMode combineMode)
         //{
@@ -683,25 +684,26 @@ namespace appbox.Drawing
         //    DrawImage(image, rect, new RectangleF(x, y, width, height));
         //}
 
-        //public void DrawImage(Image image, int x, int y)
-        //{
-        //    if (image.HiDpi)
-        //    {
-        //        DrawImage(image, new Rectangle(x, y, image.Width, image.Height));
-        //    }
-        //    else
-        //    {
-        //        if (image is Bitmap)
-        //        {
-        //            SkiaApi.sk_canvas_draw_bitmap(canvas, ((Bitmap)image).NativeBitmap, x, y, this.nativePaint);
-        //        }
-        //    }
-        //}
+        public void DrawImage(Image image, float x, float y)
+        {
+            throw new NotImplementedException();
+            //    if (image.HiDpi)
+            //    {
+            //        DrawImage(image, new Rectangle(x, y, image.Width, image.Height));
+            //    }
+            //    else
+            //    {
+            //        if (image is Bitmap)
+            //        {
+            //            SkiaApi.sk_canvas_draw_bitmap(canvas, ((Bitmap)image).NativeBitmap, x, y, this.nativePaint);
+            //        }
+            //    }
+        }
 
-        //public void DrawImage(Image image, Point point)
-        //{
-        //    DrawImage(image, point.X, point.Y);
-        //}
+        // public void DrawImage(Image image, Point point)
+        // {
+        //     DrawImage(image, point.X, point.Y);
+        // }
 
         /// <summary>
         /// Draws the specified Image at the specified location and with the specified size.

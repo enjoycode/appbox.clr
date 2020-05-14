@@ -48,8 +48,38 @@ namespace appbox.Drawing
         public float HorizontalResolution => 72f; //TODO:
         public float VerticalResolution => 72f; //TODO:
 
+        public ImageFormat RawFormat
+        {
+            get { return ImageFormat.MemoryBmp; }
+        }
+
+        public Size Size
+        {
+            get { return new Size(Width, Height); }
+        }
+
+        public PixelFormat PixelFormat { get { throw new NotImplementedException(); } } //todo::
+
         public abstract void Save(Stream stream, ImageFormat format, int quality = 100);
 
+        public Image Clone()
+        {
+            if (this is Bitmap)
+            {
+                //todo:暂重画
+                var src = (Bitmap)this;
+                var clone = new Bitmap(src.Width, src.Height);
+                using (var g = Graphics.FromImage(clone))
+                {
+                    g.DrawImage(src, 0, 0);
+                }
+                return clone;
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
+        }
 
         #region ====IDisposable Support====
         private bool disposedValue = false;

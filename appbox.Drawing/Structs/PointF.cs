@@ -110,7 +110,6 @@ namespace appbox.Drawing
 		/// <remarks>
 		///	Indicates if both X and Y are zero.
 		/// </remarks>
-		[Browsable(false)]
 		public bool IsEmpty
 		{
 			get { return ((X == 0.0) && (Y == 0.0)); }
