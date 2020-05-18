@@ -24,12 +24,7 @@ namespace appbox.Drawing
 
         internal short state;
         internal short knownColor;
-        // #if ONLY_1_1
-        // Mono bug #324144 is holding this change
-        // MS 1.1 requires this member to be present for serialization (not so in 2.0)
-        // however it's bad to keep a string (reference) in a struct
         internal string name;
-        // #endif
 
         public string Name
         {
@@ -58,8 +53,6 @@ namespace appbox.Drawing
         {
             get
             {
-                // Optimization for known colors that were deserialized
-                // from an MS serialized stream.  
                 if (value == 0 && IsKnownColor)
                 {
                     value = KnownColors.FromKnownColor((KnownColor)knownColor).ToArgb() & 0xFFFFFFFF;
@@ -120,30 +113,11 @@ namespace appbox.Drawing
             }
         }
 
-
         // -----------------------
         // Public Shared Members
         // -----------------------
 
-        /// <summary>
-        /// Empty Shared Field
-        /// </summary>
-        ///
-        /// <remarks>
-        /// An uninitialized Color Structure
-        /// </remarks>
-
         public static readonly Color Empty;
-
-        /// <summary>
-        /// Equality Operator
-        /// </summary>
-        ///
-        /// <remarks>
-        /// Compares two Color objects. The return value is
-        /// based on the equivalence of the A,R,G,B properties 
-        /// of the two Colors.
-        /// </remarks>
 
         public static bool operator ==(Color left, Color right)
         {
@@ -164,16 +138,6 @@ namespace appbox.Drawing
             }
             return true;
         }
-
-        /// <summary>
-        /// Inequality Operator
-        /// </summary>
-        ///
-        /// <remarks>
-        /// Compares two Color objects. The return value is
-        /// based on the equivalence of the A,R,G,B properties 
-        /// of the two colors.
-        /// </remarks>
 
         public static bool operator !=(Color left, Color right)
         {
@@ -236,61 +200,20 @@ namespace appbox.Drawing
         // Public Instance Members
         // -----------------------
 
-        /// <summary>
-        /// ToKnownColor method
-        /// </summary>
-        ///
-        /// <remarks>
-        /// Returns the KnownColor enum value for this color, 0 if is not known.
-        /// </remarks>
         public KnownColor ToKnownColor()
         {
             return (KnownColor)knownColor;
         }
 
-        /// <summary>
-        /// IsEmpty Property
-        /// </summary>
-        ///
-        /// <remarks>
-        /// Indicates transparent black. R,G,B = 0; A=0?
-        /// </remarks>
+        public bool IsEmpty => state == (short)ColorType.Empty;
 
-        public bool IsEmpty
-        {
-            get
-            {
-                return state == (short)ColorType.Empty;
-            }
-        }
+        public byte A => (byte)(Value >> 24);
 
-        public byte A
-        {
-            get { return (byte)(Value >> 24); }
-        }
+        public byte R => (byte)(Value >> 16);
 
-        public byte R
-        {
-            get { return (byte)(Value >> 16); }
-        }
+        public byte G => (byte)(Value >> 8);
 
-        public byte G
-        {
-            get { return (byte)(Value >> 8); }
-        }
-
-        public byte B
-        {
-            get { return (byte)Value; }
-        }
-
-        /// <summary>
-        /// Equals Method
-        /// </summary>
-        ///
-        /// <remarks>
-        /// Checks equivalence of this Color and another object.
-        /// </remarks>
+        public byte B => (byte)Value;
 
         public override bool Equals(object obj)
         {
@@ -300,31 +223,6 @@ namespace appbox.Drawing
             return this == c;
         }
 
-        /// <summary>
-        /// Reference Equals Method
-        /// Is commented out because this is handled by the base class.
-        /// TODO: Is it correct to let the base class handel reference equals
-        /// </summary>
-        ///
-        /// <remarks>
-        /// Checks equivalence of this Color and another object.
-        /// </remarks>
-        //public bool ReferenceEquals (object o)
-        //{
-        //  if (!(o is Color))return false;
-        //  return (this == (Color) o);
-        //}
-
-
-
-        /// <summary>
-        /// GetHashCode Method
-        /// </summary>
-        ///
-        /// <remarks>
-        /// Calculates a hashing value.
-        /// </remarks>
-
         public override int GetHashCode()
         {
             int hc = (int)(Value ^ (Value >> 32) ^ state ^ (knownColor >> 16));
@@ -332,14 +230,6 @@ namespace appbox.Drawing
                 hc ^= Name.GetHashCode();
             return hc;
         }
-
-        /// <summary>
-        /// ToString Method
-        /// </summary>
-        ///
-        /// <remarks>
-        /// Formats the Color as a string in ARGB notation.
-        /// </remarks>
 
         public override string ToString()
         {

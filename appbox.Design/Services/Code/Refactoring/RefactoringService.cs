@@ -25,8 +25,9 @@ namespace appbox.Design
                     return await FindEntityReferences(ctx, appName, modelName);
                 case ModelType.Service:
                     return await FindServiceReferences(ctx, appName, modelName);
+                case ModelType.Report:
                 case ModelType.View:
-                    Log.Debug("查找视图的引用尚未实现.");
+                    Log.Warn("查找引用尚未实现.");
                     return null;
                 default:
                     throw ExceptionHelper.NotImplemented();
