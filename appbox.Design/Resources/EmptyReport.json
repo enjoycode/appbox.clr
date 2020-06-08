@@ -1,0 +1,18 @@
+﻿{
+    "Width": "20cm",
+    "Items": [
+      {
+        "$T": "PageHeader",
+        "Height": "3cm"
+      },
+      {
+        "$T": "Details",
+        "Height": "6cm"
+      },
+      {
+        "$T": "PageFooter",
+        "Height": "2cm"
+      }
+    ]
+}
+  

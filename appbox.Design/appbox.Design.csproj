@@ -75,13 +75,13 @@
     <Compile Remove="Resources\DummyCode\*.cs" />
     <EmbeddedResource Include="Resources\DummyCode\*.cs" />
     <Compile Remove="Omnisharp\Roslyn\Utilities\ISymbolExtensions.cs" />
-    <EmbeddedResource Include="Resources\EmptyReport.xml" />
+    <EmbeddedResource Include="Resources\EmptyReport.json" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="3.4.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="3.4.0" />
   </ItemGroup>
   <ItemGroup>
-    <None Remove="Resources\EmptyReport.xml" />
+    <None Remove="Resources\EmptyReport.json" />
   </ItemGroup>
 </Project>

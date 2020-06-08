@@ -45,11 +45,13 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(RunConfiguration)' == 'appbox.Host' ">
     <StartAction>Project</StartAction>
+    <ExternalConsole>true</ExternalConsole>
     <LaunchUrl>api/values</LaunchUrl>
     <ApplicationURL>https://localhost:5001;http://localhost:5000</ApplicationURL>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="prometheus-net" Version="3.3.0" />
+    <PackageReference Include="ZXing.Net.Bindings.SkiaSharp" Version="0.16.9" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\appbox.Core\appbox.Core.csproj" />

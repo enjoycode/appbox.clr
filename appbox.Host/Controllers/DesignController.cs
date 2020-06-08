@@ -1,13 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Text.Json;
 using System.Threading.Tasks;
-using appbox.Caching;
 using appbox.Design;
 using appbox.Models;
 using appbox.Runtime;
 using appbox.Serialization;
 using appbox.Server.Channel;
 using Microsoft.AspNetCore.Mvc;
+using appbox.Reporting;
+using System.Collections;
+using System.Data;
 
 namespace appbox.Controllers
 {
@@ -29,7 +31,7 @@ namespace appbox.Controllers
             //调用设计时服务生成导入包
             //try
             //{
-            var appPkg = await Design.AppStoreService.Export(appName);
+            var appPkg = await AppStoreService.Export(appName);
             HttpContext.Response.Headers.Add("Content-Disposition", $"attachment; filename={appName}.apk");
             HttpContext.Response.ContentType = "application/octet-stream";
             var bs = new BinSerializer(HttpContext.Response.Body);
@@ -62,6 +64,16 @@ namespace appbox.Controllers
             return Ok();
         }
 
+#if APPBOXPRO
+        private static Report Parse(string json)
+        {
+            var bytes = System.Text.Encoding.UTF8.GetBytes(json);
+            var jr = new Utf8JsonReader(bytes.AsSpan());
+            var report = Reporting.Serialization.JsonSerializer.Desialize(ref jr);
+            return report;
+        }
+#endif
+
         /// <summary>
         /// 设计时生成报表
         /// </summary>
@@ -70,74 +82,111 @@ namespace appbox.Controllers
         [HttpGet("{reportId}")] //Get /api/design/report/1234567
         public async Task Report(string reportId)
         {
-            throw new NotImplementedException();
-            // //设置当前用户会话
-            // RuntimeContext.Current.CurrentSession = HttpContext.Session.LoadWebSession();
-            // //判断权限
-            // if (!(RuntimeContext.Current.CurrentSession is IDeveloperSession developerSession))
-            //     throw new Exception("Must login as a Developer");
-            // var desighHub = developerSession.GetDesignHub();
-            // if (desighHub == null)
-            //     throw new Exception("Cannot get DesignContext");
-            // //TODO: 以下代码与OpenReportModel重复，待优化
-            // var modelNode = desighHub.DesignTree.FindModelNode(ModelType.Report, ulong.Parse(reportId));
-            // if (modelNode == null)
-            //     throw new Exception($"Cannot find report model: {reportId}");
+#if !APPBOXPRO
+            throw new NotSupportedException();
+#else
+            //设置当前用户会话
+            RuntimeContext.Current.CurrentSession = HttpContext.Session.LoadWebSession();
+            //判断权限
+            if (!(RuntimeContext.Current.CurrentSession is IDeveloperSession developerSession))
+                throw new Exception("Must login as a Developer");
+            var desighHub = developerSession.GetDesignHub();
+            if (desighHub == null)
+                throw new Exception("Cannot get DesignContext");
+            //TODO: 以下代码与OpenReportModel重复，待优化
+            var modelNode = desighHub.DesignTree.FindModelNode(ModelType.Report, ulong.Parse(reportId));
+            if (modelNode == null)
+                throw new Exception($"Cannot find report model: {reportId}");
 
-            // string xml = null;
-            // if (modelNode.IsCheckoutByMe)
-            // {
-            //     xml = await StagedService.LoadReportCodeAsync(modelNode.Model.Id);
-            // }
-            // if (xml == null)
-            // {
-            //     xml = await Store.ModelStore.LoadReportCodeAsync(modelNode.Model.Id);
-            // }
+            //TODO:直接加载字节流
+            string json = null;
+            if (modelNode.IsCheckoutByMe)
+                json = await StagedService.LoadReportCodeAsync(modelNode.Model.Id);
+            if (json == null)
+                json = await Store.ModelStore.LoadReportCodeAsync(modelNode.Model.Id);
 
-            // var rdlParser = new Reporting.RDL.RDLParser(xml);
-            // var report = rdlParser.Parse();
-            // if (report.ErrorMaxSeverity > 0)
-            // {
-            //     var sb = StringBuilderCache.Acquire();
-            //     sb.AppendLine("Report has some errors:");
-            //     foreach (string emsg in report.ErrorItems)
-            //     {
-            //         sb.AppendLine(emsg);
-            //     }
-            //     Log.Warn(StringBuilderCache.GetStringAndRelease(sb));
-
-            //     int severity = report.ErrorMaxSeverity;
-            //     report.ErrorReset();
-            //     if (severity > 4)
-            //         throw new Exception("Parse Report error.");
-            // }
+            var report = Parse(json);
 
             // //根据推/拉模式获取或生成预览数据源, TODO:暂全部生成测试数据
-            // foreach (var ds in report.DataSets)
-            // {
-            //     ((Reporting.RDL.DataSet)ds).MakePreviewData(10);
-            // }
-            // report.RunGetData(null); //必须在手工设定数据源后执行
+            foreach (var ds in report.DataSources)
+            {
+                var ods = (ObjectDataSource)ds;
+                ods.DataSource = MakePreviewData(ods, 10);
+            }
 
-            // //输出为pdf, TODO:***暂简单写临时文件
-            // HttpContext.Response.ContentType = "application/pdf";
-            // var tempfile = System.IO.Path.GetTempFileName();
-            // try
-            // {
-            //     using (var sg = new Reporting.RDL.OneFileStreamGen(tempfile, true))
-            //     {
-            //         report.RunRender(sg, Reporting.RDL.OutputPresentationType.PDF);
-            //     }
-            //     Log.Debug($"Save report to tempfile: {tempfile}");
-            //     using var fs = System.IO.File.OpenRead(tempfile);
-            //     await fs.CopyToAsync(HttpContext.Response.Body);
-            // }
-            // finally
-            // {
-            //     System.IO.File.Delete(tempfile);
-            //     Log.Debug($"Clean report tempfile: {tempfile}");
-            // }
+            //输出为pdf
+            HttpContext.Response.ContentType = "application/pdf";
+            var rs = new InstanceReportSource { ReportDocument = report };
+            var deviceInfo = new Hashtable()
+            {
+                { "OutputFormat", "emf" },
+                { "ProcessItemActions", false },
+                { "WriteClientAction", false }
+            };
+            var renderContext = new Reporting.Processing.RenderingContext()
+            {
+                { "ReportDocumentState", null }
+            };
+            var processingReports = new Reporting.Processing.ReportProcessor()
+                .ProcessReport(rs, deviceInfo, renderContext);
+            var res = Reporting.Processing.ReportProcessor.RenderReport("IMAGE", processingReports,
+                        deviceInfo, renderContext);
+            await HttpContext.Response.Body.WriteAsync(res.DocumentBytes);
+#endif
         }
+
+#if APPBOXPRO
+        private static DataTable MakePreviewData(ObjectDataSource ds, int rows)
+        {
+            rows = Math.Min(rows, 128); //暂最多128行
+
+            var dt = new DataTable();
+            foreach (var col in ds.Fields)
+            {
+                Type fieldType = col.Type switch
+                {
+                    SimpleType.Boolean => typeof(bool),
+                    SimpleType.DateTime => typeof(DateTime),
+                    SimpleType.Decimal => typeof(Decimal),
+                    SimpleType.Float => typeof(double),
+                    SimpleType.Integer => typeof(long),
+                    _ => typeof(string),
+                };
+                dt.Columns.Add(col.Name, fieldType);
+            }
+
+            //TODO:如果有DataRegion绑定且有分组则模拟分组，暂简单模拟分组
+
+            for (int i = 0; i < rows; i++)
+            {
+                var row = dt.NewRow();
+                int j = 0;
+                int no;
+                foreach (var col in ds.Fields)
+                {
+                    no = i % (j + 3);
+                    switch (col.Type)
+                    {
+                        case SimpleType.Boolean:
+                            row[j] = i % 2 == 0; break;
+                        case SimpleType.String:
+                            row[j] = $"{col.Name}{no}";
+                            break;
+                        case SimpleType.Decimal:
+                        case SimpleType.Integer:
+                        case SimpleType.Float:
+                            row[j] = i; break;
+                        case SimpleType.DateTime:
+                            row[j] = new DateTime(1977, 3, no + 1); break;
+                    }
+                    j++;
+                }
+                dt.Rows.Add(row);
+            }
+
+            return dt;
+        }
+#endif
 
         /// <summary>
         /// 设计时生成条码图片
@@ -148,28 +197,26 @@ namespace appbox.Controllers
         [HttpGet("{type}/{code}/{width}/{height}/{scale}")] //Get /api/design/barcode/BarCode128/123456/200/100/1
         public async Task Barcode(string type, string code, int width, int height, float scale)
         {
-            throw new NotImplementedException();
             //设置当前用户会话
-            // RuntimeContext.Current.CurrentSession = HttpContext.Session.LoadWebSession();
-            // //判断权限
-            // if (!(RuntimeContext.Current.CurrentSession is IDeveloperSession))
-            //     throw new Exception("Must login as a Developer");
+            RuntimeContext.Current.CurrentSession = HttpContext.Session.LoadWebSession();
+            //判断权限
+            if (!(RuntimeContext.Current.CurrentSession is IDeveloperSession))
+                throw new Exception("Must login as a Developer");
 
-            // var target = Reporting.RDL.RdlEngineConfig.CreateCustomReportItem(type);
-            // var props = new Dictionary<string, object>
-            // {
-            //     {"Code", code }
-            // };
-            // target.SetProperties(props);
-            // var skbmp = target.DrawImage((int)(width * scale), (int)(height * scale));
-            // using var bmp = new Drawing.Bitmap(skbmp);
-            // using var ms = new System.IO.MemoryStream(1024);
-            // bmp.Save(ms, Drawing.ImageFormat.Jpeg, 90);
-            // ms.Position = 0;
+            var bw = new ZXing.SkiaSharp.BarcodeWriter(); //TODO:优化单例ZXing.BarCodeRender
+            bw.Format = (ZXing.BarcodeFormat)Enum.Parse(typeof(ZXing.BarcodeFormat), type);
+            bw.Options.Height = (int)(height * scale);
+            bw.Options.Width = (int)(width * scale);
+            var skbmp = bw.Write(code);
 
-            // HttpContext.Response.ContentType = "image/jpg";
-            // await ms.CopyToAsync(HttpContext.Response.Body);
-            // //bmp.Save(HttpContext.Response.Body, Drawing.ImageFormat.Png); //不支持同步直接写
+            using var bmp = new Drawing.Bitmap(skbmp);
+            using var ms = new System.IO.MemoryStream(1024);
+            bmp.Save(ms, Drawing.ImageFormat.Jpeg, 90);
+            ms.Position = 0;
+
+            HttpContext.Response.ContentType = "image/jpg";
+            await ms.CopyToAsync(HttpContext.Response.Body);
+            //bmp.Save(HttpContext.Response.Body, Drawing.ImageFormat.Png); //不支持同步直接写
         }
     }
 }

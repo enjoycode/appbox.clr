@@ -57,11 +57,11 @@ namespace appbox.Design
 
             //设为签出状态
             node.CheckoutInfo = new CheckoutInfo(node.NodeType, node.CheckoutInfoTargetID, model.Version,
-                                                 hub.Session.Name, hub.Session.LeafOrgUnitID);
+                hub.Session.Name, hub.Session.LeafOrgUnitID);
 
             //保存至Staged
-            var emptyReportXml = Resources.LoadStringResource("Resources.EmptyReport.xml");
-            await node.SaveAsync(new object[] { emptyReportXml });
+            var emptyReportDfn = Resources.LoadStringResource("Resources.EmptyReport.json");
+            await node.SaveAsync(new object[] { emptyReportDfn });
 
             return new NewNodeResult
             {
