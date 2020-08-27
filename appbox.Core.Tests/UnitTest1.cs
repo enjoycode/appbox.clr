@@ -33,6 +33,15 @@ namespace appbox.Core.Tests
             Console.WriteLine(name);
         }
 
+        [Fact]
+        public void StringHashCodeTest()
+        {
+            var s = "Hello中";
+            int hs1 = StringHelper.GetHashCode(s);
+            int hs2 = s.GetHashCode();
+            Assert.NotEqual(hs1, hs2);
+        }
+
         //[Fact]
         //public void Test2()
         //{

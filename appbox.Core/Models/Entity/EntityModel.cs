@@ -174,7 +174,7 @@ namespace appbox.Models
                     Members[i].AcceptChanges();
             }
 
-            StoreOptions.AcceptChanges();
+            StoreOptions?.AcceptChanges();
         }
 
         protected internal void CheckOwner(EntityModel owner)
