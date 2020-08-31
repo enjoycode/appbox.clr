@@ -77,4 +77,7 @@
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.1" />
     <PackageReference Include="System.Text.Json" Version="4.7.0" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\appbox.Drawing\appbox.Drawing.csproj" />
+  </ItemGroup>
 </Project>
