@@ -74,8 +74,7 @@ namespace appbox.Design
         {
             var data = await LoadCodeDataAsync(serviceModelId);
             if (data == null) return null;
-
-            ModelCodeUtil.DecodeServiceCode(data, out string sourceCode, out string declareCode);
+            ModelCodeUtil.DecodeServiceCode(data, out string sourceCode, out _);
             return sourceCode;
         }
 
