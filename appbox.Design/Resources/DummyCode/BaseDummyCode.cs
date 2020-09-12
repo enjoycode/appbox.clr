@@ -215,6 +215,13 @@ namespace Security
     }
 }
 
+[RealType("appbox.Data.TreeNodeInfo")]
+public struct TreeNodeInfo
+{
+	public Guid ID;
+	public string Text;
+}
+
 namespace Runtime
 {
     [RealType("appbox.Runtime.ISessionInfo")]
@@ -237,7 +244,17 @@ namespace Runtime
         /// 附加会话标记，如SaaS外部用户的租户ID等
         /// </summary>
         string Tag { get; }
+		/// <summary>
+        /// 当前会话用户的组织路径深度
+        /// 注意：外部会话包含External一级
+        /// </summary>
+        int Levels { get; }
 
+        /// <summary>
+        /// 获取层级信息
+        /// 注意：0为最后一级
+        /// </summary>
+        TreeNodeInfo this[int index] { get; }
         /// <summary>
         /// 会话用户名称
         /// </summary>
