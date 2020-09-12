@@ -51,6 +51,8 @@ namespace appbox.Design
                 dm.SetValue(member, Convert.ToDateTime(propertyValue));
             else if (dm.PropertyType == typeof(uint))
                 dm.SetValue(member, Convert.ToUInt32(propertyValue));
+			else if (dm.PropertyType == typeof(ulong))
+                dm.SetValue(member, Convert.ToUInt64(propertyValue));
             else if (dm.PropertyType == typeof(int))
                 dm.SetValue(member, Convert.ToInt32(propertyValue));
             else if (dm.PropertyType == typeof(bool))

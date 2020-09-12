@@ -31,7 +31,7 @@ namespace appbox.Models
         /// 如果DataType = Enum,则必须设置相应的EnumModel.ModelId
         /// </summary>
         /// <remarks>set for design must call OnPropertyChanged</remarks>
-        internal ulong EnumModelId { get; set; }
+        public ulong EnumModelId { get; set; }
 
         /// <summary>
         /// 仅用于Sql存储设置字符串最大长度(0=无限制)或Decimal整数部分长度
