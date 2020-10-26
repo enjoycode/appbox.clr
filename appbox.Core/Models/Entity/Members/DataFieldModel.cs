@@ -99,10 +99,24 @@ namespace appbox.Models
                 return false;
             }
         }
-        #endregion
 
-        #region ====Ctor====
-        internal DataFieldModel() { }
+		public override bool AllowNull
+        {
+            get => base.AllowNull;
+            internal set
+            {
+                base.AllowNull = value;
+                OnDataTypeChanged();
+            }
+        }
+		#endregion
+
+		#region ====Ctor====
+
+		#endregion
+
+		#region ====Ctor====
+		internal DataFieldModel() { }
 
         internal DataFieldModel(EntityModel owner, string name,
             EntityFieldType dataType, bool isFK = false) : base(owner, name)

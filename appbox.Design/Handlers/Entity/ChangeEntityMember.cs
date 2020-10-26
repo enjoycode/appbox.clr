@@ -18,7 +18,7 @@ namespace appbox.Design
             var modelID = args.GetString();
             var memberName = args.GetString();
             var propertyName = args.GetString();
-            var propertyValue = args.GetString();
+            // var propertyValue = args.GetString();
 
             var modelNode = hub.DesignTree.FindModelNode(ModelType.Entity, ulong.Parse(modelID));
             if (modelNode == null)
@@ -44,21 +44,21 @@ namespace appbox.Design
             if (dm == null)
                 throw new Exception($"Can't find EntityMemberModel's property: {propertyName}");
             if (dm.PropertyType.IsEnum)
-                dm.SetValue(member, Convert.ToByte(propertyValue));
+				dm.SetValue(member, args.GetByte()); //Convert.ToByte(propertyValue));
             else if (dm.PropertyType == typeof(decimal))
-                dm.SetValue(member, Convert.ToDecimal(propertyValue));
+				dm.SetValue(member, args.GetDecimal()); // Convert.ToDecimal(propertyValue));
             else if (dm.PropertyType == typeof(DateTime))
-                dm.SetValue(member, Convert.ToDateTime(propertyValue));
+				dm.SetValue(member, args.GetDateTime()); // Convert.ToDateTime(propertyValue));
             else if (dm.PropertyType == typeof(uint))
-                dm.SetValue(member, Convert.ToUInt32(propertyValue));
+				dm.SetValue(member, args.GetUInt32()); // Convert.ToUInt32(propertyValue));
 			else if (dm.PropertyType == typeof(ulong))
-                dm.SetValue(member, Convert.ToUInt64(propertyValue));
+				dm.SetValue(member, args.GetUInt64()); // Convert.ToUInt64(propertyValue));
             else if (dm.PropertyType == typeof(int))
-                dm.SetValue(member, Convert.ToInt32(propertyValue));
+				dm.SetValue(member, args.GetInt32()); // Convert.ToInt32(propertyValue));
             else if (dm.PropertyType == typeof(bool))
-                dm.SetValue(member, Convert.ToBoolean(propertyValue));
+				dm.SetValue(member, args.GetBoolean()); // Convert.ToBoolean(propertyValue));
             else
-                dm.SetValue(member, propertyValue);
+				dm.SetValue(member, args.GetString()); // propertyValue);
 
             if (member.Type == EntityMemberType.DataField)
             {

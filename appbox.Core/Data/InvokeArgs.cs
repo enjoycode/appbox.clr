@@ -206,12 +206,44 @@ namespace appbox.Data
                 throw new NotImplementedException();
             return Current().Int32Value;
         }
+		public uint GetUInt32()
+        {
+            if (Count == FromWebSocket)
+                return ReadJsonArg().GetUInt32();
+            if (Count == FromWebStream)
+                throw new NotImplementedException();
+            return Current().UInt32Value;
+        }
+        public long GetInt64()
+        {
+            if (Count == FromWebSocket)
+                return ReadJsonArg().GetInt64();
+            if (Count == FromWebStream)
+                throw new NotImplementedException();
+            return Current().Int64Value;
+        }
+        public ulong GetUInt64()
+        {
+            if (Count == FromWebSocket)
+                return ReadJsonArg().GetUInt64();
+            if (Count == FromWebStream)
+                throw new NotImplementedException();
+            return Current().UInt64Value;
+        }
+        public decimal GetDecimal()
+        {
+            if (Count == FromWebSocket)
+                return ReadJsonArg().GetDecimal();
+            if (Count == FromWebStream)
+                throw new NotImplementedException();
+            return Current().DecimalValue;
+        }
 
         public string GetString()
         {
             if (Count == FromWebSocket)
             {
-                return ReadJsonArg().GetString();
+				return ReadJsonArg().GetString();
             }
             if (Count == FromWebStream)
             {

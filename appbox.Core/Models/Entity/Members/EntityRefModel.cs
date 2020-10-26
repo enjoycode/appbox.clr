@@ -47,6 +47,29 @@ namespace appbox.Models
 
         public EntityRefActionRule DeleteRule { get; private set; } = EntityRefActionRule.NoAction;
 
+		public override bool AllowNull
+        {
+            get => base.AllowNull;
+            internal set
+            {
+				if(base.AllowNull != value)
+				{
+                	base.AllowNull = value;
+					if(FKMemberIds != null)
+					{
+						foreach (var fkId in FKMemberIds)
+						{
+							Owner.GetMember(fkId, true).AllowNull = value;
+						}
+					}
+                
+					if (IsAggregationRef)
+					{
+						Owner.GetMember(TypeMemberId, true).AllowNull = value;
+					}
+				}
+            }
+        }
         #endregion
 
         #region ====Ctor====
