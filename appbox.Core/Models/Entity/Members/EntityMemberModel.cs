@@ -20,7 +20,7 @@ namespace appbox.Models
         /// 是否允许为null值
         /// </summary>
         /// <remarks>设计时改变时如果是DataField需要调用其OnDataTypeChanged</remarks>
-        public bool AllowNull { get; internal set; }
+        public virtual bool AllowNull { get; internal set; }
 
         public abstract EntityMemberType Type { get; }
 

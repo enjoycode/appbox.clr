@@ -99,6 +99,16 @@ namespace appbox.Models
                 return false;
             }
         }
+
+        public override bool AllowNull
+        {
+            get => base.AllowNull;
+            internal set
+            {
+                base.AllowNull = value;
+                OnDataTypeChanged();
+            }
+        }
         #endregion
 
         #region ====Ctor====
