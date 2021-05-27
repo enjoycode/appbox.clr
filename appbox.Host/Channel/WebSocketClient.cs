@@ -13,7 +13,7 @@ namespace appbox.Server.Channel
     sealed class WebSocketClient
     {
 
-        readonly WebSocket socket;
+        internal WebSocket Socket{ get; }
         internal WebSession Session { get; }
         private readonly SemaphoreSlim sendLock = new SemaphoreSlim(1, 1);
 
@@ -24,7 +24,7 @@ namespace appbox.Server.Channel
             if (session != null)
                 session.Owner = this;
 
-            this.socket = socket;
+            this.Socket = socket;
             Session = session;
         }
 
@@ -99,9 +99,9 @@ namespace appbox.Server.Channel
                 await sendLock.WaitAsync();
                 try
                 {
-                    while (cur != null && socket.State == WebSocketState.Open)
+                    while (cur != null && Socket.State == WebSocketState.Open)
                     {
-                        await socket.SendAsync(cur.Memory, WebSocketMessageType.Text,
+                        await Socket.SendAsync(cur.Memory, WebSocketMessageType.Text,
                             cur.Next == null, CancellationToken.None);
                         cur = cur.Next;
                     }
@@ -126,13 +126,13 @@ namespace appbox.Server.Channel
                     data = ms.ToArray();
                 }
 
-                if (!serializeError && socket.State == WebSocketState.Open)
+                if (!serializeError && Socket.State == WebSocketState.Open)
                 {
                     //注意：如果用WebSocketFrameWriteStream实现，待实现发送队列
                     await sendLock.WaitAsync();
                     try
                     {
-                        await socket.SendAsync(data.AsMemory(), WebSocketMessageType.Text, true, CancellationToken.None);
+                        await Socket.SendAsync(data.AsMemory(), WebSocketMessageType.Text, true, CancellationToken.None);
                     }
                     finally
                     {
@@ -147,7 +147,7 @@ namespace appbox.Server.Channel
             string msg = string.Format("{{\"ES\":{0},\"BD\":{1}}}", source, body);
             byte[] data = System.Text.Encoding.UTF8.GetBytes(msg);
 
-            if (socket.State == WebSocketState.Open)
+            if (Socket.State == WebSocketState.Open)
             {
                 Task.Run(async () =>
                 {
@@ -155,7 +155,7 @@ namespace appbox.Server.Channel
                     try
                     {
                         //注意：如果用WebSocketFrameWriteStream实现，待实现发送队列
-                        await socket.SendAsync(new ArraySegment<byte>(data), WebSocketMessageType.Text, true, CancellationToken.None);
+                        await Socket.SendAsync(new ArraySegment<byte>(data), WebSocketMessageType.Text, true, CancellationToken.None);
                     }
                     finally
                     {

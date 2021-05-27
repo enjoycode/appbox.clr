@@ -54,27 +54,31 @@ namespace appbox.Design
             if (node.Model.ModleLayer == ModelLayer.SYS)
                 throw new Exception("Can't delete system model.");
             var model = node.Model;
-            // 查找引用项
-            var usages = await RefactoringService.FindModelReferencesAsync(hub, model.ModelType,
-                                                            node.AppNode.Model.Name, model.Name);
-            if (usages != null && usages.Count > 0)
-            {
-                //注意排除自身引用
-                usages = usages.Where(u => !(u.ModelNode.Model.Id  == model.Id)).ToArray();
-                if (usages.Count > 0)
-                {
+			// 查找引用项
+			// TODO:因为权限未实现引用项查找，因此暂时在这里直接排除
+			if (model.ModelType != ModelType.Permission)
+			{
+				var usages = await RefactoringService.FindModelReferencesAsync(hub, model.ModelType,
+																node.AppNode.Model.Name, model.Name);
+				if (usages != null && usages.Count > 0)
+				{
+					//注意排除自身引用
+					usages = usages.Where(u => !(u.ModelNode.Model.Id == model.Id)).ToArray();
+					if (usages.Count > 0)
+					{
 #if DEBUG
-                    foreach (var item in usages)
-                    {
-                        Log.Warn(item.ToString());
-                    }
+						foreach (var item in usages)
+						{
+							Log.Warn(item.ToString());
+						}
 #endif
-                    throw new Exception("Has usages, Can't delete it.");
-                }
-            }
+						throw new Exception("Has usages, Can't delete it.");
+					}
+				}
+			}
 
-            // 判断当前模型是否已持久化到数据库中
-            if (model.PersistentState == PersistentState.Detached)
+			// 判断当前模型是否已持久化到数据库中
+			if (model.PersistentState == PersistentState.Detached)
             {
                 await StagedService.DeleteModelAsync(model.Id);
             }

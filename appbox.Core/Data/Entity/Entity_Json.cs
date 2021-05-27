@@ -145,7 +145,7 @@ namespace appbox.Data
                                 if (PersistentState != PersistentState.Detached)
                                     SetEntityRef(memberModel.MemberId, null);
                             }
-                            else if (reader.TokenType == JsonTokenType.StartArray)
+                            else if (reader.TokenType == JsonTokenType.StartObject)
                             {
                                 var obj = reader.ReadObject(objrefs);
                                 SetEntityRef(memberModel.MemberId, (Entity)obj);

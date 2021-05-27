@@ -56,6 +56,12 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="OBDGateway">
+      <HintPath>.\obd\gateway\OBDGateway.dll</HintPath>
+	  <Private>true</Private>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
     <Folder Include="Channel\" />
     <Folder Include="Runtime\" />
     <Folder Include="Utils\" />

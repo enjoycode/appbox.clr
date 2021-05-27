@@ -113,7 +113,10 @@ namespace appbox.Store
 
                 DbParameter para = Command.CreateParameter();
                 para.ParameterName = pname;
-                para.Value = value;
+				if(value is ulong)
+					para.Value = unchecked((long)((ulong)value));
+				else
+					para.Value = value;
                 if (value is string)
                     para.Size = ((string)value).Length;
                 Command.Parameters.Add(para);

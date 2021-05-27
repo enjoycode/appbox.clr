@@ -16,6 +16,7 @@ namespace appbox.Server.Runtime
         private static readonly IService ClusterService = new Services.ClusterService();
 #endif
         private static readonly IService DesignService = new Design.DesignService();
+        private static readonly IService ObdService = new Host.obd.ObdService();
 
         internal static void Init()
         {
@@ -31,6 +32,10 @@ namespace appbox.Server.Runtime
             if (serviceName.Span.SequenceEqual(nameof(AdminService).AsSpan()))
             {
                 instance = AdminService; return true;
+            }
+            if (serviceName.Span.SequenceEqual(nameof(ObdService).AsSpan()))
+            {
+                instance = ObdService; return true;
             }
 #if FUTURE
             if (serviceName.Span.SequenceEqual(nameof(ClusterService).AsSpan()))

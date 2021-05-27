@@ -39,13 +39,15 @@ namespace appbox.Serialization
                         writer.WriteEndObject();
                         return;
                     }
-                    throw new Exception("Json序列化存在重复引用");
-                }
+					// return;
+					// throw new Exception("Json序列化存在重复引用");
+				}
                 if (res is Entity entity && !entity.Model.IsDTO)
                 {
                     refID = $"{(byte)entity.PersistentState}{entity.ModelId}{entity.Id}";
                 }
-                objrefs.Add(res, refID);
+				if(!objrefs.ContainsKey(res))
+                	objrefs.Add(res, refID);
             }
 
             if (res is IJsonSerializable serializable)

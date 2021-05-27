@@ -235,6 +235,30 @@ namespace appbox.Expressions
         {
             return val.HasValue ? new PrimitiveExpression(val.Value) : new PrimitiveExpression(null);
         }
+		public static implicit operator Expression(byte val)
+        {
+            return new PrimitiveExpression(val);
+        }
+        public static implicit operator Expression(byte? val)
+        {
+            return val.HasValue ? new PrimitiveExpression(val.Value) : new PrimitiveExpression(null);
+        }
+		public static implicit operator Expression(long val)
+        {
+            return new PrimitiveExpression(val);
+        }
+        public static implicit operator Expression(long? val)
+        {
+            return val.HasValue ? new PrimitiveExpression(val.Value) : new PrimitiveExpression(null);
+        }
+		public static implicit operator Expression(ulong val)
+        {
+            return new PrimitiveExpression(val);
+        }
+        public static implicit operator Expression(ulong? val)
+        {
+            return val.HasValue ? new PrimitiveExpression(val.Value) : new PrimitiveExpression(null);
+        }
         #endregion
 
         #region ====Static Help Methods====
@@ -264,12 +288,12 @@ namespace appbox.Expressions
         BinaryExpression,
         GroupExpression,
 
-        //BlockExpression,
-        //EventAction,
+        BlockExpression,
+        EventAction,
         //AssignmentExpression,
         //IdentifierExpression,
         //MemberAccessExpression,
-        //IfStatementExpression,
+        IfStatementExpression,
         //LocalDeclaration,
         //TypeExpression,
 

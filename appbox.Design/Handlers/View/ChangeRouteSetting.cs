@@ -26,8 +26,8 @@ namespace appbox.Design
             viewModel.Flag = routeEnable == true ? ViewModelFlag.ListInRouter : ViewModelFlag.None;
             viewModel.RouteParent = routeParent;
             viewModel.RoutePath = routePath;
-
-            return Task.FromResult<object>(true);
+			
+			return Task.FromResult<object>(true);
         }
     }
 }

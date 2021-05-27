@@ -7,7 +7,7 @@ using appbox.Runtime;
 using appbox.Serialization;
 using appbox.Server.Channel;
 using Microsoft.AspNetCore.Mvc;
-using appbox.Reporting;
+// using appbox.Reporting;
 using System.Collections;
 using System.Data;
 
@@ -194,29 +194,29 @@ namespace appbox.Controllers
         /// <param name="type"></param>
         /// <param name="code"></param>
         /// <returns></returns>
-        [HttpGet("{type}/{code}/{width}/{height}/{scale}")] //Get /api/design/barcode/BarCode128/123456/200/100/1
-        public async Task Barcode(string type, string code, int width, int height, float scale)
-        {
-            //设置当前用户会话
-            RuntimeContext.Current.CurrentSession = HttpContext.Session.LoadWebSession();
-            //判断权限
-            if (!(RuntimeContext.Current.CurrentSession is IDeveloperSession))
-                throw new Exception("Must login as a Developer");
+        // [HttpGet("{type}/{code}/{width}/{height}/{scale}")] //Get /api/design/barcode/BarCode128/123456/200/100/1
+        // public async Task Barcode(string type, string code, int width, int height, float scale)
+        // {
+        //     //设置当前用户会话
+        //     RuntimeContext.Current.CurrentSession = HttpContext.Session.LoadWebSession();
+        //     //判断权限
+        //     if (!(RuntimeContext.Current.CurrentSession is IDeveloperSession))
+        //         throw new Exception("Must login as a Developer");
 
-            var bw = new ZXing.SkiaSharp.BarcodeWriter(); //TODO:优化单例ZXing.BarCodeRender
-            bw.Format = (ZXing.BarcodeFormat)Enum.Parse(typeof(ZXing.BarcodeFormat), type);
-            bw.Options.Height = (int)(height * scale);
-            bw.Options.Width = (int)(width * scale);
-            var skbmp = bw.Write(code);
+        //     var bw = new ZXing.SkiaSharp.BarcodeWriter(); //TODO:优化单例ZXing.BarCodeRender
+        //     bw.Format = (ZXing.BarcodeFormat)Enum.Parse(typeof(ZXing.BarcodeFormat), type);
+        //     bw.Options.Height = (int)(height * scale);
+        //     bw.Options.Width = (int)(width * scale);
+        //     var skbmp = bw.Write(code);
 
-            using var bmp = new Drawing.Bitmap(skbmp);
-            using var ms = new System.IO.MemoryStream(1024);
-            bmp.Save(ms, Drawing.ImageFormat.Jpeg, 90);
-            ms.Position = 0;
+        //     using var bmp = new Drawing.Bitmap(skbmp);
+        //     using var ms = new System.IO.MemoryStream(1024);
+        //     bmp.Save(ms, Drawing.ImageFormat.Jpeg, 90);
+        //     ms.Position = 0;
 
-            HttpContext.Response.ContentType = "image/jpg";
-            await ms.CopyToAsync(HttpContext.Response.Body);
-            //bmp.Save(HttpContext.Response.Body, Drawing.ImageFormat.Png); //不支持同步直接写
-        }
+        //     HttpContext.Response.ContentType = "image/jpg";
+        //     await ms.CopyToAsync(HttpContext.Response.Body);
+        //     //bmp.Save(HttpContext.Response.Body, Drawing.ImageFormat.Png); //不支持同步直接写
+        // }
     }
 }

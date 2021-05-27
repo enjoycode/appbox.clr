@@ -138,6 +138,35 @@ namespace appbox.Host
                 endpoints.MapControllers();
                 endpoints.MapControllerRoute("default", "{controller=Home}/{action=Index}");
             });
+
+			try
+			{
+				// obd.ObdDataReceiveService.GetVINInfo("LB115263589752657");
+				// 启动Gateway
+				StartGateway(Configuration["DefaultSqlStore:ConnectionString"]);
+				Log.Info("网关已启动");
+			}
+			catch (System.Exception ex)
+			{
+				Log.Error(ex.Message);
+			}
         }
+
+		void StartGateway(string connectionString)
+		{
+			var settings = new OBDGateway.ServerSettings
+            {
+                TcpPort = 61100,
+                DataStore = new OBDGateway.PGSqlStore(connectionString),
+                // GetVINInfo = obd.ObdDataReceiveService.GetVINInfo,
+                VehicleOnline = obd.ObdDataReceiveService.VehicleOnline,
+                VehicleOffline = obd.ObdDataReceiveService.VehicleOffline,
+				Alarm = obd.ObdDataReceiveService.VehicleAlarm
+            };
+
+            OBDGateway.Server.Run(settings);
+
+			// obd.ObdDataReceiveService.PublishEventTest();
+		}
     }
 }

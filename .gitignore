@@ -32,3 +32,6 @@ appbox.Reporting.Tests/obj
 appbox.Reporting/obj
 appbox.Clr.Pro.sln
 buildpro.sh
+appbox.Workflow/obj/
+appbox.Drawing/appbox.Drawing.csproj.user
+appbox.Host/lib/

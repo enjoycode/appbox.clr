@@ -31,6 +31,7 @@ public static class DbFuncs
     public static int Avg(int field) { return 0; }
 
     public static long Avg(long field) { return 0; }
+    public static float Avg(float field) { return 0; }
 
     public static bool In<T>(this T source, IEnumerable<T> list) { return true; }
 

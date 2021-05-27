@@ -177,7 +177,7 @@ namespace appbox.Server
                 {
                     // Create a new shared memory mapping
 #if Windows
-                    Mmf = MemoryMappedFile.CreateNew(Name, SharedMemorySize); //Linux not supported
+                    Mmf = MemoryMappedFile.CreateOrOpen(Name, SharedMemorySize); //Linux not supported
 #else
                     var path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), Name);
                     Mmf = MemoryMappedFile.CreateFromFile(path, System.IO.FileMode.OpenOrCreate, null, SharedMemorySize);

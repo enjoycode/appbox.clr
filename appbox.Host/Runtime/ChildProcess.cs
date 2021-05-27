@@ -42,7 +42,11 @@ namespace appbox.Host
             var process = new Process();
             process.StartInfo.UseShellExecute = false;
 #if Windows
-            process.StartInfo.FileName = "appbox.AppContainer.exe";
+#if DEBUG
+            process.StartInfo.FileName = @"D:\Projects\appbox.clr\appbox.AppContainer\bin\Debug\netcoreapp3.1\appbox.AppContainer.exe";
+#else
+			process.StartInfo.FileName = @"appbox.AppContainer.exe";
+#endif
 #else
             process.StartInfo.CreateNoWindow = true;
             process.StartInfo.FileName = "appbox.AppContainer";

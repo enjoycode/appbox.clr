@@ -29,6 +29,7 @@ namespace appbox.Design
         internal static MetadataReference DataCommonLib => Get("System.Data.Common.dll");
         internal static MetadataReference ComponentModelPrimitivesLib => Get("System.ComponentModel.Primitives.dll");
         //internal static MetadataReference ComponentModelLib => Get("System.ComponentModel.dll");
+        internal static MetadataReference JsonLib => Get("System.Text.Json.dll");
         internal static MetadataReference AppBoxCoreLib => Get("appbox.Core.dll");
         internal static MetadataReference AppBoxStoreLib => Get("appbox.Store.dll");
 

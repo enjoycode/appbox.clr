@@ -22,6 +22,10 @@ namespace appbox.Store
                 BuildTreeNodePathQuery(query, ctx);
             else
                 BuildNormalQuery(query, ctx);
+			// Log.Warn($"Exec sql: {cmd.CommandText}");
+			// foreach(var p in cmd.Parameters.ToArray()) {
+			// 	Log.Warn($"p:{p.ParameterName}, v:{p.Value}");
+			// }
             return cmd;
         }
 
@@ -469,7 +473,18 @@ namespace appbox.Store
             }
             else
             {
-                ctx.AppendFormat("@{0}", ctx.GetParameterName(exp.Value));
+				ctx.AppendFormat("@{0}", ctx.GetParameterName(exp.Value));
+                // if (exp.Value is ulong) 
+                // {
+				// 	var v = (ulong)exp.Value;
+				// 	var vv = unchecked((long)v);
+				// 	Log.Info($"转换后的值为：{exp.Value},{v}, {vv}");
+				// 	ctx.AppendFormat("@{0}", ctx.GetParameterName(vv));
+                // } 
+                // else 
+                // {
+                //     ctx.AppendFormat("@{0}", ctx.GetParameterName(exp.Value));
+                // }
             }
         }
 

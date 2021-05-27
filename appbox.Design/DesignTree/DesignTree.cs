@@ -210,6 +210,7 @@ namespace appbox.Design
                     }
                 case DesignNodeType.FolderNode: return FindFolderNode(id);
                 case DesignNodeType.DataStoreNode: return StoreRootNode.Nodes.Find(t => t.ID == id);
+                case DesignNodeType.PermissionModelNode: return FindModelNode(ModelType.Permission, ulong.Parse(id));
                 default: throw ExceptionHelper.NotImplemented(); //todo: fix others
             }
         }
