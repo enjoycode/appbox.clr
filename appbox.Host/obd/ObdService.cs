@@ -336,6 +336,8 @@ namespace appbox.Host.obd
 					voidstr = args.GetString();
 					mid = args.GetString();
 					return Data.AnyValue.From(await GetOnlineAnomalousCount(sid, ous, voidstr, mid));
+				case ReadOnlyMemory<char> s when s.Span.SequenceEqual("SendTextMessage"):
+					return Data.AnyValue.From(OBDGateway.Server.SendTextMessage(args.GetString(), args.GetString()));
 				default:
 					throw new Exception($"Can't find method: {method}");
 			}
