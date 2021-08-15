@@ -306,7 +306,7 @@ namespace appbox.Store
                     var refsPtr = stackalloc ushort[refs.Count];
                     for (int i = 0; i < refs.Count; i++)
                     {
-                        refsPtr[i] = model.GetMember(refs[i].Name + "Id", true).MemberId;
+                        refsPtr[i] = refs[i].FKMemberIds[0]; //model.GetMember(refs[i].Name + "Id", true).MemberId;
                     }
                     req.RefsPtr = new IntPtr(refsPtr);
                     req.RefsSize = new IntPtr(refs.Count * 2);
@@ -486,7 +486,7 @@ namespace appbox.Store
                     var refsPtr = stackalloc ushort[refs.Count];
                     for (int i = 0; i < refs.Count; i++)
                     {
-                        refsPtr[i] = model.GetMember(refs[i].Name + "Id", true).MemberId;
+                        refsPtr[i] = refs[i].FKMemberIds[0];//model.GetMember(refs[i].Name + "Id", true).MemberId;
                     }
                     req.RefsPtr = new IntPtr(refsPtr);
                     req.RefsSize = new IntPtr(refs.Count * 2);

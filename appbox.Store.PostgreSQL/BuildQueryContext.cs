@@ -255,7 +255,7 @@ namespace appbox.Store
             {
                 ds.Add(path, exp);
                 _queryIndex += 1;
-                exp.AliasName = $"j{_queryIndex.ToString()}";
+                exp.AliasName = $"j{_queryIndex}";
                 e = exp;
             }
             return e.AliasName;

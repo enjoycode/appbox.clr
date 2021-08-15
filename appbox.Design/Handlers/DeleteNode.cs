@@ -20,7 +20,7 @@ namespace appbox.Design
             if (deleteNode == null)
                 throw new Exception("Delete target not exists.");
             if (!(deleteNode is ModelNode || deleteNode is ApplicationNode
-                || (deleteNode.NodeType == DesignNodeType.FolderNode && deleteNode.Nodes.Count == 0)))
+                || deleteNode.NodeType == DesignNodeType.FolderNode && deleteNode.Nodes.Count == 0))
                 throw new Exception("Can not delete it.");
 
             DesignNode rootNode = null;

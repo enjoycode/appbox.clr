@@ -17,9 +17,7 @@ namespace appbox.Design
             get
             {
                 var root = GetRootNode(this);
-                if (root is ITopNode)
-                    return root.DesignTree;
-                return null;
+                return root is ITopNode ? root.DesignTree : null;
             }
         }
 

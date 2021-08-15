@@ -33,11 +33,7 @@ namespace appbox.Models
                     _dataStoreModel_cached = Runtime.RuntimeContext.Current.GetModelAsync<DataStoreModel>(StoreModelId).Result;
                 return _dataStoreModel_cached;
             }
-            set
-            {
-                //仅用于设计时
-                _dataStoreModel_cached = value;
-            }
+            set => _dataStoreModel_cached = value; //仅用于设计时
         }
         /// <summary>
         /// 仅用于缓存，因向前端序列化需要用到

@@ -372,7 +372,7 @@ namespace appbox.Design
                     return;
             }
 
-            FindNewModelParentNodeInternal(node.Parent as DesignNode, ref target, ref appID, newModelType);
+            FindNewModelParentNodeInternal(node.Parent, ref target, ref appID, newModelType);
         }
 
         /// <summary>

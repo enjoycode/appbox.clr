@@ -469,7 +469,15 @@ namespace appbox.Store
             }
             else
             {
-                ctx.AppendFormat("@{0}", ctx.GetParameterName(exp.Value));
+                if (exp.Value is ulong) 
+                {
+                    ulong v = (ulong)exp.Value;
+                    ctx.AppendFormat("@{0}", ctx.GetParameterName(unchecked((long)v)));
+                } 
+                else 
+                {
+                    ctx.AppendFormat("@{0}", ctx.GetParameterName(exp.Value));
+                }
             }
         }
 
