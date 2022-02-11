@@ -63,7 +63,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="FastExpressionCompiler" Version="1.10.1" />
-    <PackageReference Include="Google.Protobuf" Version="3.9.1" />
+    <PackageReference Include="Google.Protobuf" Version="3.15.0" />
     <PackageReference Include="System.Runtime.Extensions" Version="4.3.1" />
   </ItemGroup>
   <ItemGroup>
